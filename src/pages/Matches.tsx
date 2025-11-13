@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, MessageCircle } from "lucide-react";
+import Header from "@/components/Header";
 
 interface Match {
   id: string;
@@ -44,7 +45,8 @@ const Matches = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-2xl mx-auto px-4 py-8">
+      <Header />
+      <div className="container max-w-2xl mx-auto px-4 py-8 pt-24">
         <div className="flex items-center gap-4 mb-8">
           <Button
             variant="ghost"
