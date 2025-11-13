@@ -88,17 +88,25 @@ const Swipe = () => {
 
   if (jobs.length === 0 || currentIndex >= jobs.length) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-3xl font-bold text-white mb-4">All done!</h2>
-          <p className="text-white/90 mb-6">You've reviewed all available positions. Check back soon for more opportunities!</p>
-          <Button 
-            onClick={() => navigate("/")}
-            className="bg-white text-primary hover:bg-white/90"
-          >
-            Back to Home
-          </Button>
+          <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">All done!</h2>
+          <p className="text-muted-foreground mb-6">You've reviewed all available positions. Check your matches!</p>
+          <div className="flex gap-4 justify-center">
+            <Button 
+              onClick={() => navigate("/matches")}
+              className="bg-gradient-primary text-white hover:opacity-90"
+            >
+              View Matches
+            </Button>
+            <Button 
+              onClick={() => navigate("/")}
+              variant="outline"
+            >
+              Back to Home
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -107,11 +115,11 @@ const Swipe = () => {
   const currentJob = jobs[currentIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
       </div>
 
       {/* Header */}
@@ -119,7 +127,6 @@ const Swipe = () => {
         <Button 
           variant="ghost" 
           onClick={() => navigate("/")}
-          className="text-white hover:bg-white/10"
         >
           ← Back
         </Button>
@@ -137,7 +144,7 @@ const Swipe = () => {
 
         {/* Main card */}
         <div
-          className={`absolute inset-0 bg-gradient-card rounded-3xl shadow-card-hover p-6 flex flex-col transition-all duration-300 ${
+          className={`absolute inset-0 bg-card border border-border rounded-3xl shadow-card-hover p-6 flex flex-col transition-all duration-300 ${
             swipeDirection === "left"
               ? "transform -translate-x-[150%] -rotate-12 opacity-0"
               : swipeDirection === "right"
@@ -151,8 +158,8 @@ const Swipe = () => {
           {/* Job Info */}
           <div className="flex-1 overflow-y-auto space-y-4">
             <div>
-              <h2 className="text-2xl font-bold text-foreground mb-1">{currentJob.position}</h2>
-              <p className="text-lg text-primary font-semibold">{currentJob.company}</p>
+              <h2 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-1">{currentJob.position}</h2>
+              <p className="text-lg text-foreground font-semibold">{currentJob.company}</p>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -196,16 +203,17 @@ const Swipe = () => {
         <Button
           size="lg"
           onClick={() => handleSwipe("left")}
-          className="h-16 w-16 rounded-full bg-white hover:bg-white/90 shadow-lg hover:scale-110 transition-transform"
+          variant="outline"
+          className="h-16 w-16 rounded-full shadow-lg hover:scale-110 transition-transform border-2"
         >
-          <X className="w-8 h-8 text-destructive" />
+          <X className="w-8 h-8" />
         </Button>
         <Button
           size="lg"
           onClick={() => handleSwipe("right")}
-          className="h-16 w-16 rounded-full bg-accent hover:bg-accent/90 shadow-lg hover:scale-110 transition-transform"
+          className="h-16 w-16 rounded-full bg-gradient-primary text-white shadow-lg hover:scale-110 transition-transform hover:shadow-card-hover"
         >
-          <Heart className="w-8 h-8 text-white" />
+          <Heart className="w-8 h-8" />
         </Button>
       </div>
 
