@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Swipe from "./pages/Swipe";
 import Matches from "./pages/Matches";
 import Chat from "./pages/Chat";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/swipe" element={<Swipe />} />
           <Route path="/matches" element={<Matches />} />
           <Route path="/chat/:matchId" element={<Chat />} />
+          <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

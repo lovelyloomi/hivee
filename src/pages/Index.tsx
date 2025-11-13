@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap, Heart, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Header from "@/components/Header";
 
 const Index = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      <Header />
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
@@ -15,7 +17,7 @@ const Index = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12 pt-24">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto space-y-8 animate-fade-in">
           <div className="inline-block px-4 py-2 bg-muted rounded-full text-muted-foreground text-sm font-medium mb-4">
