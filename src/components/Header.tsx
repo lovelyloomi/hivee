@@ -7,15 +7,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Header = () => {
   const navigate = useNavigate();
+  const { language, setLanguage, t } = useLanguage();
 
   const languages = [
-    { code: "en", name: "English", flag: "🇬🇧" },
-    { code: "fr", name: "French", flag: "🇫🇷" },
-    { code: "it", name: "Italian", flag: "🇮🇹" },
-    { code: "es", name: "Spanish", flag: "🇪🇸" },
+    { code: "en" as const, name: "English", flag: "🇬🇧" },
+    { code: "fr" as const, name: "French", flag: "🇫🇷" },
+    { code: "it" as const, name: "Italian", flag: "🇮🇹" },
+    { code: "es" as const, name: "Spanish", flag: "🇪🇸" },
   ];
 
   return (
@@ -25,7 +27,7 @@ const Header = () => {
           className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent cursor-pointer"
           onClick={() => navigate("/")}
         >
-          SwipeJob
+          {t('header.title')}
         </div>
 
         <div className="flex items-center gap-2">
@@ -40,10 +42,12 @@ const Header = () => {
               {languages.map((lang) => (
                 <DropdownMenuItem
                   key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
                   className="cursor-pointer hover:bg-muted"
                 >
                   <span className="mr-2">{lang.flag}</span>
                   {lang.name}
+                  {language === lang.code && <span className="ml-auto text-primary">✓</span>}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
