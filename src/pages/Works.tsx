@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Plus, Heart } from "lucide-react";
+import { Plus, Heart, Search, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Badge } from "@/components/ui/badge";
 
 interface Work {
   id: number;
@@ -31,6 +32,37 @@ const Works = () => {
   const [works, setWorks] = useState<Work[]>(mockWorks);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newWork, setNewWork] = useState({ bio: '', hashtags: '', image: '' });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
+
+  // Get all unique hashtags from all works
+  const allHashtags = useMemo(() => {
+    const tags = new Set<string>();
+    works.forEach(work => work.hashtags.forEach(tag => tags.add(tag)));
+    return Array.from(tags).sort();
+  }, [works]);
+
+  // Filter works based on search and selected hashtags
+  const filteredWorks = useMemo(() => {
+    return works.filter(work => {
+      const matchesSearch = searchQuery === '' || 
+        work.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        work.hashtags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      const matchesHashtags = selectedHashtags.length === 0 ||
+        selectedHashtags.every(selectedTag => work.hashtags.includes(selectedTag));
+      
+      return matchesSearch && matchesHashtags;
+    });
+  }, [works, searchQuery, selectedHashtags]);
+
+  const toggleHashtag = (hashtag: string) => {
+    setSelectedHashtags(prev => 
+      prev.includes(hashtag) 
+        ? prev.filter(tag => tag !== hashtag)
+        : [...prev, hashtag]
+    );
+  };
 
   const handleLike = (id: number) => {
     setWorks(works.map(work => 
@@ -62,7 +94,7 @@ const Works = () => {
       <Header />
       
       <main className="container mx-auto px-4 pt-24">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             {t('works.title')}
           </h1>
@@ -116,8 +148,61 @@ const Works = () => {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {works.map((work) => (
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              placeholder="Search works..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Hashtag Filters */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {allHashtags.map((hashtag) => (
+              <Badge
+                key={hashtag}
+                variant={selectedHashtags.includes(hashtag) ? "default" : "outline"}
+                className="cursor-pointer hover:bg-primary/90 transition-colors"
+                onClick={() => toggleHashtag(hashtag)}
+              >
+                #{hashtag}
+              </Badge>
+            ))}
+          </div>
+          {selectedHashtags.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedHashtags([])}
+              className="mt-2"
+            >
+              Clear filters
+            </Button>
+          )}
+        </div>
+
+        {/* Works Grid */}
+        {filteredWorks.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No works found matching your search or filters.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredWorks.map((work) => (
             <div key={work.id} className="group relative aspect-square rounded-xl overflow-hidden bg-card">
               <img 
                 src={work.image} 
@@ -144,8 +229,9 @@ const Works = () => {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
 
       <BottomNav />
