@@ -2,12 +2,15 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap, Heart, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import BottomNav from "@/components/BottomNav";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-hidden pb-20">
       <Header />
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -86,6 +89,8 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      <BottomNav />
     </div>
   );
 };
