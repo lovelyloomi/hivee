@@ -246,9 +246,8 @@ const Matches = () => {
   };
 
   const handleViewProfile = (match: Match) => {
-    // Open preview modal to show portfolio images and details (works for demo and real)
-    setPreviewMatch(match);
-    setPreviewOpen(true);
+    // Navigate to full profile page
+    navigate(`/profile/${match.id}`);
   };
 
   const getTimeAgo = (dateString?: string) => {
