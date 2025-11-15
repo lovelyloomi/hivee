@@ -11,6 +11,8 @@ import Matches from "./pages/Matches";
 import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import Find from "./pages/Find";
+import Search from "./pages/Search";
+import Recommendations from "./pages/Recommendations";
 import Works from "./pages/Works";
 import Favorites from "./pages/Favorites";
 import Opportunities from "./pages/Opportunities";
@@ -18,6 +20,7 @@ import BlockedUsers from "./pages/BlockedUsers";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
+import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +29,7 @@ const App = () => (
     <LanguageProvider>
       <AuthProvider>
         <TooltipProvider>
+          <OnboardingTutorial />
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -33,6 +37,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/swipe" element={<Swipe />} />
             <Route path="/find" element={<Find />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/recommendations" element={<Recommendations />} />
             <Route path="/works" element={<Works />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/matches" element={<Matches />} />

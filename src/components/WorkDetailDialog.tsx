@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import MediaViewer from './MediaViewer';
+import { WorkComments } from './WorkComments';
 import { Database } from '@/integrations/supabase/types';
 
 type Work = Database['public']['Tables']['works']['Row'];

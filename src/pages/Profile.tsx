@@ -4,9 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import LocationSettings from "@/components/LocationSettings";
-import { Upload, Briefcase, Award, Star, LogOut } from "lucide-react";
+import { ProfileAnalytics } from "@/components/ProfileAnalytics";
+import { PrivacySettings } from "@/components/PrivacySettings";
+import { NotificationSettings } from "@/components/NotificationSettings";
+import { PortfolioExport } from "@/components/PortfolioExport";
+import { Upload, Briefcase, Award, Star, LogOut, BarChart, Shield, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -255,7 +260,15 @@ const Profile = () => {
           </Button>
         </div>
 
-        <div className="space-y-6">
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="analytics"><BarChart className="h-4 w-4 mr-2" />Analytics</TabsTrigger>
+            <TabsTrigger value="privacy"><Shield className="h-4 w-4 mr-2" />Privacy</TabsTrigger>
+            <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />Notifications</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile" className="space-y-6">
           {/* Profile Picture */}
           <Card className="p-6 bg-card border-border">
             <div className="flex items-center gap-6">
@@ -416,9 +429,28 @@ const Profile = () => {
             disabled={saving}
             className="w-full bg-gradient-primary text-white hover:opacity-90"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving..." : "<PortfolioExport />"}
           </Button>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <Card className="p-6">
+              <ProfileAnalytics />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="privacy">
+            <Card className="p-6">
+              <PrivacySettings />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <Card className="p-6">
+              <NotificationSettings />
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

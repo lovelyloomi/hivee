@@ -176,6 +176,8 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
+          media_type: string | null
+          media_url: string | null
           read: boolean
           sender_id: string
         }
@@ -184,6 +186,8 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
+          media_type?: string | null
+          media_url?: string | null
           read?: boolean
           sender_id: string
         }
@@ -192,6 +196,8 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
+          media_type?: string | null
+          media_url?: string | null
           read?: boolean
           sender_id?: string
         }
@@ -207,6 +213,47 @@ export type Database = {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          email_on_comment: boolean | null
+          email_on_match: boolean | null
+          email_on_message: boolean | null
+          email_on_opportunity: boolean | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_on_comment?: boolean | null
+          email_on_match?: boolean | null
+          email_on_message?: boolean | null
+          email_on_opportunity?: boolean | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_on_comment?: boolean | null
+          email_on_match?: boolean | null
+          email_on_message?: boolean | null
+          email_on_opportunity?: boolean | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -322,6 +369,42 @@ export type Database = {
           },
         ]
       }
+      profile_views: {
+        Row: {
+          id: string
+          viewed_at: string | null
+          viewed_profile_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          id?: string
+          viewed_at?: string | null
+          viewed_profile_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          id?: string
+          viewed_at?: string | null
+          viewed_profile_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_views_viewed_profile_id_fkey"
+            columns: ["viewed_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -335,9 +418,12 @@ export type Database = {
           location_enabled: boolean | null
           longitude: number | null
           max_distance_km: number | null
+          onboarding_completed: boolean | null
           portfolio_url: string | null
           profile_completed: boolean | null
+          profile_visibility: string | null
           programs: string[] | null
+          show_location: boolean | null
           skills: string[] | null
           updated_at: string
           watermark_text: string | null
@@ -356,9 +442,12 @@ export type Database = {
           location_enabled?: boolean | null
           longitude?: number | null
           max_distance_km?: number | null
+          onboarding_completed?: boolean | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
+          profile_visibility?: string | null
           programs?: string[] | null
+          show_location?: boolean | null
           skills?: string[] | null
           updated_at?: string
           watermark_text?: string | null
@@ -377,9 +466,12 @@ export type Database = {
           location_enabled?: boolean | null
           longitude?: number | null
           max_distance_km?: number | null
+          onboarding_completed?: boolean | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
+          profile_visibility?: string | null
           programs?: string[] | null
+          show_location?: boolean | null
           skills?: string[] | null
           updated_at?: string
           watermark_text?: string | null
@@ -387,6 +479,51 @@ export type Database = {
           work_images?: string[] | null
         }
         Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reason?: string
+          reported_user_id?: string
+          reporter_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       work_comments: {
         Row: {
@@ -492,6 +629,42 @@ export type Database = {
           },
           {
             foreignKeyName: "work_likes_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_views: {
+        Row: {
+          id: string
+          viewed_at: string | null
+          viewer_id: string | null
+          work_id: string | null
+        }
+        Insert: {
+          id?: string
+          viewed_at?: string | null
+          viewer_id?: string | null
+          work_id?: string | null
+        }
+        Update: {
+          id?: string
+          viewed_at?: string | null
+          viewer_id?: string | null
+          work_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_views_work_id_fkey"
             columns: ["work_id"]
             isOneToOne: false
             referencedRelation: "works"

@@ -18,12 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Send, MoreVertical, Shield, UserX, User } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Shield, UserX, User, Paperclip } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
 import { usePresence } from "@/hooks/usePresence";
+import { MessageMedia } from "@/components/MessageMedia";
+import { TypingIndicator } from "@/components/TypingIndicator";
+import { ReportUserDialog } from "@/components/ReportUserDialog";
 
 interface Message {
   id: string;
@@ -31,6 +34,8 @@ interface Message {
   sender_id: string;
   created_at: string;
   read: boolean;
+  media_url?: string | null;
+  media_type?: string | null;
 }
 
 interface Profile {
@@ -55,6 +60,8 @@ const Chat = () => {
   const [sending, setSending] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showUnmatchDialog, setShowUnmatchDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
