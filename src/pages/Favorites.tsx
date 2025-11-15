@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Search, Bookmark } from "lucide-react";
+import { Search, Bookmark, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import WorkDetailDialog from "@/components/WorkDetailDialog";
@@ -23,9 +24,23 @@ type FavoriteWork = {
   work: Work;
 };
 
+type Opportunity = Database['public']['Tables']['opportunities']['Row'] & {
+  profiles: {
+    full_name: string | null;
+    avatar_url: string | null;
+  } | null;
+};
+
+type FavoriteOpportunity = {
+  id: string;
+  created_at: string;
+  opportunity: Opportunity;
+};
+
 export default function Favorites() {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<FavoriteWork[]>([]);
+  const [opportunityFavorites, setOpportunityFavorites] = useState<FavoriteOpportunity[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
@@ -33,13 +48,14 @@ export default function Favorites() {
   useEffect(() => {
     if (user) {
       fetchFavorites();
+      fetchOpportunityFavorites();
       setupRealtimeSubscription();
     }
   }, [user]);
 
   const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel('favorites-changes')
+    const workChannel = supabase
+      .channel('work-favorites-changes')
       .on(
         'postgres_changes',
         {
@@ -54,8 +70,25 @@ export default function Favorites() {
       )
       .subscribe();
 
+    const opportunityChannel = supabase
+      .channel('opportunity-favorites-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'opportunity_favorites',
+          filter: `user_id=eq.${user?.id}`,
+        },
+        () => {
+          fetchOpportunityFavorites();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(workChannel);
+      supabase.removeChannel(opportunityChannel);
     };
   };
 
@@ -91,6 +124,48 @@ export default function Favorites() {
     }
   };
 
+  const fetchOpportunityFavorites = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('opportunity_favorites')
+      .select(`
+        id,
+        created_at,
+        opportunity:opportunity_id (
+          *,
+          profiles:creator_id (
+            full_name,
+            avatar_url
+          )
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      const validOpportunities = data
+        .filter(fav => fav.opportunity)
+        .map(fav => ({
+          id: fav.id,
+          created_at: fav.created_at,
+          opportunity: fav.opportunity as Opportunity
+        }));
+      setOpportunityFavorites(validOpportunities);
+    }
+  };
+
+  const removeOpportunityFavorite = async (favoriteId: string) => {
+    const { error } = await supabase
+      .from('opportunity_favorites')
+      .delete()
+      .eq('id', favoriteId);
+
+    if (!error) {
+      fetchOpportunityFavorites();
+    }
+  };
+
   const allHashtags = Array.from(
     new Set(favorites.flatMap(fav => fav.work.hashtags || []))
   );
@@ -123,6 +198,14 @@ export default function Favorites() {
           <Bookmark className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-foreground">My Favorites</h1>
         </div>
+
+        <Tabs defaultValue="works" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="works">Works</TabsTrigger>
+            <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="works">{/* Works tab content */}
 
         <div className="mb-6">
           <div className="relative">
