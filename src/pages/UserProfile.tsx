@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,6 +19,7 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const [profile, setProfile] = useState<any>(null);
   const [works, setWorks] = useState<any[]>([]);
@@ -225,7 +227,7 @@ const UserProfile = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 pt-20 pb-24 flex items-center justify-center">
-          <p>Loading profile...</p>
+          <p>{t('common.loading')}</p>
         </div>
         <BottomNav />
       </div>
@@ -238,7 +240,7 @@ const UserProfile = () => {
         <Header />
         <div className="container mx-auto px-4 pt-20 pb-24 flex flex-col items-center justify-center gap-4">
           <p className="text-xl">Profile not found</p>
-          <Button onClick={() => navigate(-1)}>Go Back</Button>
+          <Button onClick={() => navigate(-1)}>{t('common.back')}</Button>
         </div>
         <BottomNav />
       </div>
@@ -254,7 +256,7 @@ const UserProfile = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-2xl font-bold">Profile</h1>
+          <h1 className="text-2xl font-bold">{t('profile.title')}</h1>
         </div>
 
         {/* Profile Header */}
@@ -281,7 +283,7 @@ const UserProfile = () => {
                 <div className="flex gap-2">
                   <Button onClick={handleStartChat}>
                     <MessageCircle className="w-4 h-4 mr-2" />
-                    Message
+                    {t('matches.message')}
                   </Button>
                   <Button variant="outline">
                     <Heart className="w-4 h-4 mr-2" />
@@ -299,9 +301,9 @@ const UserProfile = () => {
         {/* Tabs */}
         <Tabs defaultValue="portfolio" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="about">{t('profile.about')}</TabsTrigger>
+            <TabsTrigger value="portfolio">{t('profile.portfolio')}</TabsTrigger>
+            <TabsTrigger value="activity">{t('profile.activity')}</TabsTrigger>
           </TabsList>
 
           {/* About Tab */}
@@ -310,7 +312,7 @@ const UserProfile = () => {
               <CardContent className="p-6 space-y-4">
                 {profile.skills && profile.skills.length > 0 && (
                   <div>
-                    <h3 className="font-semibold mb-2">Skills</h3>
+                    <h3 className="font-semibold mb-2">{t('profile.skills')}</h3>
                     <div className="flex flex-wrap gap-2">
                       {profile.skills.map((skill: string) => (
                         <Badge key={skill} variant="secondary">{skill}</Badge>
@@ -321,7 +323,7 @@ const UserProfile = () => {
                 
                 {profile.programs && profile.programs.length > 0 && (
                   <div>
-                    <h3 className="font-semibold mb-2">Software</h3>
+                    <h3 className="font-semibold mb-2">{t('profile.programs')}</h3>
                     <div className="flex flex-wrap gap-2">
                       {profile.programs.map((program: string) => (
                         <Badge key={program} variant="outline">{program}</Badge>
@@ -337,7 +339,7 @@ const UserProfile = () => {
           <TabsContent value="portfolio">
             {works.length === 0 ? (
               <Card className="p-12 text-center">
-                <p className="text-muted-foreground">No works uploaded yet</p>
+                <p className="text-muted-foreground">{t('profile.noWorks')}</p>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
