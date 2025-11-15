@@ -18,9 +18,12 @@ const Header = () => {
 
   const languages = [
     { code: "en" as const, name: "English", flag: "🇬🇧" },
-    { code: "fr" as const, name: "French", flag: "🇫🇷" },
-    { code: "it" as const, name: "Italian", flag: "🇮🇹" },
-    { code: "es" as const, name: "Spanish", flag: "🇪🇸" },
+    { code: "fr" as const, name: "Français", flag: "🇫🇷" },
+    { code: "it" as const, name: "Italiano", flag: "🇮🇹" },
+    { code: "es" as const, name: "Español", flag: "🇪🇸" },
+    { code: "zh" as const, name: "中文", flag: "🇨🇳" },
+    { code: "ja" as const, name: "日本語", flag: "🇯🇵" },
+    { code: "ar" as const, name: "العربية", flag: "🇵🇸" },
   ];
 
   return (
