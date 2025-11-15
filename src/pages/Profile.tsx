@@ -106,12 +106,12 @@ const Profile = () => {
         .select(`
           id,
           opportunity_id,
-          opportunities!opportunity_favorites_opportunity_id_fkey(
+          opportunities(
             artist_type,
             description,
             payment,
             created_at,
-            profiles!opportunities_creator_id_fkey(full_name)
+            profiles(full_name)
           )
         `)
         .eq('user_id', user.id)
@@ -190,6 +190,28 @@ const Profile = () => {
       if (error) throw error;
 
       setFavorites(favorites.filter(f => f.id !== favoriteId));
+      toast({
+        title: "Removed from favorites"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error removing favorite",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const removeOpportunityFavorite = async (favoriteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('opportunity_favorites')
+        .delete()
+        .eq('id', favoriteId);
+
+      if (error) throw error;
+
+      setOpportunityFavorites(opportunityFavorites.filter(f => f.id !== favoriteId));
       toast({
         title: "Removed from favorites"
       });
@@ -335,6 +357,48 @@ const Profile = () => {
                       onClick={() => removeFavorite(favorite.id)}
                     >
                       Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Favorite Opportunities */}
+          {opportunityFavorites.length > 0 && (
+            <Card className="p-6 bg-card border-border">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-foreground">
+                <Briefcase className="w-5 h-5 text-primary" />
+                Favorite Opportunities ({opportunityFavorites.length})
+              </h3>
+              <div className="space-y-4">
+                {opportunityFavorites.map((favorite) => (
+                  <div
+                    key={favorite.id}
+                    className="p-4 bg-background rounded-lg border border-border"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h4 className="font-semibold text-foreground">
+                          Looking for {favorite.opportunities.artist_type}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          Posted by {favorite.opportunities.profiles.full_name}
+                        </p>
+                      </div>
+                      <p className="text-lg font-bold text-primary">
+                        {favorite.opportunities.payment}
+                      </p>
+                    </div>
+                    <p className="text-sm text-foreground/90 mb-3 line-clamp-2">
+                      {favorite.opportunities.description}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeOpportunityFavorite(favorite.id)}
+                    >
+                      Remove from Favorites
                     </Button>
                   </div>
                 ))}
