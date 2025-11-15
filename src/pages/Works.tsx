@@ -114,6 +114,7 @@ export default function Works() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
+      // Video max 60s check would require video loading, skip for now
       const maxSize = 50 * 1024 * 1024; // 50MB
       if (selectedFile.size > maxSize) {
         toast({ title: 'File too large', description: 'Maximum file size is 50MB', variant: 'destructive' });
@@ -211,12 +212,12 @@ export default function Works() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Works</h1>
+          <h1 className="text-3xl font-bold text-foreground">Works</h1>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
+              <Button size="lg" className="shadow-lg">
+                <Plus className="w-5 h-5 mr-2" />
                 Upload Work
               </Button>
             </DialogTrigger>
@@ -260,13 +261,16 @@ export default function Works() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="hashtags">Hashtags</Label>
+                  <Label htmlFor="hashtags">Hashtags (max 5)</Label>
                   <Input
                     id="hashtags"
                     placeholder="digitalart, 3d, animation (comma separated)"
                     value={newWork.hashtags}
                     onChange={(e) => setNewWork({ ...newWork, hashtags: e.target.value })}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Separate with commas, max 5 hashtags
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={uploading}>
                   {uploading ? (
