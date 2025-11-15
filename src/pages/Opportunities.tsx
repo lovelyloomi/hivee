@@ -1,76 +1,207 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Briefcase } from "lucide-react";
+import { Plus, Briefcase, Star, StarOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { ApplicationDialog } from "@/components/ApplicationDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Opportunity {
   id: string;
-  artistType: string;
+  artist_type: string;
   description: string;
   payment: string;
-  postedBy: string;
-  date: string;
+  creator_id: string;
+  created_at: string;
+  profiles: {
+    full_name: string;
+  };
 }
 
 const Opportunities = () => {
-  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [artistType, setArtistType] = useState("");
   const [description, setDescription] = useState("");
   const [payment, setPayment] = useState("");
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([
-    {
-      id: "1",
-      artistType: "Photographer",
-      description: "Need a professional photographer for a fashion photoshoot in Milan. 2-day project with editorial focus.",
-      payment: "$1,500",
-      postedBy: "Fashion Studio Milano",
-      date: "2 hours ago"
-    },
-    {
-      id: "2",
-      artistType: "Graphic Designer",
-      description: "Looking for a creative graphic designer to develop brand identity for a new startup. Logo, color palette, and style guide needed.",
-      payment: "$800",
-      postedBy: "Tech Startup",
-      date: "5 hours ago"
-    },
-    {
-      id: "3",
-      artistType: "Illustrator",
-      description: "Seeking a talented illustrator for a children's book project. Need 20 full-color illustrations in a whimsical style.",
-      payment: "$2,000",
-      postedBy: "Publishing House",
-      date: "1 day ago"
+  useEffect(() => {
+    fetchOpportunities();
+    if (user) {
+      fetchFavorites();
     }
-  ]);
+  }, [user]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const fetchOpportunities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select(`
+          *,
+          profiles!opportunities_creator_id_fkey(full_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setOpportunities(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error loading opportunities",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFavorites = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('favorited_user_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setFavorites(new Set(data?.map(f => f.favorited_user_id) || []));
+    } catch (error: any) {
+      console.error("Error fetching favorites:", error);
+    }
+  };
+
+  const toggleFavorite = async (creatorId: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      if (favorites.has(creatorId)) {
+        const { error } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('favorited_user_id', creatorId);
+
+        if (error) throw error;
+        setFavorites(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(creatorId);
+          return newSet;
+        });
+        toast({
+          title: "Removed from favorites"
+        });
+      } else {
+        const { error } = await supabase
+          .from('favorites')
+          .insert({
+            user_id: user.id,
+            favorited_user_id: creatorId
+          });
+
+        if (error) throw error;
+        setFavorites(prev => new Set([...prev, creatorId]));
+        toast({
+          title: "Added to favorites"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error updating favorites",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
     if (!artistType || !description || !payment) return;
 
-    const newOpportunity: Opportunity = {
-      id: Date.now().toString(),
-      artistType,
-      description,
-      payment,
-      postedBy: "You",
-      date: "Just now"
-    };
+    try {
+      const { error } = await supabase
+        .from('opportunities')
+        .insert({
+          creator_id: user.id,
+          artist_type: artistType,
+          description,
+          payment
+        });
 
-    setOpportunities([newOpportunity, ...opportunities]);
-    setArtistType("");
-    setDescription("");
-    setPayment("");
-    setShowForm(false);
+      if (error) throw error;
+
+      toast({
+        title: "Opportunity posted!",
+        description: "Your opportunity is now live."
+      });
+
+      setArtistType("");
+      setDescription("");
+      setPayment("");
+      setShowForm(false);
+      fetchOpportunities();
+    } catch (error: any) {
+      toast({
+        title: "Error posting opportunity",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
+
+  const handleApplyClick = (opportunityId: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    setSelectedOpportunity(opportunityId);
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return "1 day ago";
+    return `${diffInDays} days ago`;
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <Header />
+        <div className="container mx-auto px-4 pt-20 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -81,7 +212,13 @@ const Opportunities = () => {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold text-foreground">Opportunities</h1>
             <Button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => {
+                if (!user) {
+                  navigate('/auth');
+                  return;
+                }
+                setShowForm(!showForm);
+              }}
               className="gap-2"
             >
               <Plus className="h-5 w-5" />
@@ -168,22 +305,40 @@ const Opportunities = () => {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h3 className="font-semibold text-lg text-foreground">
-                          Looking for {opportunity.artistType}
+                          Looking for {opportunity.artist_type}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          Posted by {opportunity.postedBy} • {opportunity.date}
+                          Posted by {opportunity.profiles.full_name} • {getTimeAgo(opportunity.created_at)}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="flex items-center gap-2">
                         <p className="text-xl font-bold text-primary">
                           {opportunity.payment}
                         </p>
+                        {user && user.id !== opportunity.creator_id && (
+                          <button
+                            onClick={() => toggleFavorite(opportunity.creator_id)}
+                            className="p-2 hover:bg-accent rounded-full transition-colors"
+                          >
+                            {favorites.has(opportunity.creator_id) ? (
+                              <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                            ) : (
+                              <StarOff className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                     <p className="text-foreground/90 mb-4">{opportunity.description}</p>
-                    <Button variant="outline" className="gap-2">
-                      Apply Now
-                    </Button>
+                    {user && user.id !== opportunity.creator_id && (
+                      <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => handleApplyClick(opportunity.id)}
+                      >
+                        Apply Now
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -193,6 +348,15 @@ const Opportunities = () => {
       </div>
 
       <BottomNav />
+
+      {selectedOpportunity && user && (
+        <ApplicationDialog
+          open={!!selectedOpportunity}
+          onOpenChange={(open) => !open && setSelectedOpportunity(null)}
+          opportunityId={selectedOpportunity}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 };
