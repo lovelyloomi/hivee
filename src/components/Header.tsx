@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { Settings, Search as SearchIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import UserMenu from "@/components/UserMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -33,6 +34,16 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Search Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/search")}
+            className="rounded-full"
+          >
+            <SearchIcon className="h-5 w-5" />
+          </Button>
+
           {/* Notification Center */}
           <NotificationCenter />
           
@@ -57,6 +68,9 @@ const Header = () => {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Dark Mode Toggle */}
+          <ThemeToggle />
 
           {/* User Menu */}
           <UserMenu />
