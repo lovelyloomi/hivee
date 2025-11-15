@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { MatchNotification } from "@/components/MatchNotification";
 import { useNotifications } from "@/hooks/useNotifications";
+import { calculateDistance, formatDistance } from "@/utils/distance";
 
 interface Profile {
   id: string;
@@ -19,6 +20,9 @@ interface Profile {
   programs: string[];
   work_images: string[];
   avatar_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  location_enabled: boolean | null;
 }
 
 const Swipe = () => {
@@ -28,6 +32,7 @@ const Swipe = () => {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [matchNotification, setMatchNotification] = useState<{ name: string; image?: string } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -35,9 +40,24 @@ const Swipe = () => {
 
   useEffect(() => {
     if (user) {
+      fetchUserLocation();
       fetchProfiles();
     }
   }, [user]);
+
+  const fetchUserLocation = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('latitude, longitude')
+      .eq('id', user.id)
+      .single();
+
+    if (data?.latitude && data?.longitude) {
+      setUserLocation({ latitude: data.latitude, longitude: data.longitude });
+    }
+  };
 
   const fetchProfiles = async () => {
     if (!user) return;
@@ -229,6 +249,21 @@ const Swipe = () => {
               <div className="flex items-center gap-2 text-muted-foreground mb-4">
                 <MapPin className="h-4 w-4" />
                 <span>{currentProfile.location}</span>
+                {userLocation && currentProfile.latitude && currentProfile.longitude && currentProfile.location_enabled && (
+                  <>
+                    <span>•</span>
+                    <span className="text-primary font-medium">
+                      {formatDistance(
+                        calculateDistance(
+                          userLocation.latitude,
+                          userLocation.longitude,
+                          currentProfile.latitude,
+                          currentProfile.longitude
+                        )
+                      )} away
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
