@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -31,6 +32,9 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Notification Center */}
+          <NotificationCenter />
+          
           {/* Language Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
