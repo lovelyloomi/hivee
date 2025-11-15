@@ -187,8 +187,20 @@ const Chat = () => {
 
       if (selectedFile) {
         setUploadingMedia(true);
-        const fileExt = selectedFile.name.split('.').pop();
+        const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
         const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+        // Validate file type
+        const allowedTypes = ['jpg', 'jpeg', 'png', 'pdf', 'fbx', 'mp4', 'mov', 'avi', 'webm'];
+        if (fileExt && !allowedTypes.includes(fileExt)) {
+          toast({
+            title: "Unsupported file type",
+            description: "Supported: JPG, PNG, PDF, FBX, MP4, MOV, AVI, WEBM",
+            variant: "destructive"
+          });
+          setUploadingMedia(false);
+          return;
+        }
 
         const { error: uploadError } = await supabase.storage
           .from('chat-media')
