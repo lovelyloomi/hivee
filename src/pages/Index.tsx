@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap, Heart, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -9,7 +10,14 @@ import { useAuth } from "@/contexts/AuthContext";
 const Index = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, profileCompleted, loading } = useAuth();
+
+  // Redirect to onboarding if profile not completed
+  useEffect(() => {
+    if (!loading && user && profileCompleted === false) {
+      navigate('/onboarding');
+    }
+  }, [user, profileCompleted, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pb-20">

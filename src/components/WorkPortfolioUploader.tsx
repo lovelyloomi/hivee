@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, X, FileText } from "lucide-react";
@@ -21,29 +21,31 @@ export const WorkPortfolioUploader = ({
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
-  const processImage = async (file: File): Promise<File> => {
+  const processImage = useCallback(async (file: File): Promise<File> => {
     const watermarkedBlob = await applyWatermark(file, watermarkText, watermarkUrl);
     return new File([watermarkedBlob], file.name, { type: 'image/png' });
-  };
+  }, [watermarkText, watermarkUrl]);
 
-  const handleImageDrop = async (files: File[]) => {
+  const handleImageDrop = useCallback(async (files: File[]) => {
     setProcessing(true);
     try {
       const processedImages = await Promise.all(files.map(processImage));
-      setImages((prev) => {
-        const newImages = [...prev, ...processedImages];
-        onImagesReady(newImages);
+      setImages((prevImages) => {
+        const newImages = [...prevImages, ...processedImages];
+        // Call parent callback with updated images
+        setTimeout(() => onImagesReady(newImages), 0);
         return newImages;
       });
       toast({ title: "Images processed with watermark" });
     } catch (error) {
+      console.error('Error processing images:', error);
       toast({ title: "Error processing images", variant: "destructive" });
     } finally {
       setProcessing(false);
     }
-  };
+  }, [processImage, onImagesReady, toast]);
 
-  const handlePdfDrop = async (files: File[]) => {
+  const handlePdfDrop = useCallback(async (files: File[]) => {
     setProcessing(true);
     try {
       const pdfFile = files[0];
@@ -56,18 +58,20 @@ export const WorkPortfolioUploader = ({
         })
       );
 
-      setImages((prev) => {
-        const newImages = [...prev, ...processedImages];
-        onImagesReady(newImages);
+      setImages((prevImages) => {
+        const newImages = [...prevImages, ...processedImages];
+        // Call parent callback with updated images
+        setTimeout(() => onImagesReady(newImages), 0);
         return newImages;
       });
       toast({ title: `Processed ${processedImages.length} pages from PDF` });
     } catch (error) {
+      console.error('Error processing PDF:', error);
       toast({ title: "Error processing PDF", variant: "destructive" });
     } finally {
       setProcessing(false);
     }
-  };
+  }, [processImage, onImagesReady, toast]);
 
   const { getRootProps: getImageProps, getInputProps: getImageInputProps } = useDropzone({
     accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] },
@@ -82,11 +86,14 @@ export const WorkPortfolioUploader = ({
     disabled: processing,
   });
 
-  const removeImage = (index: number) => {
-    const newImages = images.filter((_, i) => i !== index);
-    setImages(newImages);
-    onImagesReady(newImages);
-  };
+  const removeImage = useCallback((index: number) => {
+    setImages((prevImages) => {
+      const newImages = prevImages.filter((_, i) => i !== index);
+      // Call parent callback with updated images
+      setTimeout(() => onImagesReady(newImages), 0);
+      return newImages;
+    });
+  }, [onImagesReady]);
 
   return (
     <Card className="p-6 space-y-4 bg-card border-border">
@@ -110,31 +117,39 @@ export const WorkPortfolioUploader = ({
           <input {...getPdfInputProps()} />
           <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm font-medium text-foreground">Upload PDF Portfolio</p>
-          <p className="text-xs text-muted-foreground mt-1">First 10 pages will be converted</p>
+          <p className="text-xs text-muted-foreground mt-1">Converts pages to images</p>
         </div>
       </div>
 
       {processing && (
-        <p className="text-sm text-muted-foreground text-center">Processing and applying watermark...</p>
+        <div className="text-center py-4">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground mt-2">Processing your files...</p>
+        </div>
       )}
 
       {images.length > 0 && (
-        <div className="grid grid-cols-3 gap-4 mt-4">
-          {images.map((img, index) => (
-            <div key={index} className="relative group no-screenshot">
-              <img
-                src={URL.createObjectURL(img)}
-                alt={`Work ${index + 1}`}
-                className="w-full h-32 object-cover rounded-lg"
-              />
-              <button
-                onClick={() => removeImage(index)}
-                className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
+        <div className="space-y-2">
+          <p className="text-sm text-foreground font-medium">{images.length} image(s) ready</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {images.map((image, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt={`Work ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => removeImage(index)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </Card>

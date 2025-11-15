@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 
 const Onboarding = () => {
-  const { user } = useAuth();
+  const { user, checkProfileCompletion } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
@@ -30,25 +30,41 @@ const Onboarding = () => {
   const [skillInput, setSkillInput] = useState("");
   const [programInput, setProgramInput] = useState("");
 
-  const handleWatermarkCreated = (text: string, url?: string) => {
+  const handleWatermarkCreated = useCallback((text: string, url?: string) => {
     setWatermarkText(text);
     setWatermarkUrl(url);
     setStep(2);
-  };
+  }, []);
 
-  const addSkill = () => {
+  const handleSkipWatermark = useCallback(() => {
+    setStep(2);
+  }, []);
+
+  const handleImagesReady = useCallback((images: File[]) => {
+    setWorkImages(images);
+  }, []);
+
+  const addSkill = useCallback(() => {
     if (skillInput.trim() && !skills.includes(skillInput.trim())) {
-      setSkills([...skills, skillInput.trim()]);
+      setSkills(prev => [...prev, skillInput.trim()]);
       setSkillInput("");
     }
-  };
+  }, [skillInput, skills]);
 
-  const addProgram = () => {
+  const addProgram = useCallback(() => {
     if (programInput.trim() && !programs.includes(programInput.trim())) {
-      setPrograms([...programs, programInput.trim()]);
+      setPrograms(prev => [...prev, programInput.trim()]);
       setProgramInput("");
     }
-  };
+  }, [programInput, programs]);
+
+  const removeSkill = useCallback((index: number) => {
+    setSkills(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const removeProgram = useCallback((index: number) => {
+    setPrograms(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
   const handleComplete = async () => {
     if (!user) return;
@@ -106,9 +122,13 @@ const Onboarding = () => {
 
       if (error) throw error;
 
+      // Refresh profile completion status
+      await checkProfileCompletion();
+      
       toast({ title: "Profile completed successfully!" });
       navigate('/');
     } catch (error: any) {
+      console.error('Onboarding error:', error);
       toast({
         title: "Error completing profile",
         description: error.message,
@@ -130,7 +150,16 @@ const Onboarding = () => {
         </div>
 
         {step === 1 && (
-          <WatermarkCreator onWatermarkCreated={handleWatermarkCreated} />
+          <div className="space-y-4">
+            <WatermarkCreator onWatermarkCreated={handleWatermarkCreated} />
+            <Button
+              variant="outline"
+              onClick={handleSkipWatermark}
+              className="w-full"
+            >
+              Skip Watermark (Not Recommended)
+            </Button>
+          </div>
         )}
 
         {step === 2 && (
@@ -138,7 +167,7 @@ const Onboarding = () => {
             <WorkPortfolioUploader
               watermarkText={watermarkText}
               watermarkUrl={watermarkUrl}
-              onImagesReady={setWorkImages}
+              onImagesReady={handleImagesReady}
             />
             <Button
               onClick={() => setStep(3)}
@@ -196,7 +225,7 @@ const Onboarding = () => {
                       {skill}
                       <X
                         className="w-3 h-3 cursor-pointer"
-                        onClick={() => setSkills(skills.filter((_, i) => i !== index))}
+                        onClick={() => removeSkill(index)}
                       />
                     </Badge>
                   ))}
@@ -204,7 +233,7 @@ const Onboarding = () => {
               </div>
 
               <div>
-                <Label htmlFor="programs" className="text-foreground">Programs You Use</Label>
+                <Label htmlFor="programs" className="text-foreground">Programs & Software</Label>
                 <div className="flex gap-2">
                   <Input
                     id="programs"
@@ -222,7 +251,7 @@ const Onboarding = () => {
                       {program}
                       <X
                         className="w-3 h-3 cursor-pointer"
-                        onClick={() => setPrograms(programs.filter((_, i) => i !== index))}
+                        onClick={() => removeProgram(index)}
                       />
                     </Badge>
                   ))}
@@ -232,7 +261,7 @@ const Onboarding = () => {
 
             <Button
               onClick={handleComplete}
-              disabled={loading || !bio || !location}
+              disabled={loading}
               className="w-full bg-gradient-primary text-white hover:opacity-90"
             >
               {loading ? "Completing..." : "Complete Profile"}
