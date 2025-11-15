@@ -14,7 +14,155 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          cv_url: string | null
+          id: string
+          motivation: string
+          opportunity_id: string
+          portfolio_url: string | null
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          cv_url?: string | null
+          id?: string
+          motivation: string
+          opportunity_id: string
+          portfolio_url?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          cv_url?: string | null
+          id?: string
+          motivation?: string
+          opportunity_id?: string
+          portfolio_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          favorited_user_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          favorited_user_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          favorited_user_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_favorited_user_id_fkey"
+            columns: ["favorited_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunities: {
+        Row: {
+          artist_type: string
+          created_at: string
+          creator_id: string
+          description: string
+          id: string
+          payment: string
+        }
+        Insert: {
+          artist_type: string
+          created_at?: string
+          creator_id: string
+          description: string
+          id?: string
+          payment: string
+        }
+        Update: {
+          artist_type?: string
+          created_at?: string
+          creator_id?: string
+          description?: string
+          id?: string
+          payment?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          portfolio_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          portfolio_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          portfolio_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
