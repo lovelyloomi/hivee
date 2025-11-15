@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Header from "@/components/Header";
+import LocationSettings from "@/components/LocationSettings";
 import { Upload, Briefcase, Award, Star, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -405,6 +406,9 @@ const Profile = () => {
               </div>
             </Card>
           )}
+
+          {/* Location Settings */}
+          <LocationSettings />
 
           {/* Save Button */}
           <Button

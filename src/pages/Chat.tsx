@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
+import { usePresence } from "@/hooks/usePresence";
 
 interface Message {
   id: string;
@@ -45,6 +46,7 @@ const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { createNotification } = useNotifications();
+  const { isUserOnline } = usePresence(user?.id);
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -328,6 +330,12 @@ const Chat = () => {
               <h2 className="font-semibold text-foreground truncate">
                 {otherUser.full_name}
               </h2>
+              <div className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${isUserOnline(otherUser.id) ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                <span className="text-xs text-muted-foreground">
+                  {isUserOnline(otherUser.id) ? 'Online' : 'Offline'}
+                </span>
+              </div>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

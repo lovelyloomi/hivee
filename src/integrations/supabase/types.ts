@@ -330,7 +330,11 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          latitude: number | null
           location: string | null
+          location_enabled: boolean | null
+          longitude: number | null
+          max_distance_km: number | null
           portfolio_url: string | null
           profile_completed: boolean | null
           programs: string[] | null
@@ -347,7 +351,11 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          latitude?: number | null
           location?: string | null
+          location_enabled?: boolean | null
+          longitude?: number | null
+          max_distance_km?: number | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
           programs?: string[] | null
@@ -364,7 +372,11 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          latitude?: number | null
           location?: string | null
+          location_enabled?: boolean | null
+          longitude?: number | null
+          max_distance_km?: number | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
           programs?: string[] | null
@@ -539,7 +551,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_distance: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
     }
     Enums: {
       work_file_type: "image" | "pdf" | "video" | "model_3d"
