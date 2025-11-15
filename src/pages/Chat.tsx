@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Send, MoreVertical, Shield, UserX, User, Paperclip } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Shield, UserX, User, Paperclip, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -62,7 +62,11 @@ const Chat = () => {
   const [showUnmatchDialog, setShowUnmatchDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user && matchId) {
@@ -169,41 +173,68 @@ const Chat = () => {
     };
   };
 
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !user || !matchId || sending) return;
+  const sendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
+    if (!newMessage.trim() && !selectedFile) return;
+    if (!user || !matchId || sending) return;
 
     setSending(true);
+    
     try {
+      let mediaUrl: string | null = null;
+      let mediaType: string | null = null;
+
+      if (selectedFile) {
+        setUploadingMedia(true);
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('chat-media')
+          .upload(fileName, selectedFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('chat-media')
+          .getPublicUrl(fileName);
+
+        mediaUrl = publicUrl;
+        mediaType = selectedFile.type;
+        setUploadingMedia(false);
+      }
+
       const { error } = await supabase
         .from('messages')
         .insert({
           conversation_id: matchId,
           sender_id: user.id,
-          content: newMessage.trim()
+          content: newMessage.trim() || '📎 Attachment',
+          media_url: mediaUrl,
+          media_type: mediaType
         });
 
       if (error) throw error;
 
-      // Update conversation's updated_at
       await supabase
         .from('conversations')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', matchId);
 
-      // Create notification for the other user
       if (otherUser) {
         await createNotification(
           otherUser.id,
           'message',
           'New Message 💬',
-          `${user.email?.split('@')[0] || 'Someone'} sent you a message`,
+          newMessage.trim() || 'Sent you a file',
           user.id,
           matchId
         );
       }
 
       setNewMessage("");
+      clearFileSelection();
     } catch (error: any) {
       toast({
         title: "Error sending message",
@@ -254,6 +285,59 @@ const Chat = () => {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setPreviewUrl(null);
+      }
+    }
+  };
+
+  const clearFileSelection = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      setSelectedFile(file);
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setPreviewUrl(null);
+      }
+    }
+  };
+
   const handleUnmatch = async () => {
     if (!user || !otherUser) return;
 
@@ -282,6 +366,7 @@ const Chat = () => {
       });
     }
   };
+
 
   if (!user) {
     return (
@@ -351,6 +436,10 @@ const Chat = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowReportDialog(true)}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Report User
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(`/profile/${otherUser.id}`)}>
                   <User className="mr-2 h-4 w-4" />
                   View Profile
@@ -370,7 +459,20 @@ const Chat = () => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+      <div 
+        className="flex-1 overflow-y-auto px-4 py-6 space-y-4"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {isDragging && (
+          <div className="fixed inset-0 bg-primary/10 border-2 border-dashed border-primary z-50 flex items-center justify-center pointer-events-none">
+            <div className="bg-background p-8 rounded-lg shadow-lg">
+              <p className="text-lg font-semibold">Drop file to upload</p>
+            </div>
+          </div>
+        )}
+
         {messages.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
             <p className="text-lg mb-2">No messages yet</p>
@@ -391,6 +493,14 @@ const Chat = () => {
                       : 'bg-card border border-border text-foreground'
                   }`}
                 >
+                  {message.media_url && message.media_type && (
+                    <div className="mb-2">
+                      <MessageMedia 
+                        mediaUrl={message.media_url} 
+                        mediaType={message.media_type} 
+                      />
+                    </div>
+                  )}
                   <p className="text-sm break-words">{message.content}</p>
                   <p
                     className={`text-xs mt-1 ${
@@ -408,24 +518,66 @@ const Chat = () => {
       </div>
 
       {/* Input */}
-      <form onSubmit={sendMessage} className="bg-card border-t border-border px-4 py-3">
-        <div className="flex gap-2">
+      <div className="bg-card border-t border-border px-4 py-3">
+        {selectedFile && (
+          <div className="mb-3 p-3 bg-muted rounded-lg flex items-center gap-3">
+            {previewUrl ? (
+              <img src={previewUrl} alt="Preview" className="h-20 w-20 object-cover rounded" />
+            ) : (
+              <div className="h-20 w-20 bg-background rounded flex items-center justify-center">
+                <Paperclip className="h-8 w-8 text-muted-foreground" />
+              </div>
+            )}
+            <div className="flex-1">
+              <p className="font-medium text-sm">{selectedFile.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {(selectedFile.size / 1024).toFixed(1)} KB
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={clearFileSelection}
+              disabled={uploadingMedia}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        <form onSubmit={sendMessage} className="flex gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept="image/*,video/*,.pdf,.doc,.docx"
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sending || uploadingMedia}
+          >
+            <Paperclip className="h-5 w-5" />
+          </Button>
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
             className="flex-1 bg-background border-border text-foreground"
-            disabled={sending}
+            disabled={sending || uploadingMedia}
           />
           <Button
             type="submit"
-            disabled={!newMessage.trim() || sending}
+            disabled={sending || uploadingMedia || (!newMessage.trim() && !selectedFile)}
             className="bg-gradient-primary text-white hover:opacity-90"
           >
-            <Send className="h-5 w-5" />
+            {uploadingMedia ? "..." : <Send className="h-5 w-5" />}
           </Button>
-        </div>
-      </form>
+        </form>
+      </div>
 
       {/* Block User Dialog */}
       <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
@@ -462,6 +614,14 @@ const Chat = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {otherUser && (
+        <ReportUserDialog
+          open={showReportDialog}
+          onOpenChange={setShowReportDialog}
+          reportedUserId={otherUser.id}
+        />
+      )}
     </div>
   );
 };
