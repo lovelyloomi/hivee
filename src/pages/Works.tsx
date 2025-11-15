@@ -210,15 +210,25 @@ export default function Works() {
     <div className="min-h-screen bg-background pb-20">
       <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Works</h1>
+      <main className="container mx-auto px-4 py-8 pt-24">
+        <h1 className="text-3xl font-bold text-foreground mb-6">Works</h1>
+
+        <div className="flex gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              placeholder="Search works..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" className="shadow-lg">
+              <Button size="lg" className="shadow-lg shrink-0">
                 <Plus className="w-5 h-5 mr-2" />
-                Upload Work
+                Upload
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -288,18 +298,6 @@ export default function Works() {
               </form>
             </DialogContent>
           </Dialog>
-        </div>
-
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search works..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
         </div>
 
         {allHashtags.length > 0 && (
