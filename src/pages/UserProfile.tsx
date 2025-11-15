@@ -143,7 +143,16 @@ const UserProfile = () => {
   };
 
   const handleStartChat = async () => {
-    if (!user || !profile) return;
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to start a conversation",
+      });
+      navigate('/auth');
+      return;
+    }
+
+    if (!profile) return;
 
     if (userId?.startsWith('demo-')) {
       toast({
@@ -155,11 +164,13 @@ const UserProfile = () => {
 
     try {
       // Check for existing conversation
-      const { data: existingConvo } = await supabase
+      const { data: existingConvo, error: fetchError } = await supabase
         .from('conversations')
         .select('id')
         .or(`and(user1_id.eq.${user.id},user2_id.eq.${userId}),and(user1_id.eq.${userId},user2_id.eq.${user.id})`)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
 
       if (existingConvo) {
         navigate(`/chat/${existingConvo.id}`);
@@ -167,8 +178,8 @@ const UserProfile = () => {
       }
 
       // Create new conversation
-      const user1Id = user.id < userId ? user.id : userId;
-      const user2Id = user.id < userId ? userId : user.id;
+      const user1Id = user.id < (userId || '') ? user.id : (userId || '');
+      const user2Id = user.id < (userId || '') ? (userId || '') : user.id;
 
       const { data, error } = await supabase
         .from('conversations')
@@ -177,7 +188,10 @@ const UserProfile = () => {
         .single();
 
       if (error) throw error;
-      navigate(`/chat/${data.id}`);
+      
+      if (data) {
+        navigate(`/chat/${data.id}`);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
