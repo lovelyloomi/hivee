@@ -12,6 +12,7 @@ import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import Find from "./pages/Find";
 import Works from "./pages/Works";
+import Favorites from "./pages/Favorites";
 import Opportunities from "./pages/Opportunities";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/swipe" element={<Swipe />} />
             <Route path="/find" element={<Find />} />
             <Route path="/works" element={<Works />} />
+            <Route path="/favorites" element={<Favorites />} />
             <Route path="/matches" element={<Matches />} />
             <Route path="/opportunities" element={<Opportunities />} />
             <Route path="/auth" element={<Auth />} />
