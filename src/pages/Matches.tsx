@@ -145,6 +145,13 @@ const Matches = () => {
         }
       }
 
+      // If no real matches, show demo data
+      if (matchedUserIds.length === 0) {
+        setMatches(demoMatches);
+        setLoading(false);
+        return;
+      }
+
       // Get full profile data for matches
       const { data: matchProfiles } = await supabase
         .from('profiles')
@@ -179,10 +186,11 @@ const Matches = () => {
       setMatches(matchesWithConversations);
     } catch (error: any) {
       console.error("Error fetching matches:", error);
+      // Fallback to demo data on error so UI is still testable
+      setMatches(demoMatches);
       toast({
-        title: "Error loading matches",
-        description: error.message,
-        variant: "destructive"
+        title: "Showing demo matches",
+        description: "We couldn't load real matches yet. Displaying demo data for preview.",
       });
     } finally {
       setLoading(false);
