@@ -14,6 +14,7 @@ import Find from "./pages/Find";
 import Works from "./pages/Works";
 import Favorites from "./pages/Favorites";
 import Opportunities from "./pages/Opportunities";
+import BlockedUsers from "./pages/BlockedUsers";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/chat/:matchId" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/blocked-users" element={<BlockedUsers />} />
             <Route path="/onboarding" element={<Onboarding />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

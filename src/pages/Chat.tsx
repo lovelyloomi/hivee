@@ -2,7 +2,23 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Send, MoreVertical, Shield, UserX, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +51,8 @@ const Chat = () => {
   const [otherUser, setOtherUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showUnmatchDialog, setShowUnmatchDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -202,6 +220,60 @@ const Chat = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  const handleBlockUser = async () => {
+    if (!user || !otherUser) return;
+
+    try {
+      const { error } = await supabase
+        .from('blocked_users')
+        .insert({
+          user_id: user.id,
+          blocked_user_id: otherUser.id
+        });
+
+      if (error) throw error;
+
+      toast({ title: "User blocked" });
+      setShowBlockDialog(false);
+      navigate('/matches');
+    } catch (error: any) {
+      toast({
+        title: "Error blocking user",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUnmatch = async () => {
+    if (!user || !otherUser) return;
+
+    try {
+      // Delete mutual favorites
+      await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('favorited_user_id', otherUser.id);
+
+      await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', otherUser.id)
+        .eq('favorited_user_id', user.id);
+
+      toast({ title: "Unmatched successfully" });
+      setShowUnmatchDialog(false);
+      navigate('/matches');
+    } catch (error: any) {
+      toast({
+        title: "Error unmatching",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -257,6 +329,27 @@ const Chat = () => {
                 {otherUser.full_name}
               </h2>
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate(`/profile/${otherUser.id}`)}>
+                  <User className="mr-2 h-4 w-4" />
+                  View Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowBlockDialog(true)}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Block User
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowUnmatchDialog(true)} className="text-destructive">
+                  <UserX className="mr-2 h-4 w-4" />
+                  Unmatch
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         )}
       </div>
@@ -318,6 +411,42 @@ const Chat = () => {
           </Button>
         </div>
       </form>
+
+      {/* Block User Dialog */}
+      <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to block {otherUser?.full_name}? They won't be able to message you anymore and you won't see their content.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBlockUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Block
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unmatch Dialog */}
+      <AlertDialog open={showUnmatchDialog} onOpenChange={setShowUnmatchDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unmatch User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to unmatch with {otherUser?.full_name}? This will remove them from your matches and delete your conversation history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnmatch} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Unmatch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
