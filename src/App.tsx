@@ -29,11 +29,11 @@ const App = () => (
     <LanguageProvider>
       <AuthProvider>
         <TooltipProvider>
-          <OnboardingTutorial />
           <Toaster />
           <Sonner />
           <BrowserRouter>
-          <Routes>
+            <OnboardingTutorial />
+            <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/swipe" element={<Swipe />} />
             <Route path="/find" element={<Find />} />
