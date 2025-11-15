@@ -11,6 +11,7 @@ import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import Find from "./pages/Find";
 import Works from "./pages/Works";
+import Opportunities from "./pages/Opportunities";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/find" element={<Find />} />
             <Route path="/works" element={<Works />} />
             <Route path="/matches" element={<Matches />} />
+            <Route path="/opportunities" element={<Opportunities />} />
             <Route path="/chat/:matchId" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

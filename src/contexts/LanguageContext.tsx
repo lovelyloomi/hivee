@@ -71,6 +71,7 @@ const translations: Translations = {
   'nav.find': { en: 'Find', fr: 'Trouver', it: 'Trova', es: 'Buscar' },
   'nav.works': { en: 'Works', fr: 'Travaux', it: 'Lavori', es: 'Trabajos' },
   'nav.matches': { en: 'Matches', fr: 'Correspondances', it: 'Corrispondenze', es: 'Coincidencias' },
+  'nav.opportunities': { en: 'Opportunities', fr: 'Opportunités', it: 'Opportunità', es: 'Oportunidades' },
 };
 
 interface LanguageContextType {
