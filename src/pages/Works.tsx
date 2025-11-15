@@ -1,242 +1,403 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { Plus, Search, Upload } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Plus, Heart, Search, X } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { Badge } from "@/components/ui/badge";
+import WorkDetailDialog from "@/components/WorkDetailDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { applyWatermark } from "@/utils/watermark";
+import { Database } from "@/integrations/supabase/types";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface Work {
-  id: number;
-  image: string;
-  bio: string;
-  hashtags: string[];
-  likes: number;
-  liked: boolean;
-}
+type Work = Database['public']['Tables']['works']['Row'] & {
+  profiles: {
+    full_name: string | null;
+    avatar_url: string | null;
+  } | null;
+};
 
-const mockWorks: Work[] = [
-  { id: 1, image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe', bio: 'Abstract digital art piece', hashtags: ['digital', 'abstract', 'art'], likes: 234, liked: false },
-  { id: 2, image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262', bio: 'Modern architecture photography', hashtags: ['photography', 'architecture', 'minimal'], likes: 412, liked: false },
-  { id: 3, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64', bio: 'UI/UX design concept', hashtags: ['uiux', 'design', 'app'], likes: 189, liked: false },
-  { id: 4, image: 'https://images.unsplash.com/photo-1634926878768-2a5b3c42f139', bio: '3D character modeling', hashtags: ['3d', 'modeling', 'character'], likes: 567, liked: false },
-  { id: 5, image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113', bio: 'Illustration artwork', hashtags: ['illustration', 'drawing', 'creative'], likes: 321, liked: false },
-  { id: 6, image: 'https://images.unsplash.com/photo-1626785774625-ddcddc3445e9', bio: 'Motion graphics frame', hashtags: ['motion', 'animation', 'graphics'], likes: 445, liked: false },
-];
-
-const Works = () => {
-  const { t } = useLanguage();
-  const [works, setWorks] = useState<Work[]>(mockWorks);
+export default function Works() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [works, setWorks] = useState<Work[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newWork, setNewWork] = useState({ bio: '', hashtags: '', image: '' });
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
+  const [selectedWork, setSelectedWork] = useState<Work | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [newWork, setNewWork] = useState({
+    title: "",
+    description: "",
+    hashtags: "",
+  });
 
-  // Get all unique hashtags from all works
-  const allHashtags = useMemo(() => {
-    const tags = new Set<string>();
-    works.forEach(work => work.hashtags.forEach(tag => tags.add(tag)));
-    return Array.from(tags).sort();
-  }, [works]);
+  useEffect(() => {
+    fetchWorks();
+    setupRealtimeSubscription();
+  }, []);
 
-  // Filter works based on search and selected hashtags
-  const filteredWorks = useMemo(() => {
-    return works.filter(work => {
-      const matchesSearch = searchQuery === '' || 
-        work.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        work.hashtags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      const matchesHashtags = selectedHashtags.length === 0 ||
-        selectedHashtags.every(selectedTag => work.hashtags.includes(selectedTag));
-      
-      return matchesSearch && matchesHashtags;
-    });
-  }, [works, searchQuery, selectedHashtags]);
+  const setupRealtimeSubscription = () => {
+    const channel = supabase
+      .channel('works-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'works',
+        },
+        () => {
+          fetchWorks();
+        }
+      )
+      .subscribe();
 
-  const toggleHashtag = (hashtag: string) => {
-    setSelectedHashtags(prev => 
-      prev.includes(hashtag) 
-        ? prev.filter(tag => tag !== hashtag)
-        : [...prev, hashtag]
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const fetchWorks = async () => {
+    const { data } = await supabase
+      .from('works')
+      .select(`
+        *,
+        profiles:user_id (
+          full_name,
+          avatar_url
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (data) setWorks(data as Work[]);
+  };
+
+  const allHashtags = Array.from(
+    new Set(works.flatMap(work => work.hashtags || []))
+  );
+
+  const filteredWorks = works.filter(work => {
+    const matchesSearch = 
+      work.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      work.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (work.hashtags || []).some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesHashtags = selectedHashtags.length === 0 ||
+      selectedHashtags.every(selectedTag => (work.hashtags || []).includes(selectedTag));
+    
+    return matchesSearch && matchesHashtags;
+  });
+
+  const toggleHashtag = (tag: string) => {
+    setSelectedHashtags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     );
   };
 
-  const handleLike = (id: number) => {
-    setWorks(works.map(work => 
-      work.id === id 
-        ? { ...work, liked: !work.liked, likes: work.liked ? work.likes - 1 : work.likes + 1 }
-        : work
-    ));
+  const getFileType = (file: File): Database['public']['Enums']['work_file_type'] => {
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return 'image';
+    if (ext === 'pdf') return 'pdf';
+    if (['mp4', 'webm', 'ogg'].includes(ext || '')) return 'video';
+    if (ext === 'fbx') return 'model_3d';
+    return 'image';
   };
 
-  const handleSubmit = () => {
-    if (!newWork.bio || !newWork.image) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      const maxSize = 50 * 1024 * 1024; // 50MB
+      if (selectedFile.size > maxSize) {
+        toast({ title: 'File too large', description: 'Maximum file size is 50MB', variant: 'destructive' });
+        return;
+      }
+      setFile(selectedFile);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    const work: Work = {
-      id: works.length + 1,
-      image: newWork.image,
-      bio: newWork.bio,
-      hashtags: newWork.hashtags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      likes: 0,
-      liked: false,
-    };
-    
-    setWorks([work, ...works]);
-    setNewWork({ bio: '', hashtags: '', image: '' });
-    setIsDialogOpen(false);
+    if (!user || !file || !newWork.title) {
+      toast({ title: 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const fileType = getFileType(file);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      let fileToUpload = file;
+
+      // Apply watermark to images
+      if (fileType === 'image') {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('watermark_text, watermark_url')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.watermark_text || profile?.watermark_url) {
+          const watermarkedBlob = await applyWatermark(
+            file,
+            profile.watermark_text || '',
+            profile.watermark_url || undefined
+          );
+          fileToUpload = new File([watermarkedBlob], file.name, { type: file.type });
+        }
+      }
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('works')
+        .upload(fileName, fileToUpload);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('works')
+        .getPublicUrl(fileName);
+
+      const hashtags = newWork.hashtags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('watermark_url')
+        .eq('id', user.id)
+        .single();
+
+      const { error: insertError } = await supabase
+        .from('works')
+        .insert({
+          user_id: user.id,
+          title: newWork.title,
+          description: newWork.description,
+          file_url: publicUrl,
+          file_type: fileType,
+          watermark_url: profile?.watermark_url,
+          hashtags,
+        });
+
+      if (insertError) throw insertError;
+
+      toast({ title: 'Work uploaded successfully!' });
+      setNewWork({ title: "", description: "", hashtags: "" });
+      setFile(null);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({ title: 'Upload failed', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <Header />
-      
-      <main className="container mx-auto px-4 pt-24">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            {t('works.title')}
-          </h1>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Works</h1>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="rounded-full w-12 h-12 p-0">
-                <Plus className="h-6 w-6" />
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Upload Work
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent>
               <DialogHeader>
-                <DialogTitle>{t('works.add')}</DialogTitle>
+                <DialogTitle>Upload New Work</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">{t('works.uploadImage')}</label>
+                  <Label htmlFor="file">File (JPG, PNG, PDF, FBX, Video)</Label>
                   <Input
-                    placeholder="Image URL"
-                    value={newWork.image}
-                    onChange={(e) => setNewWork({ ...newWork, image: e.target.value })}
+                    id="file"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm"
+                    onChange={handleFileChange}
+                    required
+                  />
+                  {file && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Selected: {file.name}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    placeholder="Work title"
+                    value={newWork.title}
+                    onChange={(e) => setNewWork({ ...newWork, title: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">{t('works.bio')}</label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
-                    placeholder={t('works.bio')}
-                    value={newWork.bio}
-                    onChange={(e) => setNewWork({ ...newWork, bio: e.target.value })}
-                    className="min-h-[100px]"
+                    id="description"
+                    placeholder="Describe your work..."
+                    value={newWork.description}
+                    onChange={(e) => setNewWork({ ...newWork, description: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">{t('works.hashtags')}</label>
+                  <Label htmlFor="hashtags">Hashtags</Label>
                   <Input
-                    placeholder="art, design, creative"
+                    id="hashtags"
+                    placeholder="digitalart, 3d, animation (comma separated)"
                     value={newWork.hashtags}
                     onChange={(e) => setNewWork({ ...newWork, hashtags: e.target.value })}
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleSubmit} className="flex-1">
-                    {t('works.submit')}
-                  </Button>
-                  <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
-                    {t('works.cancel')}
-                  </Button>
-                </div>
-              </div>
+                <Button type="submit" className="w-full" disabled={uploading}>
+                  {uploading ? (
+                    <>
+                      <Upload className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload
+                    </>
+                  )}
+                </Button>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
 
-        {/* Search Bar */}
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Search works..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
+              className="pl-10"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
           </div>
         </div>
 
-        {/* Hashtag Filters */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
-            {allHashtags.map((hashtag) => (
-              <Badge
-                key={hashtag}
-                variant={selectedHashtags.includes(hashtag) ? "default" : "outline"}
-                className="cursor-pointer hover:bg-primary/90 transition-colors"
-                onClick={() => toggleHashtag(hashtag)}
-              >
-                #{hashtag}
-              </Badge>
-            ))}
-          </div>
-          {selectedHashtags.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedHashtags([])}
-              className="mt-2"
-            >
-              Clear filters
-            </Button>
-          )}
-        </div>
-
-        {/* Works Grid */}
-        {filteredWorks.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>No works found matching your search or filters.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredWorks.map((work) => (
-            <div key={work.id} className="group relative aspect-square rounded-xl overflow-hidden bg-card">
-              <img 
-                src={work.image} 
-                alt={work.bio}
-                className="w-full h-full object-cover transition-transform group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                  <p className="text-sm mb-2">{work.bio}</p>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {work.hashtags.map((tag, idx) => (
-                      <span key={idx} className="text-xs bg-white/20 px-2 py-1 rounded">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => handleLike(work.id)}
-                    className="flex items-center gap-1 text-sm"
-                  >
-                    <Heart className={`h-4 w-4 ${work.liked ? 'fill-pink-500 text-pink-500' : ''}`} />
-                    <span>{work.likes}</span>
-                  </button>
-                </div>
-              </div>
+        {allHashtags.length > 0 && (
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2">
+              {allHashtags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant={selectedHashtags.includes(tag) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => toggleHashtag(tag)}
+                >
+                  #{tag}
+                </Badge>
+              ))}
             </div>
-            ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredWorks.map((work) => (
+            <Card
+              key={work.id}
+              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => setSelectedWork(work)}
+            >
+              <div className="relative aspect-square overflow-hidden bg-muted">
+                {work.file_type === 'image' ? (
+                  <div className="relative w-full h-full">
+                    <img
+                      src={work.file_url}
+                      alt={work.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {work.watermark_url && (
+                      <img
+                        src={work.watermark_url}
+                        alt="Watermark"
+                        className="absolute bottom-2 right-2 w-16 h-auto opacity-50"
+                      />
+                    )}
+                  </div>
+                ) : work.file_type === 'video' ? (
+                  <video
+                    src={work.file_url}
+                    className="w-full h-full object-cover"
+                    muted
+                  />
+                ) : work.file_type === 'pdf' ? (
+                  <div className="w-full h-full flex items-center justify-center bg-muted">
+                    <span className="text-4xl">📄</span>
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-muted">
+                    <span className="text-4xl">🎨</span>
+                  </div>
+                )}
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold mb-1">{work.title}</h3>
+                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                  {work.description}
+                </p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  by {work.profiles?.full_name || 'Unknown Artist'}
+                </p>
+                {work.hashtags && work.hashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {work.hashtags.slice(0, 3).map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        #{tag}
+                      </Badge>
+                    ))}
+                    {work.hashtags.length > 3 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{work.hashtags.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {filteredWorks.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            No works found. Try adjusting your search or filters.
           </div>
         )}
       </main>
 
+      {selectedWork && (
+        <WorkDetailDialog
+          work={selectedWork}
+          open={!!selectedWork}
+          onOpenChange={(open) => !open && setSelectedWork(null)}
+          currentUserId={user?.id}
+        />
+      )}
+
       <BottomNav />
     </div>
   );
-};
-
-export default Works;
+}
