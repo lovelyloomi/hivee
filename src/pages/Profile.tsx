@@ -27,6 +27,20 @@ interface Favorite {
   };
 }
 
+interface OpportunityFavorite {
+  id: string;
+  opportunity_id: string;
+  opportunities: {
+    artist_type: string;
+    description: string;
+    payment: string;
+    created_at: string;
+    profiles: {
+      full_name: string;
+    };
+  };
+}
+
 const Profile = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
@@ -40,6 +54,7 @@ const Profile = () => {
     portfolio_url: ''
   });
   const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [opportunityFavorites, setOpportunityFavorites] = useState<OpportunityFavorite[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -48,6 +63,7 @@ const Profile = () => {
     }
     fetchProfile();
     fetchFavorites();
+    fetchOpportunityFavorites();
   }, [user, navigate]);
 
   const fetchProfile = async () => {
@@ -78,6 +94,33 @@ const Profile = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOpportunityFavorites = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('opportunity_favorites')
+        .select(`
+          id,
+          opportunity_id,
+          opportunities!opportunity_favorites_opportunity_id_fkey(
+            artist_type,
+            description,
+            payment,
+            created_at,
+            profiles!opportunities_creator_id_fkey(full_name)
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setOpportunityFavorites(data || []);
+    } catch (error: any) {
+      console.error("Error fetching opportunity favorites:", error);
     }
   };
 
