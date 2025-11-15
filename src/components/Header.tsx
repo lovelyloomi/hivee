@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { User, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import UserMenu from "@/components/UserMenu";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -57,15 +58,8 @@ const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Profile Icon */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/profile")}
-            className="rounded-full"
-          >
-            <User className="h-5 w-5" />
-          </Button>
+          {/* User Menu */}
+          <UserMenu />
         </div>
       </div>
     </header>
