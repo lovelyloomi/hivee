@@ -19,6 +19,9 @@ interface Match {
   conversationId?: string;
   lastMessage?: string;
   lastMessageTime?: string;
+  matchScore?: number;
+  matchedAt?: string;
+  lastMessageFromMe?: boolean;
 }
 
 const Matches = () => {
@@ -27,12 +30,83 @@ const Matches = () => {
   const { toast } = useToast();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const [demoMode, setDemoMode] = useState(false);
+
+  // Demo data for testing
+  const demoMatches: Match[] = [
+    {
+      id: 'demo-1',
+      full_name: 'Sofia Martinez',
+      bio: 'Digital illustrator & concept artist. Love creating fantasy worlds and character designs.',
+      location: 'Barcelona, Spain',
+      work_images: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800', 'https://images.unsplash.com/photo-1634986666676-ec8fd927c23d?w=800'],
+      avatar_url: 'https://i.pravatar.cc/150?img=5',
+      matchScore: 92,
+      matchedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      lastMessage: "Hey! I love your portfolio work!",
+      lastMessageTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      lastMessageFromMe: false
+    },
+    {
+      id: 'demo-2',
+      full_name: 'Marcus Chen',
+      bio: '3D artist specializing in architectural visualization and product rendering.',
+      location: 'Singapore',
+      work_images: ['https://images.unsplash.com/photo-1618556450994-a6a128ef0d9d?w=800', 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800'],
+      avatar_url: 'https://i.pravatar.cc/150?img=12',
+      matchScore: 85,
+      matchedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      lastMessage: "Thanks! Would love to collaborate sometime",
+      lastMessageTime: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      lastMessageFromMe: true
+    },
+    {
+      id: 'demo-3',
+      full_name: 'Emma Thompson',
+      bio: 'Motion designer creating stunning animations for brands. Always experimenting!',
+      location: 'London, UK',
+      work_images: ['https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=800'],
+      avatar_url: 'https://i.pravatar.cc/150?img=9',
+      matchScore: 78,
+      matchedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      lastMessageFromMe: false
+    },
+    {
+      id: 'demo-4',
+      full_name: 'Diego Santos',
+      bio: 'Game artist & UI designer. Passionate about creating immersive gaming experiences.',
+      location: 'São Paulo, Brazil',
+      work_images: ['https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800', 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=800'],
+      avatar_url: 'https://i.pravatar.cc/150?img=15',
+      matchScore: 88,
+      matchedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      lastMessage: "Your game art is incredible! 🎮",
+      lastMessageTime: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      lastMessageFromMe: false
+    },
+    {
+      id: 'demo-5',
+      full_name: 'Yuki Tanaka',
+      bio: 'Graphic designer & brand identity specialist. Minimalist aesthetics with bold concepts.',
+      location: 'Tokyo, Japan',
+      work_images: ['https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800'],
+      avatar_url: 'https://i.pravatar.cc/150?img=47',
+      matchScore: 65,
+      matchedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      lastMessageFromMe: false
+    }
+  ];
 
   useEffect(() => {
     if (user) {
-      fetchMatches();
+      if (demoMode) {
+        setMatches(demoMatches);
+        setLoading(false);
+      } else {
+        fetchMatches();
+      }
     }
-  }, [user]);
+  }, [user, demoMode]);
 
   const fetchMatches = async () => {
     if (!user) return;
