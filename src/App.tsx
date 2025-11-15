@@ -14,6 +14,7 @@ import Find from "./pages/Find";
 import Works from "./pages/Works";
 import Opportunities from "./pages/Opportunities";
 import Auth from "./pages/Auth";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/chat/:matchId" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
