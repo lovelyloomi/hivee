@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Briefcase, Star, StarOff } from "lucide-react";
+import { Plus, Briefcase, Star, StarOff, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ApplicationDialog } from "@/components/ApplicationDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { calculateDistance, formatDistance } from "@/utils/distance";
 
 interface Opportunity {
   id: string;
@@ -22,6 +23,9 @@ interface Opportunity {
   created_at: string;
   profiles: {
     full_name: string;
+    latitude: number | null;
+    longitude: number | null;
+    location_enabled: boolean | null;
   };
 }
 
@@ -40,14 +44,30 @@ const Opportunities = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [opportunityFavorites, setOpportunityFavorites] = useState<Set<string>>(new Set());
   const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     fetchOpportunities();
     if (user) {
+      fetchUserLocation();
       fetchFavorites();
       fetchOpportunityFavorites();
     }
   }, [user]);
+
+  const fetchUserLocation = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('latitude, longitude')
+      .eq('id', user.id)
+      .single();
+
+    if (data?.latitude && data?.longitude) {
+      setUserLocation({ latitude: data.latitude, longitude: data.longitude });
+    }
+  };
 
   const fetchOpportunities = async () => {
     try {
@@ -55,7 +75,7 @@ const Opportunities = () => {
         .from('opportunities')
         .select(`
           *,
-          profiles!opportunities_creator_id_fkey(full_name)
+          profiles!opportunities_creator_id_fkey(full_name, latitude, longitude, location_enabled)
         `)
         .order('created_at', { ascending: false });
 
@@ -437,8 +457,26 @@ const Opportunities = () => {
                         <h3 className="font-semibold text-lg text-foreground">
                           Looking for {opportunity.artist_type}
                         </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Posted by {opportunity.profiles.full_name} • {getTimeAgo(opportunity.created_at)}
+                        <p className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+                          <span>Posted by {opportunity.profiles.full_name}</span>
+                          <span>•</span>
+                          <span>{getTimeAgo(opportunity.created_at)}</span>
+                          {userLocation && opportunity.profiles.latitude && opportunity.profiles.longitude && opportunity.profiles.location_enabled && (
+                            <>
+                              <span>•</span>
+                              <span className="inline-flex items-center gap-1 text-primary font-medium">
+                                <MapPin className="h-3 w-3" />
+                                {formatDistance(
+                                  calculateDistance(
+                                    userLocation.latitude,
+                                    userLocation.longitude,
+                                    opportunity.profiles.latitude,
+                                    opportunity.profiles.longitude
+                                  )
+                                )} away
+                              </span>
+                            </>
+                          )}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Upload } from "lucide-react";
+import { Plus, Search, Upload, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,11 +15,15 @@ import { useToast } from "@/hooks/use-toast";
 import { applyWatermark } from "@/utils/watermark";
 import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { calculateDistance, formatDistance } from "@/utils/distance";
 
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
     avatar_url: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    location_enabled: boolean | null;
   } | null;
 };
 
@@ -33,6 +37,7 @@ export default function Works() {
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [newWork, setNewWork] = useState({
     title: "",
     description: "",
@@ -42,7 +47,24 @@ export default function Works() {
   useEffect(() => {
     fetchWorks();
     setupRealtimeSubscription();
-  }, []);
+    if (user) {
+      fetchUserLocation();
+    }
+  }, [user]);
+
+  const fetchUserLocation = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('latitude, longitude')
+      .eq('id', user.id)
+      .single();
+
+    if (data?.latitude && data?.longitude) {
+      setUserLocation({ latitude: data.latitude, longitude: data.longitude });
+    }
+  };
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
@@ -72,7 +94,10 @@ export default function Works() {
         *,
         profiles:user_id (
           full_name,
-          avatar_url
+          avatar_url,
+          latitude,
+          longitude,
+          location_enabled
         )
       `)
       .order('created_at', { ascending: false });
@@ -361,8 +386,24 @@ export default function Works() {
                 <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                   {work.description}
                 </p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  by {work.profiles?.full_name || 'Unknown Artist'}
+                <p className="text-xs text-muted-foreground mb-3 flex items-center gap-2 flex-wrap">
+                  <span>by {work.profiles?.full_name || 'Unknown Artist'}</span>
+                  {userLocation && work.profiles?.latitude && work.profiles?.longitude && work.profiles?.location_enabled && (
+                    <>
+                      <span>•</span>
+                      <span className="inline-flex items-center gap-1 text-primary font-medium">
+                        <MapPin className="h-3 w-3" />
+                        {formatDistance(
+                          calculateDistance(
+                            userLocation.latitude,
+                            userLocation.longitude,
+                            work.profiles.latitude,
+                            work.profiles.longitude
+                          )
+                        )} away
+                      </span>
+                    </>
+                  )}
                 </p>
                 {work.hashtags && work.hashtags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
