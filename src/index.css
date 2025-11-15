@@ -117,3 +117,16 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Screenshot protection */
+.no-screenshot {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+.no-screenshot img {
+  pointer-events: none;
+  -webkit-touch-callout: none;
+}

@@ -138,8 +138,15 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          location: string | null
           portfolio_url: string | null
+          profile_completed: boolean | null
+          programs: string[] | null
+          skills: string[] | null
           updated_at: string
+          watermark_text: string | null
+          watermark_url: string | null
+          work_images: string[] | null
         }
         Insert: {
           avatar_url?: string | null
@@ -148,8 +155,15 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          location?: string | null
           portfolio_url?: string | null
+          profile_completed?: boolean | null
+          programs?: string[] | null
+          skills?: string[] | null
           updated_at?: string
+          watermark_text?: string | null
+          watermark_url?: string | null
+          work_images?: string[] | null
         }
         Update: {
           avatar_url?: string | null
@@ -158,8 +172,15 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          location?: string | null
           portfolio_url?: string | null
+          profile_completed?: boolean | null
+          programs?: string[] | null
+          skills?: string[] | null
           updated_at?: string
+          watermark_text?: string | null
+          watermark_url?: string | null
+          work_images?: string[] | null
         }
         Relationships: []
       }
