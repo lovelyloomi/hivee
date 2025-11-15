@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
   const [isEditing, setIsEditing] = useState(false);
   const [editedDescription, setEditedDescription] = useState(work.description || '');
   const [editedHashtags, setEditedHashtags] = useState(work.hashtags?.join(', ') || '');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -250,6 +252,35 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
     }
   };
 
+  const handleDeleteWork = async () => {
+    if (!currentUserId || currentUserId !== work.user_id) return;
+
+    try {
+      // Delete the file from storage
+      const fileName = work.file_url.split('/').pop();
+      if (fileName) {
+        const filePath = `${work.user_id}/${fileName}`;
+        await supabase.storage.from('works').remove([filePath]);
+      }
+
+      // Delete the work record
+      const { error } = await supabase
+        .from('works')
+        .delete()
+        .eq('id', work.id)
+        .eq('user_id', currentUserId);
+
+      if (error) throw error;
+
+      toast({ title: 'Work deleted successfully' });
+      setShowDeleteDialog(false);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({ title: 'Failed to delete work', variant: 'destructive' });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -266,13 +297,23 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
               </div>
             </div>
             {currentUserId === work.user_id && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                {isEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditing(!isEditing)}
+                >
+                  {isEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             )}
           </DialogTitle>
         </DialogHeader>
@@ -397,6 +438,23 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
           </div>
         </ScrollArea>
       </DialogContent>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Work</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this work? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteWork} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
