@@ -8,6 +8,7 @@ import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Match {
   id: string;
@@ -31,6 +32,8 @@ const Matches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [demoMode, setDemoMode] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewMatch, setPreviewMatch] = useState<Match | null>(null);
 
   // Demo data for testing
   const demoMatches: Match[] = [
@@ -243,17 +246,9 @@ const Matches = () => {
   };
 
   const handleViewProfile = (match: Match) => {
-    // Handle demo data
-    if (match.id?.startsWith('demo-')) {
-      toast({
-        title: "Demo Match",
-        description: "This is demo data. Click to see their portfolio preview!",
-      });
-      // You could open a modal here to show their work_images
-      return;
-    }
-    
-    navigate(`/profile/${match.id}`);
+    // Open preview modal to show portfolio images and details (works for demo and real)
+    setPreviewMatch(match);
+    setPreviewOpen(true);
   };
 
   const getTimeAgo = (dateString?: string) => {
@@ -425,6 +420,32 @@ const Matches = () => {
         )}
       </div>
       <BottomNav />
+
+      {/* Preview Modal */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{previewMatch?.full_name}</DialogTitle>
+          </DialogHeader>
+          {previewMatch && (
+            <div className="space-y-4">
+              {previewMatch.bio && (
+                <p className="text-sm text-muted-foreground">{previewMatch.bio}</p>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                {previewMatch.work_images?.map((img, idx) => (
+                  <img key={idx} src={img} alt={`Work ${idx + 1}`} className="w-full h-40 object-cover rounded" />
+                ))}
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={(e) => previewMatch && handleChatClick(previewMatch, e as any)}>
+                  Message
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
