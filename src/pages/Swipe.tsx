@@ -1,99 +1,147 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Heart, Briefcase, MapPin, DollarSign } from "lucide-react";
+import { X, Heart, MapPin, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { MatchNotification } from "@/components/MatchNotification";
 
-interface Job {
-  id: number;
-  company: string;
-  position: string;
+interface Profile {
+  id: string;
+  full_name: string;
+  bio: string;
   location: string;
-  salary: string;
-  description: string;
-  requirements: string[];
-  logo: string;
+  skills: string[];
+  programs: string[];
+  work_images: string[];
+  avatar_url: string | null;
 }
 
-const mockJobs: Job[] = [
-  {
-    id: 1,
-    company: "TechStart Inc.",
-    position: "Junior Frontend Developer",
-    location: "Remote",
-    salary: "$45k - $60k",
-    description: "Join our dynamic team building cutting-edge web applications. Perfect for recent graduates looking to kickstart their career.",
-    requirements: ["React", "TypeScript", "CSS"],
-    logo: "🚀"
-  },
-  {
-    id: 2,
-    company: "Creative Labs",
-    position: "UX/UI Designer",
-    location: "New York, NY",
-    salary: "$50k - $70k",
-    description: "Design beautiful, user-centered experiences for our growing portfolio of products.",
-    requirements: ["Figma", "Adobe Creative Suite", "User Research"],
-    logo: "🎨"
-  },
-  {
-    id: 3,
-    company: "DataFlow Analytics",
-    position: "Junior Data Analyst",
-    location: "Boston, MA",
-    salary: "$55k - $65k",
-    description: "Analyze data trends and help drive business decisions through insights.",
-    requirements: ["SQL", "Python", "Excel"],
-    logo: "📊"
-  },
-  {
-    id: 4,
-    company: "Marketing Pro",
-    position: "Social Media Coordinator",
-    location: "Remote",
-    salary: "$40k - $55k",
-    description: "Manage social media campaigns and grow our online presence across platforms.",
-    requirements: ["Content Creation", "Analytics", "Copywriting"],
-    logo: "📱"
-  },
-  {
-    id: 5,
-    company: "GreenTech Solutions",
-    position: "Sustainability Specialist",
-    location: "San Francisco, CA",
-    salary: "$50k - $65k",
-    description: "Help companies transition to sustainable practices and reduce their carbon footprint.",
-    requirements: ["Environmental Science", "Project Management", "Communication"],
-    logo: "🌱"
-  }
-];
-
 const Swipe = () => {
-  const [jobs, setJobs] = useState<Job[]>(mockJobs);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [matchNotification, setMatchNotification] = useState<{ name: string; image?: string } | null>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleSwipe = (direction: "left" | "right") => {
+  useEffect(() => {
+    if (user) {
+      fetchProfiles();
+    }
+  }, [user]);
+
+  const fetchProfiles = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('profile_completed', true)
+        .neq('id', user.id);
+
+      if (error) throw error;
+      setProfiles(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error loading profiles",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSwipe = async (direction: "left" | "right") => {
+    if (!user) return;
+    
     setSwipeDirection(direction);
+    
+    // If swiped right (liked), add to favorites
+    if (direction === "right" && profiles[currentIndex]) {
+      try {
+        const { error } = await supabase
+          .from('favorites')
+          .insert({
+            user_id: user.id,
+            favorited_user_id: profiles[currentIndex].id
+          });
+
+        if (!error) {
+          // Check if it's a mutual match
+          const { data: mutualMatch } = await supabase
+            .from('favorites')
+            .select('*')
+            .eq('user_id', profiles[currentIndex].id)
+            .eq('favorited_user_id', user.id)
+            .single();
+
+          if (mutualMatch) {
+            // It's a match! Show notification
+            setMatchNotification({
+              name: profiles[currentIndex].full_name,
+              image: profiles[currentIndex].work_images?.[0]
+            });
+          } else {
+            toast({
+              title: "Liked! ❤️",
+              description: `You liked ${profiles[currentIndex].full_name}`
+            });
+          }
+        }
+      } catch (error: any) {
+        console.error("Error adding to favorites:", error);
+      }
+    }
+    
     setTimeout(() => {
-      if (currentIndex < jobs.length - 1) {
+      if (currentIndex < profiles.length - 1) {
         setCurrentIndex(currentIndex + 1);
+        setCurrentImageIndex(0);
       } else {
-        // All jobs swiped - could show completion screen
-        setJobs([]);
+        setProfiles([]);
       }
       setSwipeDirection(null);
     }, 300);
   };
 
-  if (jobs.length === 0 || currentIndex >= jobs.length) {
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Please sign in to view profiles</h2>
+          <Button onClick={() => navigate('/auth')}>Sign In</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading profiles...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (profiles.length === 0 || currentIndex >= profiles.length) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">🎉</div>
           <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">All done!</h2>
-          <p className="text-muted-foreground mb-6">You've reviewed all available positions. Check your matches!</p>
+          <p className="text-muted-foreground mb-6">You've reviewed all available artists. Check your matches!</p>
           <div className="flex gap-4 justify-center">
             <Button 
               onClick={() => navigate("/matches")}
@@ -113,116 +161,134 @@ const Swipe = () => {
     );
   }
 
-  const currentJob = jobs[currentIndex];
+  const currentProfile = profiles[currentIndex];
+  const workImages = currentProfile.work_images || [];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pt-24 relative overflow-hidden">
+    <div className="min-h-screen bg-background">
       <Header />
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
-      </div>
-
-      {/* Header */}
-      <div className="w-full max-w-md mb-4 relative z-10">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate("/")}
-        >
-          ← Back
-        </Button>
-      </div>
-
-      {/* Card Stack */}
-      <div className="relative w-full max-w-md h-[600px] mb-8">
-        {/* Background cards for depth effect */}
-        {currentIndex + 1 < jobs.length && (
-          <div className="absolute inset-0 bg-card rounded-3xl transform scale-95 opacity-50 shadow-card"></div>
-        )}
-        {currentIndex + 2 < jobs.length && (
-          <div className="absolute inset-0 bg-card rounded-3xl transform scale-90 opacity-25 shadow-card"></div>
-        )}
-
-        {/* Main card */}
+      <div className="container max-w-2xl mx-auto px-4 py-8 pt-24">
         <div
-          className={`absolute inset-0 bg-card border border-border rounded-3xl shadow-card-hover p-6 flex flex-col transition-all duration-300 ${
+          className={`bg-card rounded-3xl shadow-card-hover overflow-hidden transition-transform duration-300 ${
             swipeDirection === "left"
-              ? "transform -translate-x-[150%] -rotate-12 opacity-0"
+              ? "-translate-x-full opacity-0"
               : swipeDirection === "right"
-              ? "transform translate-x-[150%] rotate-12 opacity-0"
+              ? "translate-x-full opacity-0"
               : ""
           }`}
         >
-          {/* Company Logo/Icon */}
-          <div className="text-6xl mb-4 text-center">{currentJob.logo}</div>
+          {/* Portfolio Images */}
+          {workImages.length > 0 && (
+            <div className="relative h-96 bg-muted">
+              <img
+                src={workImages[currentImageIndex]}
+                alt={`${currentProfile.full_name}'s work`}
+                className="w-full h-full object-cover"
+              />
+              
+              {/* Image Navigation Dots */}
+              {workImages.length > 1 && (
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+                  {workImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentImageIndex(idx)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        idx === currentImageIndex 
+                          ? 'bg-white w-6' 
+                          : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* Image Counter */}
+              <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                {currentImageIndex + 1} / {workImages.length}
+              </div>
+            </div>
+          )}
 
-          {/* Job Info */}
-          <div className="flex-1 overflow-y-auto space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-1">{currentJob.position}</h2>
-              <p className="text-lg text-foreground font-semibold">{currentJob.company}</p>
+          <div className="p-8">
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+                {currentProfile.full_name}
+              </h2>
+              <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                <MapPin className="h-4 w-4" />
+                <span>{currentProfile.location}</span>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm">{currentJob.location}</span>
+            {currentProfile.bio && (
+              <div className="mb-6">
+                <h3 className="font-semibold text-foreground mb-2">About</h3>
+                <p className="text-muted-foreground">{currentProfile.bio}</p>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <DollarSign className="w-4 h-4" />
-                <span className="text-sm">{currentJob.salary}</span>
-              </div>
-            </div>
+            )}
 
-            <div>
-              <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                <Briefcase className="w-4 h-4" />
-                About the role
-              </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{currentJob.description}</p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Required Skills</h3>
-              <div className="flex flex-wrap gap-2">
-                {currentJob.requirements.map((req, idx) => (
-                  <span
-                    key={idx}
-                    className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium"
-                  >
-                    {req}
-                  </span>
-                ))}
+            {currentProfile.skills && currentProfile.skills.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold text-foreground mb-2">Skills</h3>
+                <div className="flex flex-wrap gap-2">
+                  {currentProfile.skills.map((skill, index) => (
+                    <Badge key={index} variant="secondary">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
               </div>
+            )}
+
+            {currentProfile.programs && currentProfile.programs.length > 0 && (
+              <div className="mb-8">
+                <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Programs
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {currentProfile.programs.map((program, index) => (
+                    <Badge key={index} variant="outline">
+                      {program}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-4 justify-center pt-6 border-t border-border">
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => handleSwipe("left")}
+                className="rounded-full h-16 w-16 p-0 border-2 hover:border-destructive hover:bg-destructive/10"
+              >
+                <X className="h-8 w-8 text-destructive" />
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => handleSwipe("right")}
+                className="rounded-full h-16 w-16 p-0 bg-gradient-primary text-white hover:opacity-90"
+              >
+                <Heart className="h-8 w-8" />
+              </Button>
             </div>
           </div>
         </div>
+
+        <div className="text-center mt-4 text-sm text-muted-foreground">
+          {profiles.length - currentIndex - 1} profiles remaining
+        </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-6 relative z-10">
-        <Button
-          size="lg"
-          onClick={() => handleSwipe("left")}
-          variant="outline"
-          className="h-16 w-16 rounded-full shadow-lg hover:scale-110 transition-transform border-2"
-        >
-          <X className="w-8 h-8" />
-        </Button>
-        <Button
-          size="lg"
-          onClick={() => handleSwipe("right")}
-          className="h-16 w-16 rounded-full bg-gradient-primary text-white shadow-lg hover:scale-110 transition-transform hover:shadow-card-hover"
-        >
-          <Heart className="w-8 h-8" />
-        </Button>
-      </div>
-
-      {/* Progress indicator */}
-      <div className="mt-6 text-white/80 text-sm relative z-10">
-        {currentIndex + 1} / {jobs.length}
-      </div>
+      {matchNotification && (
+        <MatchNotification
+          profileName={matchNotification.name}
+          profileImage={matchNotification.image}
+          onClose={() => setMatchNotification(null)}
+        />
+      )}
     </div>
   );
 };

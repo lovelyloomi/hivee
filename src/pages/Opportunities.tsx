@@ -37,6 +37,7 @@ const Opportunities = () => {
   const [loading, setLoading] = useState(true);
   const [selectedOpportunity, setSelectedOpportunity] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
 
   useEffect(() => {
     fetchOpportunities();
@@ -141,30 +142,84 @@ const Opportunities = () => {
     if (!artistType || !description || !payment) return;
 
     try {
-      const { error } = await supabase
-        .from('opportunities')
-        .insert({
-          creator_id: user.id,
-          artist_type: artistType,
-          description,
-          payment
+      if (editingOpportunity) {
+        // Update existing opportunity
+        const { error } = await supabase
+          .from('opportunities')
+          .update({
+            artist_type: artistType,
+            description,
+            payment
+          })
+          .eq('id', editingOpportunity.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Opportunity updated!",
+          description: "Your changes have been saved."
         });
+      } else {
+        // Create new opportunity
+        const { error } = await supabase
+          .from('opportunities')
+          .insert({
+            creator_id: user.id,
+            artist_type: artistType,
+            description,
+            payment
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Opportunity posted!",
-        description: "Your opportunity is now live."
-      });
+        toast({
+          title: "Opportunity posted!",
+          description: "Your opportunity is now live."
+        });
+      }
 
       setArtistType("");
       setDescription("");
       setPayment("");
       setShowForm(false);
+      setEditingOpportunity(null);
       fetchOpportunities();
     } catch (error: any) {
       toast({
-        title: "Error posting opportunity",
+        title: editingOpportunity ? "Error updating opportunity" : "Error posting opportunity",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEdit = (opp: Opportunity) => {
+    setEditingOpportunity(opp);
+    setArtistType(opp.artist_type);
+    setDescription(opp.description);
+    setPayment(opp.payment);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (oppId: string) => {
+    if (!confirm('Are you sure you want to delete this opportunity?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('opportunities')
+        .delete()
+        .eq('id', oppId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Opportunity deleted",
+        description: "The opportunity has been removed."
+      });
+      fetchOpportunities();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting opportunity",
         description: error.message,
         variant: "destructive"
       });
@@ -228,7 +283,9 @@ const Opportunities = () => {
 
           {showForm && (
             <Card className="p-6 mb-6 bg-card border-border">
-              <h2 className="text-xl font-semibold mb-4 text-foreground">Post a New Opportunity</h2>
+              <h2 className="text-xl font-semibold mb-4 text-foreground">
+                {editingOpportunity ? 'Edit Opportunity' : 'Post a New Opportunity'}
+              </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
@@ -277,12 +334,18 @@ const Opportunities = () => {
 
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">
-                    Post Opportunity
+                    {editingOpportunity ? 'Save Changes' : 'Post Opportunity'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setShowForm(false)}
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditingOpportunity(null);
+                      setArtistType("");
+                      setDescription("");
+                      setPayment("");
+                    }}
                   >
                     Cancel
                   </Button>
@@ -330,15 +393,35 @@ const Opportunities = () => {
                       </div>
                     </div>
                     <p className="text-foreground/90 mb-4">{opportunity.description}</p>
-                    {user && user.id !== opportunity.creator_id && (
-                      <Button
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => handleApplyClick(opportunity.id)}
-                      >
-                        Apply Now
-                      </Button>
-                    )}
+                    <div className="flex gap-2">
+                      {user && user.id !== opportunity.creator_id && (
+                        <Button
+                          variant="outline"
+                          className="gap-2"
+                          onClick={() => handleApplyClick(opportunity.id)}
+                        >
+                          Apply Now
+                        </Button>
+                      )}
+                      {user && user.id === opportunity.creator_id && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(opportunity)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDelete(opportunity.id)}
+                          >
+                            Delete
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>

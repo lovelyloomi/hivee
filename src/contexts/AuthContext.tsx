@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
@@ -26,6 +26,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Check if profile is completed when user logs in
+        if (session?.user && event === 'SIGNED_IN') {
+          setTimeout(() => {
+            supabase
+              .from('profiles')
+              .select('profile_completed')
+              .eq('id', session.user.id)
+              .single()
+              .then(({ data }) => {
+                if (data && !data.profile_completed) {
+                  window.location.href = '/onboarding';
+                }
+              });
+          }, 0);
+        }
       }
     );
 
