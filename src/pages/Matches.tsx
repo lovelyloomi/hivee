@@ -197,8 +197,19 @@ const Matches = () => {
     }
   };
 
-  const handleChatClick = async (match: Match) => {
+  const handleChatClick = async (match: Match, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
     if (!user) return;
+
+    // Handle demo data
+    if (match.id?.startsWith('demo-')) {
+      toast({
+        title: "Demo Match",
+        description: "This is demo data. Real matches will have working chat!",
+      });
+      return;
+    }
 
     try {
       let conversationId = match.conversationId;
@@ -229,6 +240,20 @@ const Matches = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleViewProfile = (match: Match) => {
+    // Handle demo data
+    if (match.id?.startsWith('demo-')) {
+      toast({
+        title: "Demo Match",
+        description: "This is demo data. Click to see their portfolio preview!",
+      });
+      // You could open a modal here to show their work_images
+      return;
+    }
+    
+    navigate(`/profile/${match.id}`);
   };
 
   const getTimeAgo = (dateString?: string) => {
@@ -300,7 +325,7 @@ const Matches = () => {
               <Card
                 key={match.id}
                 className="p-6 bg-card border-border hover:border-primary/50 transition-colors cursor-pointer"
-                onClick={() => handleChatClick(match)}
+                onClick={() => handleViewProfile(match)}
               >
                 <div className="flex items-start gap-4">
                   {/* Profile/Work Image */}
@@ -335,7 +360,14 @@ const Matches = () => {
                           {match.location}
                         </p>
                       </div>
-                      <MessageCircle className="h-5 w-5 text-primary flex-shrink-0 ml-2" />
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="flex-shrink-0 ml-2"
+                        onClick={(e) => handleChatClick(match, e)}
+                      >
+                        <MessageCircle className="h-5 w-5 text-primary" />
+                      </Button>
                     </div>
 
                     {match.bio && (
