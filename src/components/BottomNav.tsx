@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/NavLink";
-import { Search, Image, Heart } from "lucide-react";
+import { Search, Image, Heart, Briefcase } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const BottomNav = () => {
@@ -34,6 +34,15 @@ const BottomNav = () => {
           >
             <Heart className="h-6 w-6" />
             <span className="text-xs font-medium">{t('nav.matches')}</span>
+          </NavLink>
+
+          <NavLink
+            to="/opportunities"
+            className="flex flex-col items-center gap-1 px-6 py-2 rounded-lg transition-colors text-muted-foreground"
+            activeClassName="text-primary bg-primary/10"
+          >
+            <Briefcase className="h-6 w-6" />
+            <span className="text-xs font-medium">{t('nav.opportunities')}</span>
           </NavLink>
         </div>
       </div>
