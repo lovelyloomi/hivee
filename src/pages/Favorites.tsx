@@ -112,7 +112,6 @@ export default function Favorites() {
       .order('created_at', { ascending: false });
 
     if (data) {
-      // Filter out any null works
       const validFavorites = data
         .filter(fav => fav.work)
         .map(fav => ({
@@ -205,114 +204,181 @@ export default function Favorites() {
             <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="works">{/* Works tab content */}
-
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search favorites..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {allHashtags.length > 0 && (
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
-              {allHashtags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant={selectedHashtags.includes(tag) ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => toggleHashtag(tag)}
-                >
-                  {tag}
-                </Badge>
-              ))}
+          <TabsContent value="works">
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="Search favorites..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-          </div>
-        )}
 
-        {filteredFavorites.length === 0 ? (
-          <div className="text-center py-16">
-            <Bookmark className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-2xl font-semibold mb-2 text-foreground">
-              {searchQuery || selectedHashtags.length > 0 ? 'No favorites found' : 'No favorites yet'}
-            </h2>
-            <p className="text-muted-foreground">
-              {searchQuery || selectedHashtags.length > 0 
-                ? 'Try adjusting your search or filters'
-                : 'Start favoriting works to see them here'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredFavorites.map((favorite) => (
-              <Card
-                key={favorite.id}
-                className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                onClick={() => setSelectedWork(favorite.work)}
-              >
-                <div className="aspect-square relative overflow-hidden bg-muted">
-                  {favorite.work.file_type === 'image' ? (
-                    <img
-                      src={favorite.work.file_url}
-                      alt={favorite.work.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : favorite.work.file_type === 'video' ? (
-                    <video
-                      src={favorite.work.file_url}
-                      className="w-full h-full object-cover"
-                      muted
-                    />
-                  ) : favorite.work.file_type === 'pdf' ? (
-                    <div className="flex items-center justify-center h-full bg-muted">
-                      <div className="text-center">
-                        <svg className="w-16 h-16 mx-auto mb-2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                        <p className="text-sm text-muted-foreground">PDF</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full bg-muted">
-                      <div className="text-center">
-                        <svg className="w-16 h-16 mx-auto mb-2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        <p className="text-sm text-muted-foreground">3D Model</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-foreground mb-1 truncate">{favorite.work.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    by {favorite.work.profiles?.full_name || 'Unknown'}
-                  </p>
-                  {favorite.work.hashtags && favorite.work.hashtags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {favorite.work.hashtags.slice(0, 3).map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {favorite.work.hashtags.length > 3 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{favorite.work.hashtags.length - 3}
-                        </Badge>
+            {allHashtags.length > 0 && (
+              <div className="mb-6 flex flex-wrap gap-2">
+                {allHashtags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant={selectedHashtags.includes(tag) ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => toggleHashtag(tag)}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredFavorites.map((favorite) => {
+                const work = favorite.work;
+                const thumbnailUrl = work.file_type === 'image' 
+                  ? work.file_url 
+                  : work.file_type === 'video'
+                  ? work.file_url
+                  : '/placeholder.svg';
+
+                return (
+                  <Card 
+                    key={work.id} 
+                    className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+                    onClick={() => setSelectedWork(work)}
+                  >
+                    <div className="aspect-video bg-muted relative overflow-hidden">
+                      {work.file_type === 'image' ? (
+                        <img 
+                          src={thumbnailUrl} 
+                          alt={work.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : work.file_type === 'video' ? (
+                        <video 
+                          src={thumbnailUrl}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                          <span className="text-muted-foreground text-sm">
+                            {work.file_type}
+                          </span>
+                        </div>
                       )}
                     </div>
-                  )}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-lg mb-2 text-foreground line-clamp-1">
+                        {work.title}
+                      </h3>
+                      {work.description && (
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {work.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                          {work.profiles?.avatar_url ? (
+                            <img 
+                              src={work.profiles.avatar_url} 
+                              alt={work.profiles.full_name || "User"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs text-primary font-medium">
+                              {work.profiles?.full_name?.[0] || "U"}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {work.profiles?.full_name || "Anonymous"}
+                        </span>
+                      </div>
+                      {work.hashtags && work.hashtags.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1">
+                          {work.hashtags.map((tag, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {filteredFavorites.length === 0 && (
+              <div className="text-center py-12">
+                <Bookmark className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg text-muted-foreground">
+                  {searchQuery || selectedHashtags.length > 0 
+                    ? "No favorites match your search"
+                    : "No favorite works yet"
+                  }
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="opportunities">
+            <div className="space-y-4">
+              {opportunityFavorites.map((favorite) => {
+                const opp = favorite.opportunity;
+                return (
+                  <Card key={opp.id} className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Briefcase className="w-5 h-5 text-primary" />
+                          <h3 className="font-semibold text-lg text-foreground">
+                            {opp.artist_type}
+                          </h3>
+                        </div>
+                        <p className="text-muted-foreground mb-4">{opp.description}</p>
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="text-primary font-medium">{opp.payment}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                              {opp.profiles?.avatar_url ? (
+                                <img 
+                                  src={opp.profiles.avatar_url} 
+                                  alt={opp.profiles.full_name || "User"}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-xs text-primary font-medium">
+                                  {opp.profiles?.full_name?.[0] || "U"}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-muted-foreground">
+                              {opp.profiles?.full_name || "Anonymous"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeOpportunityFavorite(favorite.id)}
+                        className="text-destructive hover:text-destructive/80 text-sm font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </Card>
+                );
+              })}
+              {opportunityFavorites.length === 0 && (
+                <div className="text-center py-12">
+                  <Briefcase className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg text-muted-foreground">No favorite opportunities yet</p>
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       <BottomNav />
