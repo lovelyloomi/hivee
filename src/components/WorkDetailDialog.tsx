@@ -1,10 +1,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Heart, Bookmark, Send, Trash2 } from 'lucide-react';
+import { Heart, Bookmark, Send, Trash2, Edit2, X, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -38,17 +40,23 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
   const [isLiked, setIsLiked] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedDescription, setEditedDescription] = useState(work.description || '');
+  const [editedHashtags, setEditedHashtags] = useState(work.hashtags?.join(', ') || '');
   const { toast } = useToast();
 
   useEffect(() => {
     if (open && work.id) {
+      setEditedDescription(work.description || '');
+      setEditedHashtags(work.hashtags?.join(', ') || '');
+      setIsEditing(false);
       fetchComments();
       fetchLikeStatus();
       fetchFavoriteStatus();
       fetchLikeCount();
       setupRealtimeSubscription();
     }
-  }, [open, work.id]);
+  }, [open, work.id, work.description, work.hashtags]);
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
@@ -212,19 +220,60 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
     }
   };
 
+  const handleSaveEdit = async () => {
+    const hashtagArray = editedHashtags
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0);
+    
+    if (hashtagArray.length > 5) {
+      toast({ title: 'Maximum 5 hashtags allowed', variant: 'destructive' });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('works')
+      .update({
+        description: editedDescription,
+        hashtags: hashtagArray,
+      })
+      .eq('id', work.id)
+      .eq('user_id', currentUserId!);
+
+    if (error) {
+      toast({ title: 'Failed to update work', variant: 'destructive' });
+    } else {
+      setIsEditing(false);
+      toast({ title: 'Work updated successfully' });
+      onOpenChange(false); // Close and reopen to refresh
+      setTimeout(() => onOpenChange(true), 100);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={work.profiles?.avatar_url || ''} />
-              <AvatarFallback>{work.profiles?.full_name?.[0] || 'U'}</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="font-semibold">{work.title}</div>
-              <div className="text-sm text-muted-foreground">{work.profiles?.full_name}</div>
+          <DialogTitle className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Avatar>
+                <AvatarImage src={work.profiles?.avatar_url || ''} />
+                <AvatarFallback>{work.profiles?.full_name?.[0] || 'U'}</AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-semibold">{work.title}</div>
+                <div className="text-sm text-muted-foreground">{work.profiles?.full_name}</div>
+              </div>
             </div>
+            {currentUserId === work.user_id && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
+              >
+                {isEditing ? <X className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -237,18 +286,48 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
               title={work.title}
             />
 
-            {work.description && (
-              <p className="text-sm text-foreground">{work.description}</p>
-            )}
-
-            {work.hashtags && work.hashtags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {work.hashtags.map((tag) => (
-                  <Badge key={tag} variant="secondary">
-                    {tag}
-                  </Badge>
-                ))}
+            {isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    placeholder="Add a description..."
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-hashtags">Hashtags (max 5)</Label>
+                  <Input
+                    id="edit-hashtags"
+                    value={editedHashtags}
+                    onChange={(e) => setEditedHashtags(e.target.value)}
+                    placeholder="art, 3d, animation (comma separated)"
+                  />
+                </div>
+                <Button onClick={handleSaveEdit} className="w-full">
+                  <Check className="w-4 h-4 mr-2" />
+                  Save Changes
+                </Button>
               </div>
+            ) : (
+              <>
+                {work.description && (
+                  <p className="text-sm text-foreground">{work.description}</p>
+                )}
+
+                {work.hashtags && work.hashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {work.hashtags.map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
 
             <div className="flex items-center gap-4 pt-2 border-t">
