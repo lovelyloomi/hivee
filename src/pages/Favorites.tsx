@@ -118,8 +118,8 @@ export default function Favorites() {
     <div className="min-h-screen bg-background pb-20">
       <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-8">
+      <main className="container mx-auto px-4 py-8 pt-24">
+        <div className="flex items-center gap-3 mb-6">
           <Bookmark className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-foreground">My Favorites</h1>
         </div>
