@@ -30,8 +30,11 @@ export const WorkPortfolioUploader = ({
     setProcessing(true);
     try {
       const processedImages = await Promise.all(files.map(processImage));
-      setImages((prev) => [...prev, ...processedImages]);
-      onImagesReady([...images, ...processedImages]);
+      setImages((prev) => {
+        const newImages = [...prev, ...processedImages];
+        onImagesReady(newImages);
+        return newImages;
+      });
       toast({ title: "Images processed with watermark" });
     } catch (error) {
       toast({ title: "Error processing images", variant: "destructive" });
@@ -53,8 +56,11 @@ export const WorkPortfolioUploader = ({
         })
       );
 
-      setImages((prev) => [...prev, ...processedImages]);
-      onImagesReady([...images, ...processedImages]);
+      setImages((prev) => {
+        const newImages = [...prev, ...processedImages];
+        onImagesReady(newImages);
+        return newImages;
+      });
       toast({ title: `Processed ${processedImages.length} pages from PDF` });
     } catch (error) {
       toast({ title: "Error processing PDF", variant: "destructive" });
