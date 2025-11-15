@@ -36,6 +36,7 @@ const Opportunities = () => {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOpportunity, setSelectedOpportunity] = useState<string | null>(null);
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
 
@@ -226,12 +227,13 @@ const Opportunities = () => {
     }
   };
 
-  const handleApplyClick = (opportunityId: string) => {
+  const handleApplyClick = (opportunityId: string, creatorId: string) => {
     if (!user) {
       navigate('/auth');
       return;
     }
     setSelectedOpportunity(opportunityId);
+    setSelectedCreatorId(creatorId);
   };
 
   const getTimeAgo = (dateString: string) => {
@@ -398,7 +400,7 @@ const Opportunities = () => {
                         <Button
                           variant="outline"
                           className="gap-2"
-                          onClick={() => handleApplyClick(opportunity.id)}
+                          onClick={() => handleApplyClick(opportunity.id, opportunity.creator_id)}
                         >
                           Apply Now
                         </Button>
@@ -432,12 +434,18 @@ const Opportunities = () => {
 
       <BottomNav />
 
-      {selectedOpportunity && user && (
+      {selectedOpportunity && selectedCreatorId && user && (
         <ApplicationDialog
           open={!!selectedOpportunity}
-          onOpenChange={(open) => !open && setSelectedOpportunity(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedOpportunity(null);
+              setSelectedCreatorId(null);
+            }
+          }}
           opportunityId={selectedOpportunity}
           userId={user.id}
+          creatorId={selectedCreatorId}
         />
       )}
     </div>

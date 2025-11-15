@@ -6,16 +6,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ApplicationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   opportunityId: string;
   userId: string;
+  creatorId: string;
 }
 
-export const ApplicationDialog = ({ open, onOpenChange, opportunityId, userId }: ApplicationDialogProps) => {
+export const ApplicationDialog = ({ open, onOpenChange, opportunityId, userId, creatorId }: ApplicationDialogProps) => {
   const { toast } = useToast();
+  const { createNotification } = useNotifications();
+  const { user } = useAuth();
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [motivation, setMotivation] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
@@ -83,6 +88,16 @@ export const ApplicationDialog = ({ open, onOpenChange, opportunityId, userId }:
         });
 
       if (insertError) throw insertError;
+
+      // Create notification for opportunity creator
+      await createNotification(
+        creatorId,
+        'application',
+        'New Application 📋',
+        `${user?.email?.split('@')[0] || 'Someone'} applied to your opportunity`,
+        userId,
+        opportunityId
+      );
 
       toast({
         title: "Application submitted!",

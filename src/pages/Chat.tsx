@@ -6,6 +6,7 @@ import { ArrowLeft, Send } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface Message {
   id: string;
@@ -27,6 +28,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { createNotification } = useNotifications();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -161,6 +163,18 @@ const Chat = () => {
         .from('conversations')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', matchId);
+
+      // Create notification for the other user
+      if (otherUser) {
+        await createNotification(
+          otherUser.id,
+          'message',
+          'New Message 💬',
+          `${user.email?.split('@')[0] || 'Someone'} sent you a message`,
+          user.id,
+          matchId
+        );
+      }
 
       setNewMessage("");
     } catch (error: any) {

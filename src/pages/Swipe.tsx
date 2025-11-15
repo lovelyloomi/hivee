@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { MatchNotification } from "@/components/MatchNotification";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface Profile {
   id: string;
@@ -30,6 +31,7 @@ const Swipe = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { createNotification } = useNotifications();
 
   useEffect(() => {
     if (user) {
@@ -90,6 +92,15 @@ const Swipe = () => {
               name: profiles[currentIndex].full_name,
               image: profiles[currentIndex].work_images?.[0]
             });
+            
+            // Create notification for the other user
+            await createNotification(
+              profiles[currentIndex].id,
+              'match',
+              'New Match! 🎉',
+              `You matched with ${user.email?.split('@')[0] || 'someone'}!`,
+              user.id
+            );
           } else {
             toast({
               title: "Liked! ❤️",
