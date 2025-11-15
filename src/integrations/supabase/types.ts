@@ -170,6 +170,47 @@ export type Database = {
           },
         ]
       }
+      matches: {
+        Row: {
+          conversation_id: string | null
+          id: string
+          last_interaction_at: string | null
+          match_score: number | null
+          matched_at: string | null
+          status: string | null
+          user1_id: string
+          user2_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          id?: string
+          last_interaction_at?: string | null
+          match_score?: number | null
+          matched_at?: string | null
+          status?: string | null
+          user1_id: string
+          user2_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          id?: string
+          last_interaction_at?: string | null
+          match_score?: number | null
+          matched_at?: string | null
+          status?: string | null
+          user1_id?: string
+          user2_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -525,6 +566,33 @@ export type Database = {
           },
         ]
       }
+      swipes: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          swiped_on_work_index: number | null
+          swiped_user_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          swiped_on_work_index?: number | null
+          swiped_user_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          swiped_on_work_index?: number | null
+          swiped_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       work_comments: {
         Row: {
           content: string
@@ -726,6 +794,10 @@ export type Database = {
     Functions: {
       calculate_distance: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
+      calculate_match_score: {
+        Args: { user1: string; user2: string }
         Returns: number
       }
     }
