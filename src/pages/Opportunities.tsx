@@ -38,12 +38,14 @@ const Opportunities = () => {
   const [selectedOpportunity, setSelectedOpportunity] = useState<string | null>(null);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [opportunityFavorites, setOpportunityFavorites] = useState<Set<string>>(new Set());
   const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
 
   useEffect(() => {
     fetchOpportunities();
     if (user) {
       fetchFavorites();
+      fetchOpportunityFavorites();
     }
   }, [user]);
 
@@ -86,6 +88,22 @@ const Opportunities = () => {
     }
   };
 
+  const fetchOpportunityFavorites = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('opportunity_favorites')
+        .select('opportunity_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setOpportunityFavorites(new Set(data?.map(f => f.opportunity_id) || []));
+    } catch (error: any) {
+      console.error("Error fetching opportunity favorites:", error);
+    }
+  };
+
   const toggleFavorite = async (creatorId: string) => {
     if (!user) {
       navigate('/auth');
@@ -119,6 +137,53 @@ const Opportunities = () => {
 
         if (error) throw error;
         setFavorites(prev => new Set([...prev, creatorId]));
+        toast({
+          title: "Added to favorites"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error updating favorites",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const toggleOpportunityFavorite = async (opportunityId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      if (opportunityFavorites.has(opportunityId)) {
+        const { error } = await supabase
+          .from('opportunity_favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('opportunity_id', opportunityId);
+
+        if (error) throw error;
+        setOpportunityFavorites(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(opportunityId);
+          return newSet;
+        });
+        toast({
+          title: "Removed from favorites"
+        });
+      } else {
+        const { error } = await supabase
+          .from('opportunity_favorites')
+          .insert({
+            user_id: user.id,
+            opportunity_id: opportunityId
+          });
+
+        if (error) throw error;
+        setOpportunityFavorites(prev => new Set([...prev, opportunityId]));
         toast({
           title: "Added to favorites"
         });
@@ -376,19 +441,20 @@ const Opportunities = () => {
                           Posted by {opportunity.profiles.full_name} • {getTimeAgo(opportunity.created_at)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <p className="text-xl font-bold text-primary">
                           {opportunity.payment}
                         </p>
-                        {user && user.id !== opportunity.creator_id && (
+                        {user && (
                           <button
-                            onClick={() => toggleFavorite(opportunity.creator_id)}
+                            onClick={(e) => toggleOpportunityFavorite(opportunity.id, e)}
                             className="p-2 hover:bg-accent rounded-full transition-colors"
+                            title={opportunityFavorites.has(opportunity.id) ? "Remove from favorites" : "Add to favorites"}
                           >
-                            {favorites.has(opportunity.creator_id) ? (
+                            {opportunityFavorites.has(opportunity.id) ? (
                               <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
                             ) : (
-                              <StarOff className="h-5 w-5 text-muted-foreground" />
+                              <Star className="h-5 w-5 text-muted-foreground" />
                             )}
                           </button>
                         )}
