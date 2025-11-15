@@ -301,6 +301,164 @@ export type Database = {
         }
         Relationships: []
       }
+      work_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          user_id: string
+          work_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          user_id: string
+          work_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_comments_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          work_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          work_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_favorites_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_likes: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          work_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          work_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_likes_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      works: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_type: Database["public"]["Enums"]["work_file_type"]
+          file_url: string
+          hashtags: string[] | null
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+          watermark_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_type: Database["public"]["Enums"]["work_file_type"]
+          file_url: string
+          hashtags?: string[] | null
+          id?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          watermark_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_type?: Database["public"]["Enums"]["work_file_type"]
+          file_url?: string
+          hashtags?: string[] | null
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          watermark_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "works_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -309,7 +467,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      work_file_type: "image" | "pdf" | "video" | "model_3d"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -436,6 +594,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      work_file_type: ["image", "pdf", "video", "model_3d"],
+    },
   },
 } as const
