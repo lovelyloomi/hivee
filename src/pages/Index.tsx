@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pb-20">
@@ -37,21 +39,32 @@ const Index = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button
-              size="lg"
-              onClick={() => navigate("/swipe")}
-              className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group"
-            >
-              Start Swiping
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            {!user ? (
+              <Button
+                size="lg"
+                onClick={() => navigate("/auth")}
+                className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group"
+              >
+                Get Started
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                onClick={() => navigate("/swipe")}
+                className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group"
+              >
+                Start Swiping
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            )}
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate("/matches")}
+              onClick={() => navigate("/opportunities")}
               className="px-8 py-6 text-lg rounded-full"
             >
-              View Matches
+              View Opportunities
             </Button>
           </div>
         </div>
