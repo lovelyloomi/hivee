@@ -55,6 +55,42 @@ const translations: Translations = {
   'landing.feature3.desc': { en: 'Connect with top companies', fr: 'Connectez-vous avec les meilleures entreprises', it: 'Connettiti con le migliori aziende', es: 'Conecta con las mejores empresas', zh: '与顶尖公司联系', ja: 'トップ企業とつながる', ar: 'تواصل مع أفضل الشركات' },
   
   // Swipe
+  'swipe.selectCategory': { 
+    en: 'Select Artist Category', 
+    fr: 'Sélectionner une Catégorie d\'Artiste', 
+    it: 'Seleziona Categoria Artista', 
+    es: 'Seleccionar Categoría de Artista', 
+    zh: '选择艺术家类别', 
+    ja: 'アーティストカテゴリーを選択', 
+    ar: 'اختر فئة الفنان' 
+  },
+  'swipe.selectSubtitle': { 
+    en: 'What kind of artists are you looking for?', 
+    fr: 'Quel type d\'artistes recherchez-vous ?', 
+    it: 'Che tipo di artisti stai cercando?', 
+    es: '¿Qué tipo de artistas estás buscando?', 
+    zh: '您在寻找什么类型的艺术家？', 
+    ja: 'どのようなアーティストをお探しですか？', 
+    ar: 'ما نوع الفنانين الذين تبحث عنهم؟' 
+  },
+  'swipe.allArtists': { 
+    en: 'All Artists', 
+    fr: 'Tous les Artistes', 
+    it: 'Tutti gli Artisti', 
+    es: 'Todos los Artistas', 
+    zh: '所有艺术家', 
+    ja: '全アーティスト', 
+    ar: 'جميع الفنانين' 
+  },
+  'swipe.allArtistsDesc': { 
+    en: 'Swipe through all creative professionals', 
+    fr: 'Parcourir tous les professionnels créatifs', 
+    it: 'Scorri tutti i professionisti creativi', 
+    es: 'Desliza por todos los profesionales creativos', 
+    zh: '浏览所有创意专业人士', 
+    ja: 'すべてのクリエイティブプロフェッショナルをスワイプ', 
+    ar: 'تصفح جميع المحترفين المبدعين' 
+  },
   'swipe.interested': { en: 'Interested', fr: 'Intéressé', it: 'Interessato', es: 'Interesado', zh: '感兴趣', ja: '興味あり', ar: 'مهتم' },
   'swipe.pass': { en: 'Pass', fr: 'Passer', it: 'Passa', es: 'Pasar', zh: '跳过', ja: 'パス', ar: 'تخطي' },
   'swipe.requirements': { en: 'Requirements', fr: 'Exigences', it: 'Requisiti', es: 'Requisitos', zh: '要求', ja: '要件', ar: 'المتطلبات' },
