@@ -13,6 +13,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { ArtistPreviewModal } from "@/components/ArtistPreviewModal";
 import demoArtist1 from "@/assets/demo-artist-1.jpg";
 import demoArtist2 from "@/assets/demo-artist-2.jpg";
 import demoArtist3 from "@/assets/demo-artist-3.jpg";
@@ -34,10 +35,22 @@ export const ArtistOfTheMonth = () => {
   const navigate = useNavigate();
   const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedArtist, setSelectedArtist] = useState<TopArtist | null>(null);
+  const [selectedRank, setSelectedRank] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     fetchTopArtists();
   }, []);
+
+  const handleArtistClick = (artist: TopArtist, rank: number) => {
+    setSelectedArtist(artist);
+    setSelectedRank(rank);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedArtist(null);
+    setSelectedRank(undefined);
+  };
 
   const fetchTopArtists = async () => {
     try {
@@ -218,7 +231,10 @@ export const ArtistOfTheMonth = () => {
         <CarouselContent>
           {topArtists.map((artist, index) => (
             <CarouselItem key={artist.id} className="md:basis-1/2 lg:basis-1/3">
-              <div className="bg-card border border-border rounded-2xl p-6 hover:shadow-card-hover transition-all hover:scale-105 shadow-card relative">
+              <div 
+                className="bg-card border border-border rounded-2xl p-6 hover:shadow-card-hover transition-all hover:scale-105 shadow-card relative cursor-pointer"
+                onClick={() => handleArtistClick(artist, index)}
+              >
                 {getRankBadge(index)}
                 
                 {/* Artist Header */}
@@ -261,14 +277,10 @@ export const ArtistOfTheMonth = () => {
                   </div>
                 )}
 
-                {/* View Profile Button */}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => navigate(`/profile/${artist.id}`)}
-                >
-                  {t('home.viewProfile')}
-                </Button>
+                {/* Quick View Hint */}
+                <p className="text-center text-xs text-muted-foreground">
+                  Click to preview
+                </p>
               </div>
             </CarouselItem>
           ))}
@@ -276,6 +288,16 @@ export const ArtistOfTheMonth = () => {
         <CarouselPrevious className="-left-4" />
         <CarouselNext className="-right-4" />
       </Carousel>
+
+      {/* Artist Preview Modal */}
+      {selectedArtist && (
+        <ArtistPreviewModal
+          isOpen={!!selectedArtist}
+          onClose={handleCloseModal}
+          artist={selectedArtist}
+          rank={selectedRank}
+        />
+      )}
     </div>
   );
 };
