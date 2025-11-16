@@ -119,9 +119,9 @@ const Swipe = () => {
 
   const handleCategorySelect = (categoryId: string | null) => {
     if (categoryId) {
-      navigate(`/swipe?category=${categoryId}`);
+      navigate(`/find?category=${categoryId}`);
     } else {
-      navigate('/swipe');
+      navigate('/find');
     }
   };
 

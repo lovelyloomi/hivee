@@ -60,7 +60,7 @@ const Index = () => {
             ) : (
               <Button
                 size="lg"
-                onClick={() => navigate("/swipe")}
+                onClick={() => navigate("/find")}
                 className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group"
               >
                 Start Swiping

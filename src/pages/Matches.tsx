@@ -309,7 +309,7 @@ const Matches = () => {
             <p className="text-muted-foreground mb-6">
               Start swiping to find artists you'd love to work with!
             </p>
-            <Button onClick={() => navigate('/swipe')} className="bg-gradient-primary text-white hover:opacity-90">
+            <Button onClick={() => navigate('/find')} className="bg-gradient-primary text-white hover:opacity-90">
               Start Swiping
             </Button>
           </Card>
