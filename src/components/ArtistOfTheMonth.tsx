@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Flame } from "lucide-react";
+import { Flame, Medal } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -13,6 +13,12 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import demoArtist1 from "@/assets/demo-artist-1.jpg";
+import demoArtist2 from "@/assets/demo-artist-2.jpg";
+import demoArtist3 from "@/assets/demo-artist-3.jpg";
+import demoWork1 from "@/assets/demo-work-1.jpg";
+import demoWork2 from "@/assets/demo-work-2.jpg";
+import demoWork3 from "@/assets/demo-work-3.jpg";
 
 interface TopArtist {
   id: string;
@@ -104,12 +110,86 @@ export const ArtistOfTheMonth = () => {
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
-      setTopArtists(topFive);
+      // If no real artists, use demo data
+      if (topFive.length === 0) {
+        setTopArtists([
+          {
+            id: 'demo-1',
+            full_name: 'Alex Rivera',
+            avatar_url: demoArtist1,
+            skills: ['Digital Art', 'Illustration'],
+            total_likes: 342,
+            recent_works: [demoWork1, demoWork2, demoWork3],
+          },
+          {
+            id: 'demo-2',
+            full_name: 'Jordan Chen',
+            avatar_url: demoArtist2,
+            skills: ['3D Modeling', 'Animation'],
+            total_likes: 287,
+            recent_works: [demoWork2, demoWork3, demoWork1],
+          },
+          {
+            id: 'demo-3',
+            full_name: 'Sam Taylor',
+            avatar_url: demoArtist3,
+            skills: ['Character Design', 'Concept Art'],
+            total_likes: 215,
+            recent_works: [demoWork3, demoWork1, demoWork2],
+          },
+        ]);
+      } else {
+        setTopArtists(topFive);
+      }
     } catch (error) {
       console.error('Error fetching top artists:', error);
+      // Fallback to demo data on error
+      setTopArtists([
+        {
+          id: 'demo-1',
+          full_name: 'Alex Rivera',
+          avatar_url: demoArtist1,
+          skills: ['Digital Art', 'Illustration'],
+          total_likes: 342,
+          recent_works: [demoWork1, demoWork2, demoWork3],
+        },
+        {
+          id: 'demo-2',
+          full_name: 'Jordan Chen',
+          avatar_url: demoArtist2,
+          skills: ['3D Modeling', 'Animation'],
+          total_likes: 287,
+          recent_works: [demoWork2, demoWork3, demoWork1],
+        },
+        {
+          id: 'demo-3',
+          full_name: 'Sam Taylor',
+          avatar_url: demoArtist3,
+          skills: ['Character Design', 'Concept Art'],
+          total_likes: 215,
+          recent_works: [demoWork3, demoWork1, demoWork2],
+        },
+      ]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getRankBadge = (index: number) => {
+    const badges = [
+      { color: 'text-yellow-500', label: '1st' },
+      { color: 'text-gray-400', label: '2nd' },
+      { color: 'text-amber-700', label: '3rd' },
+    ];
+    
+    if (index < 3) {
+      return (
+        <div className={`absolute -top-2 -right-2 ${badges[index].color} bg-background rounded-full p-2 shadow-lg border-2 border-current`}>
+          <Medal className="w-6 h-6" fill="currentColor" />
+        </div>
+      );
+    }
+    return null;
   };
 
   if (loading || topArtists.length === 0) {
@@ -136,9 +216,11 @@ export const ArtistOfTheMonth = () => {
         className="w-full"
       >
         <CarouselContent>
-          {topArtists.map((artist) => (
+          {topArtists.map((artist, index) => (
             <CarouselItem key={artist.id} className="md:basis-1/2 lg:basis-1/3">
-              <div className="bg-card border border-border rounded-2xl p-6 hover:shadow-card-hover transition-all hover:scale-105 shadow-card">
+              <div className="bg-card border border-border rounded-2xl p-6 hover:shadow-card-hover transition-all hover:scale-105 shadow-card relative">
+                {getRankBadge(index)}
+                
                 {/* Artist Header */}
                 <div className="flex items-center gap-4 mb-4">
                   <Avatar className="h-16 w-16 ring-2 ring-primary/20">
