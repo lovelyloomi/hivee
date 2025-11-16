@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/NavLink";
-import { Search, Image, Heart, Briefcase, Home } from "lucide-react";
+import { Compass, Image, Heart, Briefcase, Home } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const BottomNav = () => {
@@ -14,7 +14,7 @@ const BottomNav = () => {
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground"
             activeClassName="text-primary bg-primary/10"
           >
-            <Search className="h-6 w-6" />
+            <Compass className="h-6 w-6" />
             <span className="text-xs font-medium">Looking For</span>
           </NavLink>
 
