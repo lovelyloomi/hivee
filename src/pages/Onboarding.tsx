@@ -116,6 +116,7 @@ const Onboarding = () => {
           watermark_text: watermarkText || null,
           watermark_url: watermarkStorageUrl || null,
           work_images: uploadedImageUrls,
+          birth_date: user.user_metadata?.birth_date || null,
           profile_completed: true,
         })
         .eq('id', user.id);

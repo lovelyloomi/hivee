@@ -15,6 +15,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -53,7 +54,28 @@ const Auth = () => {
           setLoading(false);
           return;
         }
-        const { error } = await signUp(email, password, fullName);
+        if (!birthDate) {
+          toast({
+            title: "Birth date required",
+            description: "Please enter your birth date",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+        // Check if user is at least 13 years old
+        const birthDateObj = new Date(birthDate);
+        const age = Math.floor((new Date().getTime() - birthDateObj.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        if (age < 13) {
+          toast({
+            title: "Age requirement",
+            description: "You must be at least 13 years old to sign up",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+        const { error } = await signUp(email, password, fullName, birthDate);
         if (error) {
           toast({
             title: "Error signing up",
@@ -91,19 +113,34 @@ const Auth = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-2">
-                  Full Name
-                </label>
-                <Input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="John Doe"
-                  required={!isLogin}
-                  className="bg-background border-border text-foreground"
-                />
-              </div>
+              <>
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-2">
+                    Full Name
+                  </label>
+                  <Input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="John Doe"
+                    required={!isLogin}
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-2">
+                    Birth Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    required={!isLogin}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+              </>
             )}
             
             <div>

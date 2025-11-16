@@ -451,6 +451,7 @@ export type Database = {
           account_type: Database["public"]["Enums"]["account_type"] | null
           avatar_url: string | null
           bio: string | null
+          birth_date: string | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -476,6 +477,7 @@ export type Database = {
           account_type?: Database["public"]["Enums"]["account_type"] | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -501,6 +503,7 @@ export type Database = {
           account_type?: Database["public"]["Enums"]["account_type"] | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -752,6 +755,7 @@ export type Database = {
           hashtags: string[] | null
           id: string
           made_with_ai: boolean
+          nsfw: boolean
           title: string
           updated_at: string
           user_id: string
@@ -767,6 +771,7 @@ export type Database = {
           hashtags?: string[] | null
           id?: string
           made_with_ai?: boolean
+          nsfw?: boolean
           title: string
           updated_at?: string
           user_id: string
@@ -782,6 +787,7 @@ export type Database = {
           hashtags?: string[] | null
           id?: string
           made_with_ai?: boolean
+          nsfw?: boolean
           title?: string
           updated_at?: string
           user_id?: string
@@ -812,6 +818,7 @@ export type Database = {
         Args: { user1: string; user2: string }
         Returns: number
       }
+      is_user_adult: { Args: { user_birth_date: string }; Returns: boolean }
     }
     Enums: {
       account_type:
