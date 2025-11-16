@@ -19,7 +19,6 @@ import { applyWatermark } from "@/utils/watermark";
 import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { calculateDistance, formatDistance } from "@/utils/distance";
-
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -29,10 +28,13 @@ type Work = Database['public']['Tables']['works']['Row'] & {
     location_enabled: boolean | null;
   } | null;
 };
-
 export default function Works() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const {
+    user
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const [works, setWorks] = useState<Work[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,7 +42,10 @@ export default function Works() {
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStyle, setFilterStyle] = useState<string>("all");
   const [showAIWorks, setShowAIWorks] = useState<boolean>(true);
@@ -51,16 +56,17 @@ export default function Works() {
     work_type: "",
     work_style: "",
     made_with_ai: false,
-    nsfw: false,
+    nsfw: false
   });
-
   const [showNSFW, setShowNSFW] = useState(false);
   const [selectedNSFWWork, setSelectedNSFWWork] = useState<string | null>(null);
   const [userAge, setUserAge] = useState<number | null>(null);
-  const [trendingHashtags, setTrendingHashtags] = useState<{ tag: string; count: number }[]>([]);
+  const [trendingHashtags, setTrendingHashtags] = useState<{
+    tag: string;
+    count: number;
+  }[]>([]);
   const [reportWorkId, setReportWorkId] = useState<string | null>(null);
   const [reportWorkOwnerId, setReportWorkOwnerId] = useState<string | null>(null);
-
   useEffect(() => {
     fetchWorks();
     fetchTrendingHashtags();
@@ -70,62 +76,45 @@ export default function Works() {
       fetchUserAge();
     }
   }, [user]);
-
   const fetchUserAge = async () => {
     if (!user) return;
-    
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("birth_date")
-      .eq("id", user.id)
-      .single();
-    
+    const {
+      data: profile
+    } = await supabase.from("profiles").select("birth_date").eq("id", user.id).single();
     if (profile?.birth_date) {
       const birthDate = new Date(profile.birth_date);
       const age = Math.floor((new Date().getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
       setUserAge(age);
     }
   };
-
   const fetchUserLocation = async () => {
     if (!user) return;
-
-    const { data } = await supabase
-      .from('profiles')
-      .select('latitude, longitude')
-      .eq('id', user.id)
-      .single();
-
+    const {
+      data
+    } = await supabase.from('profiles').select('latitude, longitude').eq('id', user.id).single();
     if (data?.latitude && data?.longitude) {
-      setUserLocation({ latitude: data.latitude, longitude: data.longitude });
+      setUserLocation({
+        latitude: data.latitude,
+        longitude: data.longitude
+      });
     }
   };
-
   const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel('works-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'works',
-        },
-        () => {
-          fetchWorks();
-        }
-      )
-      .subscribe();
-
+    const channel = supabase.channel('works-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'works'
+    }, () => {
+      fetchWorks();
+    }).subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   };
-
   const fetchWorks = async () => {
-    const { data } = await supabase
-      .from('works')
-      .select(`
+    const {
+      data
+    } = await supabase.from('works').select(`
         *,
         profiles:user_id (
           full_name,
@@ -134,65 +123,46 @@ export default function Works() {
           longitude,
           location_enabled
         )
-      `)
-      .order('created_at', { ascending: false });
-
+      `).order('created_at', {
+      ascending: false
+    });
     if (data) setWorks(data as Work[]);
   };
-
   const fetchTrendingHashtags = async () => {
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
-    const { data } = await supabase
-      .from('works')
-      .select('hashtags')
-      .gte('created_at', twentyFourHoursAgo.toISOString());
-
+    const {
+      data
+    } = await supabase.from('works').select('hashtags').gte('created_at', twentyFourHoursAgo.toISOString());
     if (data) {
-      const hashtagCount: { [key: string]: number } = {};
+      const hashtagCount: {
+        [key: string]: number;
+      } = {};
       data.forEach(work => {
         (work.hashtags || []).forEach(tag => {
           hashtagCount[tag] = (hashtagCount[tag] || 0) + 1;
         });
       });
-
-      const sorted = Object.entries(hashtagCount)
-        .map(([tag, count]) => ({ tag, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
-
+      const sorted = Object.entries(hashtagCount).map(([tag, count]) => ({
+        tag,
+        count
+      })).sort((a, b) => b.count - a.count).slice(0, 10);
       setTrendingHashtags(sorted);
     }
   };
-
-  const allHashtags = Array.from(
-    new Set(works.flatMap(work => work.hashtags || []))
-  );
-
+  const allHashtags = Array.from(new Set(works.flatMap(work => work.hashtags || [])));
   const filteredWorks = works.filter(work => {
-    const matchesSearch = 
-      work.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      work.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (work.hashtags || []).some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesHashtags = selectedHashtags.length === 0 ||
-      selectedHashtags.every(selectedTag => (work.hashtags || []).includes(selectedTag));
-    
+    const matchesSearch = work.title?.toLowerCase().includes(searchQuery.toLowerCase()) || work.description?.toLowerCase().includes(searchQuery.toLowerCase()) || (work.hashtags || []).some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesHashtags = selectedHashtags.length === 0 || selectedHashtags.every(selectedTag => (work.hashtags || []).includes(selectedTag));
     const matchesType = filterType === "all" || work.work_type === filterType;
     const matchesStyle = filterStyle === "all" || work.work_style === filterStyle;
     const matchesAI = showAIWorks || !work.made_with_ai;
     const matchesNSFW = showNSFW || !work.nsfw;
-    
     return matchesSearch && matchesHashtags && matchesType && matchesStyle && matchesAI && matchesNSFW;
   });
-
   const toggleHashtag = (tag: string) => {
-    setSelectedHashtags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
+    setSelectedHashtags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   };
-
   const getFileType = (file: File): Database['public']['Enums']['work_file_type'] => {
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return 'image';
@@ -201,132 +171,123 @@ export default function Works() {
     if (ext === 'fbx') return 'model_3d';
     return 'image';
   };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       // Video max 60s check would require video loading, skip for now
       const maxSize = 50 * 1024 * 1024; // 50MB
       if (selectedFile.size > maxSize) {
-        toast({ title: 'File too large', description: 'Maximum file size is 50MB', variant: 'destructive' });
+        toast({
+          title: 'File too large',
+          description: 'Maximum file size is 50MB',
+          variant: 'destructive'
+        });
         return;
       }
       setFile(selectedFile);
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!user || !file || !newWork.title || !newWork.work_type || !newWork.work_style) {
-      toast({ title: 'Please fill all required fields (title, type, style)', variant: 'destructive' });
+      toast({
+        title: 'Please fill all required fields (title, type, style)',
+        variant: 'destructive'
+      });
       return;
     }
-
     if (newWork.nsfw && (!userAge || userAge < 18)) {
       toast({
         title: "Age Restriction",
         description: "You must be 18+ to upload NSFW content",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setUploading(true);
-
     try {
       const fileType = getFileType(file);
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
       let fileToUpload = file;
 
       // Apply watermark to images
       if (fileType === 'image') {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('watermark_text, watermark_url')
-          .eq('id', user.id)
-          .single();
-
+        const {
+          data: profile
+        } = await supabase.from('profiles').select('watermark_text, watermark_url').eq('id', user.id).single();
         if (profile?.watermark_text || profile?.watermark_url) {
-          const watermarkedBlob = await applyWatermark(
-            file,
-            profile.watermark_text || '',
-            profile.watermark_url || undefined
-          );
-          fileToUpload = new File([watermarkedBlob], file.name, { type: file.type });
+          const watermarkedBlob = await applyWatermark(file, profile.watermark_text || '', profile.watermark_url || undefined);
+          fileToUpload = new File([watermarkedBlob], file.name, {
+            type: file.type
+          });
         }
       }
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('works')
-        .upload(fileName, fileToUpload);
-
+      const {
+        data: uploadData,
+        error: uploadError
+      } = await supabase.storage.from('works').upload(fileName, fileToUpload);
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('works')
-        .getPublicUrl(fileName);
-
-      const hashtags = newWork.hashtags
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag);
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('watermark_url')
-        .eq('id', user.id)
-        .single();
-
-      const { error: insertError } = await supabase
-        .from('works')
-        .insert({
-          user_id: user.id,
-          title: newWork.title,
-          description: newWork.description,
-          file_url: publicUrl,
-          file_type: fileType,
-          watermark_url: profile?.watermark_url,
-          hashtags,
+      const {
+        data: {
+          publicUrl
+        }
+      } = supabase.storage.from('works').getPublicUrl(fileName);
+      const hashtags = newWork.hashtags.split(',').map(tag => tag.trim()).filter(tag => tag);
+      const {
+        data: profile
+      } = await supabase.from('profiles').select('watermark_url').eq('id', user.id).single();
+      const {
+        error: insertError
+      } = await supabase.from('works').insert({
+        user_id: user.id,
+        title: newWork.title,
+        description: newWork.description,
+        file_url: publicUrl,
+        file_type: fileType,
+        watermark_url: profile?.watermark_url,
+        hashtags,
         work_type: newWork.work_type,
         work_style: newWork.work_style,
         made_with_ai: newWork.made_with_ai,
-        nsfw: newWork.nsfw,
+        nsfw: newWork.nsfw
       });
-
       if (insertError) throw insertError;
-
-      toast({ title: 'Work uploaded successfully!' });
-      setNewWork({ title: "", description: "", hashtags: "", work_type: "", work_style: "", made_with_ai: false, nsfw: false });
+      toast({
+        title: 'Work uploaded successfully!'
+      });
+      setNewWork({
+        title: "",
+        description: "",
+        hashtags: "",
+        work_type: "",
+        work_style: "",
+        made_with_ai: false,
+        nsfw: false
+      });
       setFile(null);
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Upload error:', error);
-      toast({ title: 'Upload failed', variant: 'destructive' });
+      toast({
+        title: 'Upload failed',
+        variant: 'destructive'
+      });
     } finally {
       setUploading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen bg-background pb-20">
+  return <div className="min-h-screen bg-background pb-20">
       <Header />
 
       <main className="container mx-auto px-4 py-8 pt-24">
-        <h1 className="text-3xl font-bold text-foreground mb-6">Works</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-6">Gallery</h1>
 
         <div className="space-y-4 mb-6">
           <div className="flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search works..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Search works..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
             </div>
           
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -343,36 +304,24 @@ export default function Works() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <Label htmlFor="file">File (JPG, PNG, PDF, FBX, Video)</Label>
-                    <Input
-                      id="file"
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm"
-                      onChange={handleFileChange}
-                      required
-                    />
-                    {file && (
-                      <p className="text-sm text-muted-foreground mt-1">
+                    <Input id="file" type="file" accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm" onChange={handleFileChange} required />
+                    {file && <p className="text-sm text-muted-foreground mt-1">
                         Selected: {file.name}
-                      </p>
-                    )}
+                      </p>}
                   </div>
                   <div>
                     <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      placeholder="Work title"
-                      value={newWork.title}
-                      onChange={(e) => setNewWork({ ...newWork, title: e.target.value })}
-                      required
-                    />
+                    <Input id="title" placeholder="Work title" value={newWork.title} onChange={e => setNewWork({
+                    ...newWork,
+                    title: e.target.value
+                  })} required />
                   </div>
                   <div>
                     <Label htmlFor="work_type">Type *</Label>
-                    <Select 
-                      value={newWork.work_type} 
-                      onValueChange={(value) => setNewWork({ ...newWork, work_type: value })}
-                      required
-                    >
+                    <Select value={newWork.work_type} onValueChange={value => setNewWork({
+                    ...newWork,
+                    work_type: value
+                  })} required>
                       <SelectTrigger>
                         <SelectValue placeholder="Select work type" />
                       </SelectTrigger>
@@ -391,11 +340,10 @@ export default function Works() {
                   </div>
                   <div>
                     <Label htmlFor="work_style">Style *</Label>
-                    <Select 
-                      value={newWork.work_style} 
-                      onValueChange={(value) => setNewWork({ ...newWork, work_style: value })}
-                      required
-                    >
+                    <Select value={newWork.work_style} onValueChange={value => setNewWork({
+                    ...newWork,
+                    work_style: value
+                  })} required>
                       <SelectTrigger>
                         <SelectValue placeholder="Select style" />
                       </SelectTrigger>
@@ -414,21 +362,19 @@ export default function Works() {
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
-                      <Checkbox
-                        id="made_with_ai"
-                        checked={newWork.made_with_ai}
-                        onCheckedChange={(checked) => setNewWork({ ...newWork, made_with_ai: checked as boolean })}
-                      />
+                      <Checkbox id="made_with_ai" checked={newWork.made_with_ai} onCheckedChange={checked => setNewWork({
+                      ...newWork,
+                      made_with_ai: checked as boolean
+                    })} />
                       <Label htmlFor="made_with_ai" className="cursor-pointer font-medium">
                         Made with AI *
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
-                      <Checkbox
-                        id="nsfw"
-                        checked={newWork.nsfw}
-                        onCheckedChange={(checked) => setNewWork({ ...newWork, nsfw: checked as boolean })}
-                      />
+                      <Checkbox id="nsfw" checked={newWork.nsfw} onCheckedChange={checked => setNewWork({
+                      ...newWork,
+                      nsfw: checked as boolean
+                    })} />
                       <Label htmlFor="nsfw" className="cursor-pointer font-medium">
                         NSFW (18+ content) *
                       </Label>
@@ -436,37 +382,29 @@ export default function Works() {
                   </div>
                   <div>
                     <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Describe your work..."
-                      value={newWork.description}
-                      onChange={(e) => setNewWork({ ...newWork, description: e.target.value })}
-                    />
+                    <Textarea id="description" placeholder="Describe your work..." value={newWork.description} onChange={e => setNewWork({
+                    ...newWork,
+                    description: e.target.value
+                  })} />
                   </div>
                   <div>
                     <Label htmlFor="hashtags">Hashtags (max 5)</Label>
-                    <Input
-                      id="hashtags"
-                      placeholder="digitalart, 3d, animation (comma separated)"
-                      value={newWork.hashtags}
-                      onChange={(e) => setNewWork({ ...newWork, hashtags: e.target.value })}
-                    />
+                    <Input id="hashtags" placeholder="digitalart, 3d, animation (comma separated)" value={newWork.hashtags} onChange={e => setNewWork({
+                    ...newWork,
+                    hashtags: e.target.value
+                  })} />
                     <p className="text-xs text-muted-foreground mt-1">
                       Separate with commas, max 5 hashtags
                     </p>
                   </div>
                   <Button type="submit" className="w-full" disabled={uploading}>
-                    {uploading ? (
-                      <>
+                    {uploading ? <>
                         <Upload className="w-4 h-4 mr-2 animate-spin" />
                         Uploading...
-                      </>
-                    ) : (
-                      <>
+                      </> : <>
                         <Upload className="w-4 h-4 mr-2" />
                         Upload
-                      </>
-                    )}
+                      </>}
                   </Button>
                 </form>
               </DialogContent>
@@ -474,23 +412,17 @@ export default function Works() {
           </div>
 
           {/* Trending Hashtags Section */}
-          {trendingHashtags.length > 0 && (
-            <div className="bg-card border border-border rounded-lg p-4">
+          {trendingHashtags.length > 0 && <div className="bg-card border border-border rounded-lg p-4">
               <h3 className="text-sm font-semibold mb-3 text-foreground">🔥 Trending in Last 24h</h3>
               <div className="flex flex-wrap gap-2">
-                {trendingHashtags.map(({ tag, count }) => (
-                  <Badge
-                    key={tag}
-                    variant={selectedHashtags.includes(tag) ? "default" : "secondary"}
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => toggleHashtag(tag)}
-                  >
+                {trendingHashtags.map(({
+              tag,
+              count
+            }) => <Badge key={tag} variant={selectedHashtags.includes(tag) ? "default" : "secondary"} className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => toggleHashtag(tag)}>
                     #{tag} <span className="ml-1 text-xs opacity-70">({count})</span>
-                  </Badge>
-                ))}
+                  </Badge>)}
               </div>
-            </div>
-          )}
+            </div>}
 
           {/* Filter Controls */}
           <div className="flex flex-wrap gap-3 items-center">
@@ -530,23 +462,14 @@ export default function Works() {
             </Select>
 
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="show_ai"
-                checked={showAIWorks}
-                onCheckedChange={(checked) => setShowAIWorks(checked as boolean)}
-              />
+              <Checkbox id="show_ai" checked={showAIWorks} onCheckedChange={checked => setShowAIWorks(checked as boolean)} />
               <Label htmlFor="show_ai" className="cursor-pointer text-sm">
                 Show AI Works
               </Label>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="show_nsfw"
-                checked={showNSFW}
-                onCheckedChange={(checked) => setShowNSFW(checked as boolean)}
-                disabled={!userAge || userAge < 18}
-              />
+              <Checkbox id="show_nsfw" checked={showNSFW} onCheckedChange={checked => setShowNSFW(checked as boolean)} disabled={!userAge || userAge < 18} />
               <Label htmlFor="show_nsfw" className="cursor-pointer text-sm">
                 Show NSFW {(!userAge || userAge < 18) && "(18+ only)"}
               </Label>
@@ -556,157 +479,87 @@ export default function Works() {
 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredWorks.map((work) => {
-            const isNSFWBlurred = work.nsfw && selectedNSFWWork !== work.id;
-            
-            return (
-            <Card
-              key={work.id}
-              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => {
-                if (work.nsfw && (!userAge || userAge < 18)) {
-                  toast({
-                    title: "Age Restriction",
-                    description: "You must be 18+ to view NSFW content",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-                if (isNSFWBlurred) {
-                  setSelectedNSFWWork(work.id);
-                  return;
-                }
-                setSelectedWork(work);
-              }}
-            >
+          {filteredWorks.map(work => {
+          const isNSFWBlurred = work.nsfw && selectedNSFWWork !== work.id;
+          return <Card key={work.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => {
+            if (work.nsfw && (!userAge || userAge < 18)) {
+              toast({
+                title: "Age Restriction",
+                description: "You must be 18+ to view NSFW content",
+                variant: "destructive"
+              });
+              return;
+            }
+            if (isNSFWBlurred) {
+              setSelectedNSFWWork(work.id);
+              return;
+            }
+            setSelectedWork(work);
+          }}>
               <div className="relative aspect-square overflow-hidden bg-muted">
-                {work.file_type === 'image' ? (
-                  <div className="relative w-full h-full">
-                    <img
-                      src={work.file_url}
-                      alt={work.title}
-                      className={`w-full h-full object-cover ${isNSFWBlurred ? "blur-2xl" : ""}`}
-                    />
-                    {isNSFWBlurred && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                {work.file_type === 'image' ? <div className="relative w-full h-full">
+                    <img src={work.file_url} alt={work.title} className={`w-full h-full object-cover ${isNSFWBlurred ? "blur-2xl" : ""}`} />
+                    {isNSFWBlurred && <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                         <span className="text-white font-bold text-lg">18+ NSFW</span>
-                      </div>
-                    )}
-                    {work.watermark_url && !isNSFWBlurred && (
-                      <img
-                        src={work.watermark_url}
-                        alt="Watermark"
-                        className="absolute bottom-2 right-2 w-16 h-auto opacity-50"
-                      />
-                    )}
-                  </div>
-                ) : work.file_type === 'video' ? (
-                  <video
-                    src={work.file_url}
-                    className="w-full h-full object-cover"
-                    muted
-                  />
-                ) : work.file_type === 'pdf' ? (
-                  <div className="w-full h-full flex items-center justify-center bg-muted">
+                      </div>}
+                    {work.watermark_url && !isNSFWBlurred && <img src={work.watermark_url} alt="Watermark" className="absolute bottom-2 right-2 w-16 h-auto opacity-50" />}
+                  </div> : work.file_type === 'video' ? <video src={work.file_url} className="w-full h-full object-cover" muted /> : work.file_type === 'pdf' ? <div className="w-full h-full flex items-center justify-center bg-muted">
                     <span className="text-4xl">📄</span>
-                  </div>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-muted">
+                  </div> : <div className="w-full h-full flex items-center justify-center bg-muted">
                     <span className="text-4xl">🎨</span>
-                  </div>
-                )}
+                  </div>}
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between mb-1">
                   <h3 className="font-semibold flex-1">{work.title}</h3>
-                  {!work.nsfw && work.user_id !== user?.id && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 ml-2 text-muted-foreground hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setReportWorkId(work.id);
-                        setReportWorkOwnerId(work.user_id);
-                      }}
-                    >
+                  {!work.nsfw && work.user_id !== user?.id && <Button variant="ghost" size="sm" className="h-8 w-8 p-0 ml-2 text-muted-foreground hover:text-destructive" onClick={e => {
+                  e.stopPropagation();
+                  setReportWorkId(work.id);
+                  setReportWorkOwnerId(work.user_id);
+                }}>
                       <Flag className="h-4 w-4" />
-                    </Button>
-                  )}
+                    </Button>}
                 </div>
                 <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                   {work.description}
                 </p>
                 <p className="text-xs text-muted-foreground mb-3 flex items-center gap-2 flex-wrap">
                   <span>by {work.profiles?.full_name || 'Unknown Artist'}</span>
-                  {userLocation && work.profiles?.latitude && work.profiles?.longitude && work.profiles?.location_enabled && (
-                    <>
+                  {userLocation && work.profiles?.latitude && work.profiles?.longitude && work.profiles?.location_enabled && <>
                       <span>•</span>
                       <span className="inline-flex items-center gap-1 text-primary font-medium">
                         <MapPin className="h-3 w-3" />
-                        {formatDistance(
-                          calculateDistance(
-                            userLocation.latitude,
-                            userLocation.longitude,
-                            work.profiles.latitude,
-                            work.profiles.longitude
-                          )
-                        )} away
+                        {formatDistance(calculateDistance(userLocation.latitude, userLocation.longitude, work.profiles.latitude, work.profiles.longitude))} away
                       </span>
-                    </>
-                  )}
+                    </>}
                 </p>
-                {work.hashtags && work.hashtags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {work.hashtags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
+                {work.hashtags && work.hashtags.length > 0 && <div className="flex flex-wrap gap-1">
+                    {work.hashtags.slice(0, 3).map(tag => <Badge key={tag} variant="secondary" className="text-xs">
                         #{tag}
-                      </Badge>
-                    ))}
-                    {work.hashtags.length > 3 && (
-                      <Badge variant="secondary" className="text-xs">
+                      </Badge>)}
+                    {work.hashtags.length > 3 && <Badge variant="secondary" className="text-xs">
                         +{work.hashtags.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-                )}
+                      </Badge>}
+                  </div>}
               </div>
-            </Card>
-            );
-          })}
+            </Card>;
+        })}
         </div>
 
-        {filteredWorks.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
+        {filteredWorks.length === 0 && <div className="text-center py-12 text-muted-foreground">
             No works found. Try adjusting your search or filters.
-          </div>
-        )}
+          </div>}
       </main>
 
-      {selectedWork && (
-        <WorkDetailDialog
-          work={selectedWork}
-          open={!!selectedWork}
-          onOpenChange={(open) => !open && setSelectedWork(null)}
-          currentUserId={user?.id}
-        />
-      )}
+      {selectedWork && <WorkDetailDialog work={selectedWork} open={!!selectedWork} onOpenChange={open => !open && setSelectedWork(null)} currentUserId={user?.id} />}
 
-      {reportWorkId && reportWorkOwnerId && (
-        <ReportWorkDialog
-          open={!!reportWorkId}
-          onOpenChange={(open) => {
-            if (!open) {
-              setReportWorkId(null);
-              setReportWorkOwnerId(null);
-            }
-          }}
-          workId={reportWorkId}
-          workOwnerId={reportWorkOwnerId}
-        />
-      )}
+      {reportWorkId && reportWorkOwnerId && <ReportWorkDialog open={!!reportWorkId} onOpenChange={open => {
+      if (!open) {
+        setReportWorkId(null);
+        setReportWorkOwnerId(null);
+      }
+    }} workId={reportWorkId} workOwnerId={reportWorkOwnerId} />}
 
       <BottomNav />
-    </div>
-  );
+    </div>;
 }
