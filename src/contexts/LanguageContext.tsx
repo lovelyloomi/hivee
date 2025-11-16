@@ -141,6 +141,12 @@ const translations: Translations = {
   'nav.matches': { en: 'Matches', fr: 'Correspondances', it: 'Corrispondenze', es: 'Coincidencias', zh: '匹配', ja: 'マッチング', ar: 'التطابقات' },
   'nav.opportunities': { en: 'Opportunities', fr: 'Opportunités', it: 'Opportunità', es: 'Oportunidades', zh: '机会', ja: '機会', ar: 'الفرص' },
   
+  // Swipe filter translations
+  'swipe.or': { en: 'or', fr: 'ou', it: 'o', es: 'o', zh: '或', ja: 'または', ar: 'أو' },
+  'swipe.showFilters': { en: 'Show Filters', fr: 'Afficher les filtres', it: 'Mostra filtri', es: 'Mostrar filtros', zh: '显示过滤器', ja: 'フィルターを表示', ar: 'إظهار المرشحات' },
+  'swipe.hideFilters': { en: 'Hide Filters', fr: 'Masquer les filtres', it: 'Nascondi filtri', es: 'Ocultar filtros', zh: '隐藏过滤器', ja: 'フィルターを非表示', ar: 'إخفاء المرشحات' },
+  'swipe.maxDistance': { en: 'Maximum Distance', fr: 'Distance maximale', it: 'Distanza massima', es: 'Distancia máxima', zh: '最大距离', ja: '最大距離', ar: 'المسافة القصوى' },
+  
   // Common
   'common.back': { en: 'Back', fr: 'Retour', it: 'Indietro', es: 'Volver', zh: '返回', ja: '戻る', ar: 'رجوع' },
   'common.next': { en: 'Next', fr: 'Suivant', it: 'Avanti', es: 'Siguiente', zh: '下一步', ja: '次へ', ar: 'التالي' },
