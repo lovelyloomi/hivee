@@ -751,10 +751,13 @@ export type Database = {
           file_url: string
           hashtags: string[] | null
           id: string
+          made_with_ai: boolean
           title: string
           updated_at: string
           user_id: string
           watermark_url: string | null
+          work_style: string | null
+          work_type: string | null
         }
         Insert: {
           created_at?: string
@@ -763,10 +766,13 @@ export type Database = {
           file_url: string
           hashtags?: string[] | null
           id?: string
+          made_with_ai?: boolean
           title: string
           updated_at?: string
           user_id: string
           watermark_url?: string | null
+          work_style?: string | null
+          work_type?: string | null
         }
         Update: {
           created_at?: string
@@ -775,10 +781,13 @@ export type Database = {
           file_url?: string
           hashtags?: string[] | null
           id?: string
+          made_with_ai?: boolean
           title?: string
           updated_at?: string
           user_id?: string
           watermark_url?: string | null
+          work_style?: string | null
+          work_type?: string | null
         }
         Relationships: [
           {

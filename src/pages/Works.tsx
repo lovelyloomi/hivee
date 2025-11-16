@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Upload, MapPin } from "lucide-react";
+import { Plus, Search, Upload, MapPin, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import WorkDetailDialog from "@/components/WorkDetailDialog";
@@ -38,10 +40,16 @@ export default function Works() {
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterStyle, setFilterStyle] = useState<string>("all");
+  const [showAIWorks, setShowAIWorks] = useState<boolean>(true);
   const [newWork, setNewWork] = useState({
     title: "",
     description: "",
     hashtags: "",
+    work_type: "",
+    work_style: "",
+    made_with_ai: false,
   });
 
   useEffect(() => {
@@ -118,7 +126,11 @@ export default function Works() {
     const matchesHashtags = selectedHashtags.length === 0 ||
       selectedHashtags.every(selectedTag => (work.hashtags || []).includes(selectedTag));
     
-    return matchesSearch && matchesHashtags;
+    const matchesType = filterType === "all" || work.work_type === filterType;
+    const matchesStyle = filterStyle === "all" || work.work_style === filterStyle;
+    const matchesAI = showAIWorks || !work.made_with_ai;
+    
+    return matchesSearch && matchesHashtags && matchesType && matchesStyle && matchesAI;
   });
 
   const toggleHashtag = (tag: string) => {
@@ -152,8 +164,8 @@ export default function Works() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !file || !newWork.title) {
-      toast({ title: 'Please fill all required fields', variant: 'destructive' });
+    if (!user || !file || !newWork.title || !newWork.work_type || !newWork.work_style) {
+      toast({ title: 'Please fill all required fields (title, type, style)', variant: 'destructive' });
       return;
     }
 
@@ -215,12 +227,15 @@ export default function Works() {
           file_type: fileType,
           watermark_url: profile?.watermark_url,
           hashtags,
+          work_type: newWork.work_type,
+          work_style: newWork.work_style,
+          made_with_ai: newWork.made_with_ai,
         });
 
       if (insertError) throw insertError;
 
       toast({ title: 'Work uploaded successfully!' });
-      setNewWork({ title: "", description: "", hashtags: "" });
+      setNewWork({ title: "", description: "", hashtags: "", work_type: "", work_style: "", made_with_ai: false });
       setFile(null);
       setIsDialogOpen(false);
     } catch (error) {
@@ -238,91 +253,213 @@ export default function Works() {
       <main className="container mx-auto px-4 py-8 pt-24">
         <h1 className="text-3xl font-bold text-foreground mb-6">Works</h1>
 
-        <div className="flex gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search works..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+        <div className="space-y-4 mb-6">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search works..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="shadow-lg shrink-0">
-                <Plus className="w-5 h-5 mr-2" />
-                Upload
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Upload New Work</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="file">File (JPG, PNG, PDF, FBX, Video)</Label>
-                  <Input
-                    id="file"
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm"
-                    onChange={handleFileChange}
-                    required
-                  />
-                  {file && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Selected: {file.name}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    placeholder="Work title"
-                    value={newWork.title}
-                    onChange={(e) => setNewWork({ ...newWork, title: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe your work..."
-                    value={newWork.description}
-                    onChange={(e) => setNewWork({ ...newWork, description: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="hashtags">Hashtags (max 5)</Label>
-                  <Input
-                    id="hashtags"
-                    placeholder="digitalart, 3d, animation (comma separated)"
-                    value={newWork.hashtags}
-                    onChange={(e) => setNewWork({ ...newWork, hashtags: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Separate with commas, max 5 hashtags
-                  </p>
-                </div>
-                <Button type="submit" className="w-full" disabled={uploading}>
-                  {uploading ? (
-                    <>
-                      <Upload className="w-4 h-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload
-                    </>
-                  )}
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="shadow-lg shrink-0">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Upload
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Upload New Work</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="file">File (JPG, PNG, PDF, FBX, Video)</Label>
+                    <Input
+                      id="file"
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm"
+                      onChange={handleFileChange}
+                      required
+                    />
+                    {file && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Selected: {file.name}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      placeholder="Work title"
+                      value={newWork.title}
+                      onChange={(e) => setNewWork({ ...newWork, title: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="work_type">Type *</Label>
+                    <Select 
+                      value={newWork.work_type} 
+                      onValueChange={(value) => setNewWork({ ...newWork, work_type: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select work type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="3d">3D</SelectItem>
+                        <SelectItem value="2d">2D</SelectItem>
+                        <SelectItem value="photography">Photography</SelectItem>
+                        <SelectItem value="digital_painting">Digital Painting</SelectItem>
+                        <SelectItem value="illustration">Illustration</SelectItem>
+                        <SelectItem value="concept_art">Concept Art</SelectItem>
+                        <SelectItem value="animation">Animation</SelectItem>
+                        <SelectItem value="graphic_design">Graphic Design</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="work_style">Style *</Label>
+                    <Select 
+                      value={newWork.work_style} 
+                      onValueChange={(value) => setNewWork({ ...newWork, work_style: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="stylized">Stylized</SelectItem>
+                        <SelectItem value="realism">Realism</SelectItem>
+                        <SelectItem value="semi_realistic">Semi-Realistic</SelectItem>
+                        <SelectItem value="cartoonish">Cartoonish</SelectItem>
+                        <SelectItem value="vectorial">Vectorial</SelectItem>
+                        <SelectItem value="abstract">Abstract</SelectItem>
+                        <SelectItem value="minimalist">Minimalist</SelectItem>
+                        <SelectItem value="pixel_art">Pixel Art</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
+                    <Checkbox
+                      id="made_with_ai"
+                      checked={newWork.made_with_ai}
+                      onCheckedChange={(checked) => setNewWork({ ...newWork, made_with_ai: checked as boolean })}
+                    />
+                    <Label htmlFor="made_with_ai" className="cursor-pointer font-medium">
+                      Made with AI *
+                    </Label>
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Describe your work..."
+                      value={newWork.description}
+                      onChange={(e) => setNewWork({ ...newWork, description: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="hashtags">Hashtags (max 5)</Label>
+                    <Input
+                      id="hashtags"
+                      placeholder="digitalart, 3d, animation (comma separated)"
+                      value={newWork.hashtags}
+                      onChange={(e) => setNewWork({ ...newWork, hashtags: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Separate with commas, max 5 hashtags
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={uploading}>
+                    {uploading ? (
+                      <>
+                        <Upload className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Hashtags Section */}
+          {allHashtags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-muted-foreground self-center">Trending:</span>
+              {allHashtags.slice(0, 10).map((tag) => (
+                <Badge
+                  key={tag}
+                  variant={selectedHashtags.includes(tag) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => toggleHashtag(tag)}
+                >
+                  #{tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* Filter Controls */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="3d">3D</SelectItem>
+                <SelectItem value="2d">2D</SelectItem>
+                <SelectItem value="photography">Photography</SelectItem>
+                <SelectItem value="digital_painting">Digital Painting</SelectItem>
+                <SelectItem value="illustration">Illustration</SelectItem>
+                <SelectItem value="concept_art">Concept Art</SelectItem>
+                <SelectItem value="animation">Animation</SelectItem>
+                <SelectItem value="graphic_design">Graphic Design</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterStyle} onValueChange={setFilterStyle}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Styles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Styles</SelectItem>
+                <SelectItem value="stylized">Stylized</SelectItem>
+                <SelectItem value="realism">Realism</SelectItem>
+                <SelectItem value="semi_realistic">Semi-Realistic</SelectItem>
+                <SelectItem value="cartoonish">Cartoonish</SelectItem>
+                <SelectItem value="vectorial">Vectorial</SelectItem>
+                <SelectItem value="abstract">Abstract</SelectItem>
+                <SelectItem value="minimalist">Minimalist</SelectItem>
+                <SelectItem value="pixel_art">Pixel Art</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="show_ai"
+                checked={showAIWorks}
+                onCheckedChange={(checked) => setShowAIWorks(checked as boolean)}
+              />
+              <Label htmlFor="show_ai" className="cursor-pointer text-sm">
+                Show AI Works
+              </Label>
+            </div>
+          </div>
         </div>
 
         {allHashtags.length > 0 && (
