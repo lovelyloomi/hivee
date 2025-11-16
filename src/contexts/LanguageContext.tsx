@@ -97,55 +97,78 @@ const translations: Translations = {
   'swipe.complete.title': { en: 'All Done!', fr: 'Terminé !', it: 'Tutto Fatto!', es: '¡Completado!', zh: '全部完成！', ja: '完了！', ar: 'تم!' },
   'swipe.complete.desc': { en: "You've reviewed all available jobs. Check your matches!", fr: 'Vous avez consulté tous les emplois disponibles. Vérifiez vos correspondances !', it: 'Hai rivisto tutti i lavori disponibili. Controlla le tue corrispondenze!', es: '¡Has revisado todos los trabajos disponibles! ¡Revisa tus coincidencias!', zh: '您已浏览所有可用的工作。查看您的匹配！', ja: '利用可能なすべての仕事を確認しました。マッチングをチェック！', ar: 'لقد راجعت جميع الوظائف المتاحة. تحقق من تطابقاتك!' },
   'swipe.complete.cta': { en: 'View Matches', fr: 'Voir les Correspondances', it: 'Visualizza Corrispondenze', es: 'Ver Coincidencias', zh: '查看匹配', ja: 'マッチングを見る', ar: 'عرض التطابقات' },
-  
-  // Matches
-  'matches.title': { en: 'Your Matches', fr: 'Vos Correspondances', it: 'Le Tue Corrispondenze', es: 'Tus Coincidencias', zh: '您的匹配', ja: 'あなたのマッチング', ar: 'تطابقاتك' },
-  'matches.new': { en: 'New', fr: 'Nouveau', it: 'Nuovo', es: 'Nuevo', zh: '新', ja: '新規', ar: 'جديد' },
-  'matches.message': { en: 'Message', fr: 'Message', it: 'Messaggio', es: 'Mensaje', zh: '消息', ja: 'メッセージ', ar: 'رسالة' },
-  'matches.noMatches': { en: 'No matches yet', fr: 'Pas encore de correspondances', it: 'Nessuna corrispondenza ancora', es: 'Aún sin coincidencias', zh: '还没有匹配', ja: 'マッチングはまだありません', ar: 'لا توجد تطابقات بعد' },
-  
-  // Chat
-  'chat.typing': { en: 'Type a message...', fr: 'Tapez un message...', it: 'Scrivi un messaggio...', es: 'Escribe un mensaje...', zh: '输入消息...', ja: 'メッセージを入力...', ar: 'اكتب رسالة...' },
-  'chat.send': { en: 'Send', fr: 'Envoyer', it: 'Invia', es: 'Enviar', zh: '发送', ja: '送信', ar: 'إرسال' },
-  'chat.attachment': { en: 'Attachment', fr: 'Pièce jointe', it: 'Allegato', es: 'Adjunto', zh: '附件', ja: '添付', ar: 'مرفق' },
-  'chat.block': { en: 'Block User', fr: "Bloquer l'utilisateur", it: 'Blocca utente', es: 'Bloquear usuario', zh: '屏蔽用户', ja: 'ユーザーをブロック', ar: 'حظر المستخدم' },
-  'chat.report': { en: 'Report User', fr: "Signaler l'utilisateur", it: 'Segnala utente', es: 'Reportar usuario', zh: '举报用户', ja: 'ユーザーを報告', ar: 'الإبلاغ عن المستخدم' },
-  'chat.unmatch': { en: 'Unmatch', fr: 'Défaire la correspondance', it: 'Rimuovi corrispondenza', es: 'Deshacer coincidencia', zh: '取消匹配', ja: 'マッチング解除', ar: 'إلغاء التطابق' },
-  
-  // Profile
-  'profile.title': { en: 'Profile', fr: 'Profil', it: 'Profilo', es: 'Perfil', zh: '个人资料', ja: 'プロフィール', ar: 'الملف الشخصي' },
-  'profile.about': { en: 'About', fr: 'À propos', it: 'Informazioni', es: 'Acerca de', zh: '关于', ja: 'について', ar: 'حول' },
-  'profile.portfolio': { en: 'Portfolio', fr: 'Portfolio', it: 'Portfolio', es: 'Portafolio', zh: '作品集', ja: 'ポートフォリオ', ar: 'المحفظة' },
-  'profile.activity': { en: 'Activity', fr: 'Activité', it: 'Attività', es: 'Actividad', zh: '活动', ja: 'アクティビティ', ar: 'النشاط' },
-  'profile.skills': { en: 'Skills', fr: 'Compétences', it: 'Competenze', es: 'Habilidades', zh: '技能', ja: 'スキル', ar: 'المهارات' },
-  'profile.programs': { en: 'Programs', fr: 'Programmes', it: 'Programmi', es: 'Programas', zh: '软件', ja: 'プログラム', ar: 'البرامج' },
-  'profile.bio': { en: 'Bio', fr: 'Biographie', it: 'Biografia', es: 'Biografía', zh: '简介', ja: '自己紹介', ar: 'السيرة الذاتية' },
-  'profile.location': { en: 'Location', fr: 'Localisation', it: 'Posizione', es: 'Ubicación', zh: '位置', ja: '場所', ar: 'الموقع' },
-  'profile.noWorks': { en: 'No works yet', fr: 'Pas encore de travaux', it: 'Nessun lavoro ancora', es: 'Aún sin trabajos', zh: '还没有作品', ja: '作品はまだありません', ar: 'لا توجد أعمال بعد' },
-  'profile.settings': { en: 'Settings', fr: 'Paramètres', it: 'Impostazioni', es: 'Configuración', zh: '设置', ja: '設定', ar: 'الإعدادات' },
-  'profile.personalInfo': { en: 'Personal Information', fr: 'Informations Personnelles', it: 'Informazioni Personali', es: 'Información Personal', zh: '个人信息', ja: '個人情報', ar: 'المعلومات الشخصية' },
-  'profile.name': { en: 'Name', fr: 'Nom', it: 'Nome', es: 'Nombre', zh: '姓名', ja: '名前', ar: 'الاسم' },
-  'profile.email': { en: 'Email', fr: 'Email', it: 'Email', es: 'Correo', zh: '电子邮件', ja: 'メール', ar: 'البريد الإلكتروني' },
-  'profile.phone': { en: 'Phone', fr: 'Téléphone', it: 'Telefono', es: 'Teléfono', zh: '电话', ja: '電話', ar: 'الهاتف' },
-  'profile.experience': { en: 'Experience', fr: 'Expérience', it: 'Esperienza', es: 'Experiencia', zh: '经验', ja: '経験', ar: 'الخبرة' },
-  'profile.save': { en: 'Save Changes', fr: 'Enregistrer', it: 'Salva', es: 'Guardar', zh: '保存更改', ja: '変更を保存', ar: 'حفظ التغييرات' },
-  
-  // Navigation
-  'nav.home': { en: 'Home', fr: 'Accueil', it: 'Home', es: 'Inicio', zh: '主页', ja: 'ホーム', ar: 'الرئيسية' },
-  'nav.swipe': { en: 'Swipe', fr: 'Swipe', it: 'Swipe', es: 'Swipe', zh: '滑动', ja: 'スワイプ', ar: 'سوايب' },
-  'nav.gallery': { en: 'Gallery', fr: 'Galerie', it: 'Galleria', es: 'Galería', zh: '画廊', ja: 'ギャラリー', ar: 'المعرض' },
-  'nav.find': { en: 'Find', fr: 'Trouver', it: 'Trova', es: 'Buscar', zh: '查找', ja: '探す', ar: 'البحث' },
-  'nav.works': { en: 'Works', fr: 'Travaux', it: 'Lavori', es: 'Trabajos', zh: '作品', ja: '作品', ar: 'الأعمال' },
-  'nav.favorites': { en: 'Favorites', fr: 'Favoris', it: 'Preferiti', es: 'Favoritos', zh: '收藏', ja: 'お気に入り', ar: 'المفضلة' },
-  'nav.connections': { en: 'Connections', fr: 'Connexions', it: 'Connessioni', es: 'Conexiones', zh: '连接', ja: 'つながり', ar: 'الاتصالات' },
-  'nav.matches': { en: 'Matches', fr: 'Correspondances', it: 'Corrispondenze', es: 'Coincidencias', zh: '匹配', ja: 'マッチング', ar: 'التطابقات' },
-  'nav.opportunities': { en: 'Opportunities', fr: 'Opportunités', it: 'Opportunità', es: 'Oportunidades', zh: '机会', ja: '機会', ar: 'الفرص' },
-  
-  // Swipe filter translations
-  'swipe.or': { en: 'or', fr: 'ou', it: 'o', es: 'o', zh: '或', ja: 'または', ar: 'أو' },
-  'swipe.showFilters': { en: 'Show Filters', fr: 'Afficher les filtres', it: 'Mostra filtri', es: 'Mostrar filtros', zh: '显示过滤器', ja: 'フィルターを表示', ar: 'إظهار المرشحات' },
-  'swipe.hideFilters': { en: 'Hide Filters', fr: 'Masquer les filtres', it: 'Nascondi filtri', es: 'Ocultar filtros', zh: '隐藏过滤器', ja: 'フィルターを非表示', ar: 'إخفاء المرشحات' },
-  'swipe.maxDistance': { en: 'Maximum Distance', fr: 'Distance maximale', it: 'Distanza massima', es: 'Distancia máxima', zh: '最大距离', ja: '最大距離', ar: 'المسافة القصوى' },
+  'swipe.whatLookingFor': { 
+    en: 'What are you looking for?', 
+    fr: 'Que recherchez-vous ?', 
+    it: 'Cosa stai cercando?', 
+    es: '¿Qué estás buscando?', 
+    zh: '您在寻找什么？', 
+    ja: '何をお探しですか？', 
+    ar: 'ماذا تبحث؟' 
+  },
+  'swipe.changeCategory': { 
+    en: 'Change Category', 
+    fr: 'Changer de Catégorie', 
+    it: 'Cambia Categoria', 
+    es: 'Cambiar Categoría', 
+    zh: '更改类别', 
+    ja: 'カテゴリーを変更', 
+    ar: 'تغيير الفئة' 
+  },
+  'swipe.noMoreProfiles': { 
+    en: 'No more profiles to swipe', 
+    fr: 'Plus de profils à parcourir', 
+    it: 'Nessun altro profilo da scorrere', 
+    es: 'No hay más perfiles para deslizar', 
+    zh: '没有更多的个人资料可浏览', 
+    ja: 'スワイプするプロフィールがありません', 
+    ar: 'لا مزيد من الملفات الشخصية للتصفح' 
+  },
+  'swipe.refresh': { 
+    en: 'Refresh', 
+    fr: 'Actualiser', 
+    it: 'Aggiorna', 
+    es: 'Actualizar', 
+    zh: '刷新', 
+    ja: 'リフレッシュ', 
+    ar: 'تحديث' 
+  },
+  'swipe.or': { 
+    en: 'or choose a category', 
+    fr: 'ou choisissez une catégorie', 
+    it: 'o scegli una categoria', 
+    es: 'o elige una categoría', 
+    zh: '或选择类别', 
+    ja: 'またはカテゴリーを選択', 
+    ar: 'أو اختر فئة' 
+  },
+  'swipe.showFilters': { 
+    en: 'Show Filters', 
+    fr: 'Afficher les Filtres', 
+    it: 'Mostra Filtri', 
+    es: 'Mostrar Filtros', 
+    zh: '显示过滤器', 
+    ja: 'フィルターを表示', 
+    ar: 'عرض المرشحات' 
+  },
+  'swipe.hideFilters': { 
+    en: 'Hide Filters', 
+    fr: 'Masquer les Filtres', 
+    it: 'Nascondi Filtri', 
+    es: 'Ocultar Filtros', 
+    zh: '隐藏过滤器', 
+    ja: 'フィルターを非表示', 
+    ar: 'إخفاء المرشحات' 
+  },
+  'swipe.maxDistance': { 
+    en: 'Max Distance', 
+    fr: 'Distance Maximale', 
+    it: 'Distanza Massima', 
+    es: 'Distancia Máxima', 
+    zh: '最大距离', 
+    ja: '最大距離', 
+    ar: 'المسافة القصوى' 
+  },
   
   // Common
   'common.back': { en: 'Back', fr: 'Retour', it: 'Indietro', es: 'Volver', zh: '返回', ja: '戻る', ar: 'رجوع' },
