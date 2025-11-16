@@ -34,8 +34,33 @@ const translations: Translations = {
   'nav.connections': { en: 'Connections', fr: 'Connexions', it: 'Connessioni', es: 'Conexiones', zh: '连接', ja: 'つながり', ar: 'الاتصالات' },
   'nav.opportunities': { en: 'Opportunities', fr: 'Opportunités', it: 'Opportunità', es: 'Oportunidades', zh: '机会', ja: '機会', ar: 'فرص' },
   
+  // Verification
+  'verification.emailVerified': { en: 'Email Verified', fr: 'Email vérifié', it: 'Email verificata', es: 'Email verificado', zh: '已验证邮箱', ja: 'メール確認済み', ar: 'البريد الإلكتروني موثق' },
+  
+  // Account Types
+  'accountType.selectType': { en: 'Select Your Account Type', fr: 'Sélectionnez votre type de compte', it: 'Seleziona il tipo di account', es: 'Selecciona tu tipo de cuenta', zh: '选择账户类型', ja: 'アカウントタイプを選択', ar: 'اختر نوع حسابك' },
+  'accountType.selectDescription': { en: 'Choose the category that best describes you', fr: 'Choisissez la catégorie qui vous décrit le mieux', it: 'Scegli la categoria che ti descrive meglio', es: 'Elige la categoría que mejor te describa', zh: '选择最能描述您的类别', ja: 'あなたに最も適したカテゴリーを選択してください', ar: 'اختر الفئة التي تصفك بشكل أفضل' },
+  
+  'accountType.freelance_artist.title': { en: 'Freelance Artist', fr: 'Artiste indépendant', it: 'Artista freelance', es: 'Artista freelance', zh: '自由艺术家', ja: 'フリーランスアーティスト', ar: 'فنان مستقل' },
+  'accountType.freelance_artist.description': { en: 'Independent artist offering services', fr: 'Artiste indépendant offrant des services', it: 'Artista indipendente che offre servizi', es: 'Artista independiente que ofrece servicios', zh: '提供服务的独立艺术家', ja: 'サービスを提供する独立アーティスト', ar: 'فنان مستقل يقدم الخدمات' },
+  
+  'accountType.commission_artist.title': { en: 'Commission Artist', fr: 'Artiste de commande', it: 'Artista su commissione', es: 'Artista de comisión', zh: '委托艺术家', ja: 'コミッションアーティスト', ar: 'فنان بالعمولة' },
+  'accountType.commission_artist.description': { en: 'Specializing in commissioned work', fr: 'Spécialisé dans le travail sur commande', it: 'Specializzato in lavori su commissione', es: 'Especializado en trabajo comisionado', zh: '专门从事委托作品', ja: '受注制作専門', ar: 'متخصص في الأعمال بالعمولة' },
+  
+  'accountType.art_student.title': { en: 'Art Student', fr: 'Étudiant en art', it: 'Studente d\'arte', es: 'Estudiante de arte', zh: '艺术学生', ja: '美術学生', ar: 'طالب فني' },
+  'accountType.art_student.description': { en: 'Learning and showcasing work', fr: 'Apprendre et présenter son travail', it: 'Imparare e mostrare il lavoro', es: 'Aprendiendo y mostrando trabajo', zh: '学习和展示作品', ja: '学習と作品の展示', ar: 'التعلم وعرض الأعمال' },
+  
+  'accountType.studio_agency.title': { en: 'Studio/Agency', fr: 'Studio/Agence', it: 'Studio/Agenzia', es: 'Estudio/Agencia', zh: '工作室/代理', ja: 'スタジオ/エージェンシー', ar: 'استوديو/وكالة' },
+  'accountType.studio_agency.description': { en: 'Business profile for agencies', fr: 'Profil professionnel pour agences', it: 'Profilo aziendale per agenzie', es: 'Perfil empresarial para agencias', zh: '代理机构商业资料', ja: 'エージェンシー向けビジネスプロフィール', ar: 'ملف تجاري للوكالات' },
+  
+  'accountType.gallery_curator.title': { en: 'Gallery/Curator', fr: 'Galerie/Conservateur', it: 'Galleria/Curatore', es: 'Galería/Curador', zh: '画廊/策展人', ja: 'ギャラリー/キュレーター', ar: 'معرض/أمين' },
+  'accountType.gallery_curator.description': { en: 'Gallery owners discovering talent', fr: 'Propriétaires de galeries découvrant des talents', it: 'Proprietari di gallerie alla scoperta di talenti', es: 'Propietarios de galerías descubriendo talento', zh: '画廊主发掘人才', ja: 'タレント発掘中のギャラリーオーナー', ar: 'أصحاب المعارض يكتشفون المواهب' },
+  
+  'accountType.art_collector.title': { en: 'Art Collector', fr: 'Collectionneur d\'art', it: 'Collezionista d\'arte', es: 'Coleccionista de arte', zh: '艺术收藏家', ja: 'アートコレクター', ar: 'جامع فني' },
+  'accountType.art_collector.description': { en: 'Collectors discovering artists', fr: 'Collectionneurs découvrant des artistes', it: 'Collezionisti alla scoperta di artisti', es: 'Coleccionistas descubriendo artistas', zh: '收藏家发现艺术家', ja: 'アーティスト発掘中のコレクター', ar: 'جامعون يكتشفون الفنانين' },
+  
   // Index/Landing
-  'landing.hero.title': { 
+  'landing.hero.title': {
     en: 'Find Your Dream Job', 
     fr: 'Trouvez Votre Emploi de Rêve', 
     it: 'Trova il Tuo Lavoro dei Sogni', 

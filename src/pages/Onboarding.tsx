@@ -179,7 +179,7 @@ const Onboarding = () => {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <div className="space-y-6">
             <Card className="p-6 space-y-4 bg-card border-border">
               <div>

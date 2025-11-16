@@ -448,6 +448,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: Database["public"]["Enums"]["account_type"] | null
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -472,6 +473,7 @@ export type Database = {
           work_images: string[] | null
         }
         Insert: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -496,6 +498,7 @@ export type Database = {
           work_images?: string[] | null
         }
         Update: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -802,6 +805,13 @@ export type Database = {
       }
     }
     Enums: {
+      account_type:
+        | "freelance_artist"
+        | "commission_artist"
+        | "art_student"
+        | "studio_agency"
+        | "gallery_curator"
+        | "art_collector"
       work_file_type: "image" | "pdf" | "video" | "model_3d"
     }
     CompositeTypes: {
@@ -930,6 +940,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_type: [
+        "freelance_artist",
+        "commission_artist",
+        "art_student",
+        "studio_agency",
+        "gallery_curator",
+        "art_collector",
+      ],
       work_file_type: ["image", "pdf", "video", "model_3d"],
     },
   },
