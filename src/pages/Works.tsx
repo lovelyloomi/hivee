@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Upload, MapPin, Filter } from "lucide-react";
+import { Plus, Search, Upload, MapPin, Filter, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import WorkDetailDialog from "@/components/WorkDetailDialog";
+import { ReportWorkDialog } from "@/components/ReportWorkDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { applyWatermark } from "@/utils/watermark";
@@ -56,9 +57,13 @@ export default function Works() {
   const [showNSFW, setShowNSFW] = useState(false);
   const [selectedNSFWWork, setSelectedNSFWWork] = useState<string | null>(null);
   const [userAge, setUserAge] = useState<number | null>(null);
+  const [trendingHashtags, setTrendingHashtags] = useState<{ tag: string; count: number }[]>([]);
+  const [reportWorkId, setReportWorkId] = useState<string | null>(null);
+  const [reportWorkOwnerId, setReportWorkOwnerId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWorks();
+    fetchTrendingHashtags();
     setupRealtimeSubscription();
     if (user) {
       fetchUserLocation();
@@ -133,6 +138,32 @@ export default function Works() {
       .order('created_at', { ascending: false });
 
     if (data) setWorks(data as Work[]);
+  };
+
+  const fetchTrendingHashtags = async () => {
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+    const { data } = await supabase
+      .from('works')
+      .select('hashtags')
+      .gte('created_at', twentyFourHoursAgo.toISOString());
+
+    if (data) {
+      const hashtagCount: { [key: string]: number } = {};
+      data.forEach(work => {
+        (work.hashtags || []).forEach(tag => {
+          hashtagCount[tag] = (hashtagCount[tag] || 0) + 1;
+        });
+      });
+
+      const sorted = Object.entries(hashtagCount)
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      setTrendingHashtags(sorted);
+    }
   };
 
   const allHashtags = Array.from(
@@ -442,20 +473,22 @@ export default function Works() {
             </Dialog>
           </div>
 
-          {/* Hashtags Section */}
-          {allHashtags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm font-medium text-muted-foreground self-center">Trending:</span>
-              {allHashtags.slice(0, 10).map((tag) => (
-                <Badge
-                  key={tag}
-                  variant={selectedHashtags.includes(tag) ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => toggleHashtag(tag)}
-                >
-                  #{tag}
-                </Badge>
-              ))}
+          {/* Trending Hashtags Section */}
+          {trendingHashtags.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <h3 className="text-sm font-semibold mb-3 text-foreground">🔥 Trending in Last 24h</h3>
+              <div className="flex flex-wrap gap-2">
+                {trendingHashtags.map(({ tag, count }) => (
+                  <Badge
+                    key={tag}
+                    variant={selectedHashtags.includes(tag) ? "default" : "secondary"}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => toggleHashtag(tag)}
+                  >
+                    #{tag} <span className="ml-1 text-xs opacity-70">({count})</span>
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
 
@@ -521,22 +554,6 @@ export default function Works() {
           </div>
         </div>
 
-        {allHashtags.length > 0 && (
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
-              {allHashtags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant={selectedHashtags.includes(tag) ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => toggleHashtag(tag)}
-                >
-                  #{tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredWorks.map((work) => {
@@ -600,7 +617,23 @@ export default function Works() {
                 )}
               </div>
               <div className="p-4">
-                <h3 className="font-semibold mb-1">{work.title}</h3>
+                <div className="flex items-start justify-between mb-1">
+                  <h3 className="font-semibold flex-1">{work.title}</h3>
+                  {!work.nsfw && work.user_id !== user?.id && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 ml-2 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setReportWorkId(work.id);
+                        setReportWorkOwnerId(work.user_id);
+                      }}
+                    >
+                      <Flag className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                   {work.description}
                 </p>
@@ -656,6 +689,20 @@ export default function Works() {
           open={!!selectedWork}
           onOpenChange={(open) => !open && setSelectedWork(null)}
           currentUserId={user?.id}
+        />
+      )}
+
+      {reportWorkId && reportWorkOwnerId && (
+        <ReportWorkDialog
+          open={!!reportWorkId}
+          onOpenChange={(open) => {
+            if (!open) {
+              setReportWorkId(null);
+              setReportWorkOwnerId(null);
+            }
+          }}
+          workId={reportWorkId}
+          workOwnerId={reportWorkOwnerId}
         />
       )}
 
