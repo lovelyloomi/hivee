@@ -66,7 +66,9 @@ export const SearchFilters = ({
   return (
     <div className="space-y-6 p-4 bg-card rounded-lg border">
       <div>
-        <Label htmlFor="search">Search</Label>
+        <Label htmlFor="search" className="text-sm font-medium">
+          Refine Search
+        </Label>
         <Input
           id="search"
           value={searchQuery}

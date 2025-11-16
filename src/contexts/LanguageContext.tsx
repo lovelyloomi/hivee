@@ -17,6 +17,15 @@ interface Translations {
 const translations: Translations = {
   // Header
   'header.title': { en: 'SwipeJob', fr: 'SwipeJob', it: 'SwipeJob', es: 'SwipeJob', zh: 'SwipeJob', ja: 'SwipeJob', ar: 'SwipeJob' },
+  'header.searchPlaceholder': { 
+    en: 'Search users, works, opportunities...', 
+    fr: 'Rechercher utilisateurs, œuvres, opportunités...', 
+    it: 'Cerca utenti, opere, opportunità...', 
+    es: 'Buscar usuarios, trabajos, oportunidades...',
+    zh: '搜索用户、作品、机会...',
+    ja: 'ユーザー、作品、機会を検索...',
+    ar: 'البحث عن المستخدمين والأعمال والفرص...'
+  },
   
   // Index/Landing
   'landing.hero.title': { 
