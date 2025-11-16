@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Heart, MapPin, Briefcase } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { MatchNotification } from "@/components/MatchNotification";
 import { useNotifications } from "@/hooks/useNotifications";
 import { calculateDistance, formatDistance } from "@/utils/distance";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Profile {
   id: string;
@@ -25,7 +26,20 @@ interface Profile {
   location_enabled: boolean | null;
 }
 
+const categories = [
+  { id: 'graphic-design', name: 'Graphic Design', color: 'bg-gradient-to-br from-pink-500 to-purple-500', skills: ['Graphic Design', 'Branding', 'Logo Design'] },
+  { id: 'illustration', name: 'Illustration', color: 'bg-gradient-to-br from-purple-500 to-blue-500', skills: ['Illustration', 'Digital Art', 'Character Design'] },
+  { id: 'photography', name: 'Photography', color: 'bg-gradient-to-br from-blue-500 to-cyan-500', skills: ['Photography', 'Photo Editing', 'Portrait'] },
+  { id: 'ui-ux', name: 'UI/UX Design', color: 'bg-gradient-to-br from-cyan-500 to-teal-500', skills: ['UI/UX Design', 'Web Design', 'Mobile Design'] },
+  { id: 'animation', name: 'Animation', color: 'bg-gradient-to-br from-teal-500 to-green-500', skills: ['Animation', '2D Animation', '3D Animation'] },
+  { id: 'video', name: 'Video Editing', color: 'bg-gradient-to-br from-green-500 to-yellow-500', skills: ['Video Editing', 'Motion Graphics'] },
+  { id: '3d', name: '3D Modeling', color: 'bg-gradient-to-br from-yellow-500 to-orange-500', skills: ['3D Modeling', '3D Design', 'Blender'] },
+  { id: 'music', name: 'Music Production', color: 'bg-gradient-to-br from-orange-500 to-red-500', skills: ['Music Production', 'Sound Design', 'Audio Editing'] },
+  { id: 'writing', name: 'Content Writing', color: 'bg-gradient-to-br from-red-500 to-pink-500', skills: ['Content Writing', 'Copywriting', 'Blogging'] },
+];
+
 const Swipe = () => {
+  const [searchParams] = useSearchParams();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
@@ -33,17 +47,27 @@ const Swipe = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [matchNotification, setMatchNotification] = useState<{ name: string; image?: string } | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [showCategorySelection, setShowCategorySelection] = useState(true);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const { createNotification } = useNotifications();
+  const { t } = useLanguage();
+
+  const selectedCategory = searchParams.get('category');
 
   useEffect(() => {
     if (user) {
       fetchUserLocation();
-      fetchProfiles();
+      if (selectedCategory !== null) {
+        setShowCategorySelection(false);
+        fetchProfiles();
+      } else {
+        setShowCategorySelection(true);
+        setLoading(false);
+      }
     }
-  }, [user]);
+  }, [user, selectedCategory]);
 
   const fetchUserLocation = async () => {
     if (!user) return;
@@ -63,11 +87,22 @@ const Swipe = () => {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('*')
         .eq('profile_completed', true)
         .neq('id', user.id);
+
+      // Filter by category if selected
+      if (selectedCategory) {
+        const category = categories.find(c => c.id === selectedCategory);
+        if (category) {
+          // Filter profiles that have at least one matching skill
+          query = query.overlaps('skills', category.skills);
+        }
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setProfiles(data || []);
@@ -79,6 +114,14 @@ const Swipe = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCategorySelect = (categoryId: string | null) => {
+    if (categoryId) {
+      navigate(`/swipe?category=${categoryId}`);
+    } else {
+      navigate('/swipe');
     }
   };
 
@@ -151,6 +194,57 @@ const Swipe = () => {
           <h2 className="text-2xl font-bold mb-4">Please sign in to view profiles</h2>
           <Button onClick={() => navigate('/auth')}>Sign In</Button>
         </div>
+      </div>
+    );
+  }
+
+  // Category Selection View
+  if (showCategorySelection) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <Header />
+        
+        <main className="container mx-auto px-4 pt-24">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
+              {t('swipe.selectCategory')}
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              {t('swipe.selectSubtitle')}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            {/* All Artists Option */}
+            <button
+              onClick={() => handleCategorySelect(null)}
+              className="group relative aspect-square rounded-2xl overflow-hidden transition-all hover:scale-105 hover:shadow-xl col-span-2 md:col-span-1"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/60 opacity-90 group-hover:opacity-100 transition-opacity" />
+              <div className="relative h-full flex items-center justify-center p-6">
+                <span className="text-white font-bold text-xl text-center drop-shadow-lg">
+                  {t('swipe.allArtists')}
+                </span>
+              </div>
+            </button>
+
+            {/* Category Cards */}
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => handleCategorySelect(category.id)}
+                className="group relative aspect-square rounded-2xl overflow-hidden transition-all hover:scale-105 hover:shadow-xl"
+              >
+                <div className={`absolute inset-0 ${category.color} opacity-90 group-hover:opacity-100 transition-opacity`} />
+                <div className="relative h-full flex items-center justify-center p-6">
+                  <span className="text-white font-bold text-lg text-center drop-shadow-lg">
+                    {category.name}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }

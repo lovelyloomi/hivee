@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { ArtistOfTheMonth } from "@/components/ArtistOfTheMonth";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -76,9 +77,14 @@ const Index = () => {
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Features Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 max-w-5xl w-full animate-slide-in">
+      {/* Artist of the Month Section */}
+      <ArtistOfTheMonth />
+
+      {/* Features Section */}
+      <div className="relative z-10 px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full animate-slide-in">
           <div className="bg-card border border-border rounded-2xl p-6 text-center hover:shadow-card-hover transition-all hover:scale-105 shadow-card">
             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Zap className="w-8 h-8 text-primary" />

@@ -12,7 +12,6 @@ import UserProfile from "./pages/UserProfile";
 import Matches from "./pages/Matches";
 import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
-import Find from "./pages/Find";
 import Search from "./pages/Search";
 import Recommendations from "./pages/Recommendations";
 import Works from "./pages/Works";
@@ -39,7 +38,6 @@ const App = () => (
             <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/swipe" element={<Swipe />} />
-            <Route path="/find" element={<Find />} />
             <Route path="/search" element={<Search />} />
             <Route path="/recommendations" element={<Recommendations />} />
             <Route path="/works" element={<Works />} />
