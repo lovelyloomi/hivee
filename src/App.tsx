@@ -36,8 +36,8 @@ const App = () => (
           <BrowserRouter>
             <OnboardingTutorial />
             <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/swipe" element={<Swipe />} />
+          <Route path="/" element={<Index />} />
+          <Route path="/find" element={<Swipe />} />
             <Route path="/search" element={<Search />} />
             <Route path="/recommendations" element={<Recommendations />} />
             <Route path="/works" element={<Works />} />

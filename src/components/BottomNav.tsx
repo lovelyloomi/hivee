@@ -14,8 +14,8 @@ const BottomNav = () => {
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground"
             activeClassName="text-primary bg-primary/10"
           >
-            <Compass className="h-6 w-6" />
-            <span className="text-xs font-medium">Looking For</span>
+            <Heart className="h-6 w-6" />
+            <span className="text-xs font-medium">{t('nav.swipe')}</span>
           </NavLink>
 
           <NavLink
@@ -24,7 +24,7 @@ const BottomNav = () => {
             activeClassName="text-primary bg-primary/10"
           >
             <Image className="h-6 w-6" />
-            <span className="text-xs font-medium">Gallery</span>
+            <span className="text-xs font-medium">{t('nav.gallery')}</span>
           </NavLink>
 
           <NavLink
@@ -33,7 +33,7 @@ const BottomNav = () => {
             activeClassName="text-primary bg-primary/10"
           >
             <Home className="h-7 w-7" />
-            <span className="text-xs font-medium">Home</span>
+            <span className="text-xs font-medium">{t('nav.home')}</span>
           </NavLink>
 
           <NavLink
@@ -41,8 +41,8 @@ const BottomNav = () => {
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground"
             activeClassName="text-primary bg-primary/10"
           >
-            <Heart className="h-6 w-6" />
-            <span className="text-xs font-medium">Connections</span>
+            <Heart className="h-6 w-6 fill-current" />
+            <span className="text-xs font-medium">{t('nav.connections')}</span>
           </NavLink>
 
           <NavLink
