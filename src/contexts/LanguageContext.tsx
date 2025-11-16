@@ -132,9 +132,12 @@ const translations: Translations = {
   
   // Navigation
   'nav.home': { en: 'Home', fr: 'Accueil', it: 'Home', es: 'Inicio', zh: '主页', ja: 'ホーム', ar: 'الرئيسية' },
+  'nav.swipe': { en: 'Swipe', fr: 'Swipe', it: 'Swipe', es: 'Swipe', zh: '滑动', ja: 'スワイプ', ar: 'سوايب' },
+  'nav.gallery': { en: 'Gallery', fr: 'Galerie', it: 'Galleria', es: 'Galería', zh: '画廊', ja: 'ギャラリー', ar: 'المعرض' },
   'nav.find': { en: 'Find', fr: 'Trouver', it: 'Trova', es: 'Buscar', zh: '查找', ja: '探す', ar: 'البحث' },
   'nav.works': { en: 'Works', fr: 'Travaux', it: 'Lavori', es: 'Trabajos', zh: '作品', ja: '作品', ar: 'الأعمال' },
   'nav.favorites': { en: 'Favorites', fr: 'Favoris', it: 'Preferiti', es: 'Favoritos', zh: '收藏', ja: 'お気に入り', ar: 'المفضلة' },
+  'nav.connections': { en: 'Connections', fr: 'Connexions', it: 'Connessioni', es: 'Conexiones', zh: '连接', ja: 'つながり', ar: 'الاتصالات' },
   'nav.matches': { en: 'Matches', fr: 'Correspondances', it: 'Corrispondenze', es: 'Coincidencias', zh: '匹配', ja: 'マッチング', ar: 'التطابقات' },
   'nav.opportunities': { en: 'Opportunities', fr: 'Opportunités', it: 'Opportunità', es: 'Oportunidades', zh: '机会', ja: '機会', ar: 'الفرص' },
   

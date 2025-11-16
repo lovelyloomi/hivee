@@ -173,7 +173,7 @@ export default function Search() {
                     : null;
 
                   return (
-                    <Card key={profile.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/swipe?user=${profile.id}`)}>
+                    <Card key={profile.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/find?user=${profile.id}`)}>
                       <CardContent className="p-4">
                         <div className="flex items-start gap-4">
                           <Avatar className="h-12 w-12">

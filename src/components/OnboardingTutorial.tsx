@@ -29,7 +29,7 @@ const steps = [
   {
     title: "Start Swiping",
     description: "Discover and connect with other artists. Swipe right on profiles you're interested in!",
-    action: "/swipe"
+    action: "/find"
   },
   {
     title: "Explore Opportunities",
