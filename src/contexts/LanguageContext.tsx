@@ -169,6 +169,15 @@ const translations: Translations = {
     ja: '最大距離', 
     ar: 'المسافة القصوى' 
   },
+  'swipe.undo': { 
+    en: 'Undo Last Swipe', 
+    fr: 'Annuler le Dernier Swipe', 
+    it: 'Annulla Ultimo Swipe', 
+    es: 'Deshacer Último Swipe', 
+    zh: '撤销上次滑动', 
+    ja: '最後のスワイプを元に戻す', 
+    ar: 'التراجع عن آخر تمرير' 
+  },
   
   // Common
   'common.back': { en: 'Back', fr: 'Retour', it: 'Indietro', es: 'Volver', zh: '返回', ja: '戻る', ar: 'رجوع' },

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
-import { X, Heart, MapPin, Briefcase } from "lucide-react";
+import { X, Heart, MapPin, Briefcase, SlidersHorizontal, Undo2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -60,6 +60,8 @@ const Swipe = () => {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [distanceFilter, setDistanceFilter] = useState(50);
   const [showFilters, setShowFilters] = useState(false);
+  const [lastSwipe, setLastSwipe] = useState<{ profileId: string; action: 'like' | 'pass'; index: number } | null>(null);
+  const [showUndo, setShowUndo] = useState(false);
 
   useEffect(() => {
     const categoryParam = searchParams.get('category');
@@ -109,7 +111,6 @@ const Swipe = () => {
 
       if (error) throw error;
 
-      // Get swipe history
       const { data: swipes } = await supabase
         .from('swipes')
         .select('swiped_user_id')
@@ -124,15 +125,12 @@ const Swipe = () => {
         .single();
 
       const filteredProfiles = data.filter((profile: Profile) => {
-        // Filter out already swiped profiles
         if (swipedUserIds.has(profile.id)) return false;
         
-        // Filter by category if selected (but not if "all" is selected)
         if (selectedCategory && selectedCategory !== 'all' && (!profile.skills || !profile.skills.includes(selectedCategory))) {
           return false;
         }
         
-        // Filter by distance if both user and profile have coordinates
         if (userProfile?.latitude && userProfile?.longitude && profile.latitude && profile.longitude) {
           const distance = calculateDistance(
             userProfile.latitude,
@@ -180,6 +178,15 @@ const Swipe = () => {
 
       if (error) throw error;
 
+      // Store last swipe for undo
+      setLastSwipe({ 
+        profileId: currentProfile.id, 
+        action: direction === 'right' ? 'like' : 'pass',
+        index: currentIndex 
+      });
+      setShowUndo(true);
+      setTimeout(() => setShowUndo(false), 5000);
+
       if (direction === 'right') {
         const { data: mutualLike } = await supabase
           .from('swipes')
@@ -217,41 +224,64 @@ const Swipe = () => {
               currentProfile.id,
               'match',
               'New Match!',
-              `You matched with ${currentProfile.full_name}!`,
-              conversation.id,
+              `You matched with ${user?.email || 'someone'}`,
               user.id
             );
-          }
 
-          setMatchNotification({
-            name: currentProfile.full_name,
-            image: currentProfile.avatar_url || undefined
-          });
-
-          await supabase
-            .from('favorites')
-            .insert({
-              user_id: user.id,
-              favorited_user_id: currentProfile.id
+            setMatchNotification({
+              name: currentProfile.full_name || 'Unknown',
+              image: currentProfile.avatar_url || undefined
             });
+          }
         }
       }
 
       setTimeout(() => {
         setSwipeDirection(null);
-        setCurrentImageIndex(0);
         if (currentIndex < profiles.length - 1) {
           setCurrentIndex(currentIndex + 1);
+          setCurrentImageIndex(0);
         } else {
-          fetchProfiles();
-          setCurrentIndex(0);
+          setProfiles([]);
         }
       }, 300);
+
     } catch (error) {
-      console.error('Error recording swipe:', error);
+      console.error('Error handling swipe:', error);
       toast({
         title: "Error",
-        description: "Failed to record swipe",
+        description: "Failed to save swipe",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!user || !lastSwipe) return;
+
+    try {
+      const { error } = await supabase
+        .from('swipes')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('swiped_user_id', lastSwipe.profileId)
+        .eq('action', lastSwipe.action);
+
+      if (error) throw error;
+
+      setCurrentIndex(lastSwipe.index);
+      setLastSwipe(null);
+      setShowUndo(false);
+
+      toast({
+        title: t('swipe.undo'),
+        description: "Swipe undone successfully",
+      });
+    } catch (error) {
+      console.error('Error undoing swipe:', error);
+      toast({
+        title: "Error",
+        description: "Failed to undo swipe",
         variant: "destructive",
       });
     }
@@ -260,48 +290,53 @@ const Swipe = () => {
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
     setShowCategorySelection(false);
-    if (categoryId === 'all') {
-      navigate(`/find?category=all`);
-    } else {
-      navigate(`/find?category=${categoryId}`);
-    }
+    navigate(`/find?category=${categoryId}`);
   };
 
-  // Show category selection if no category is selected
+  const currentProfile = profiles[currentIndex];
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Please log in to continue</p>
+      </div>
+    );
+  }
+
   if (showCategorySelection) {
     return (
-      <div className="min-h-screen bg-background pb-20 animate-fade-in">
+      <div className="min-h-screen bg-background pb-20">
         <Header />
-        <div className="container mx-auto px-4 py-8 pt-24">
-          <h1 className="text-3xl font-bold mb-8 text-center bg-gradient-primary bg-clip-text text-transparent">
-            {t('swipe.whatLookingFor')}
-          </h1>
-          
-          {/* All Artists Button */}
-          <div className="max-w-md mx-auto mb-8">
+        <div className="container mx-auto px-4 pt-24 pb-8 animate-fade-in">
+          <div className="max-w-3xl mx-auto text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">{t('swipe.selectCategory')}</h1>
+            <p className="text-muted-foreground text-lg">{t('swipe.selectSubtitle')}</p>
+          </div>
+
+          <div className="max-w-3xl mx-auto mb-6">
             <Button
               onClick={() => handleCategorySelect('all')}
-              className="w-full bg-gradient-primary text-white hover:opacity-90 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all"
               size="lg"
+              className="w-full bg-gradient-primary text-white hover:opacity-90 shadow-card hover:shadow-card-hover transition-all"
             >
               {t('swipe.allArtists')}
             </Button>
-            <p className="text-center text-muted-foreground text-sm mt-4">
-              {t('swipe.or')}
-            </p>
           </div>
 
-          {/* Categories Grid */}
+          <div className="text-center mb-6">
+            <p className="text-muted-foreground text-sm">{t('swipe.or')}</p>
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
             {categories.map((category) => (
               <Card
                 key={category.id}
-                className="cursor-pointer hover:shadow-card-hover transition-all hover:scale-105"
+                className="cursor-pointer hover:shadow-card-hover transition-all hover:scale-105 shadow-card"
                 onClick={() => handleCategorySelect(category.id)}
               >
                 <CardContent className="p-4 text-center">
                   <div className="text-4xl mb-2">{category.icon}</div>
-                  <h3 className="font-semibold text-sm">{category.name}</h3>
+                  <p className="font-medium text-sm">{category.name}</p>
                 </CardContent>
               </Card>
             ))}
@@ -314,36 +349,26 @@ const Swipe = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pb-20 animate-fade-in">
-        <Header />
-        <div className="flex items-center justify-center min-h-[80vh]">
+      <div className="min-h-screen bg-background flex items-center justify-center animate-fade-in">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
-        <BottomNav />
       </div>
     );
   }
 
-  if (profiles.length === 0 || currentIndex >= profiles.length) {
+  if (profiles.length === 0 || !currentProfile) {
     return (
-      <div className="min-h-screen bg-background pb-20 pt-20 animate-fade-in">
+      <div className="min-h-screen bg-background pb-20 animate-fade-in">
         <Header />
-        <div className="container mx-auto px-4 py-8 max-w-md">
-          <div className="mb-6">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowCategorySelection(true)}
-            >
-              ← {t('swipe.changeCategory')}
-            </Button>
-          </div>
-          <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <p className="text-xl text-muted-foreground mb-4">{t('swipe.noMoreProfiles')}</p>
-            <Button onClick={() => {
-              setCurrentIndex(0);
-              fetchProfiles();
-            }}>
-              {t('swipe.refresh')}
+        <div className="container mx-auto px-4 pt-24 pb-8 flex flex-col items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md">
+            <div className="text-6xl mb-4">🎨</div>
+            <h2 className="text-2xl font-bold mb-2">{t('swipe.noProfiles')}</h2>
+            <p className="text-muted-foreground mb-6">{t('swipe.noProfilesDesc')}</p>
+            <Button onClick={() => setShowCategorySelection(true)}>
+              {t('swipe.changeCategory')}
             </Button>
           </div>
         </div>
@@ -352,170 +377,159 @@ const Swipe = () => {
     );
   }
 
-  const currentProfile = profiles[currentIndex];
-  const currentImage = currentProfile.work_images?.[currentImageIndex] || currentProfile.avatar_url;
-
   return (
-    <>
-      <div className="min-h-screen bg-background pb-20 pt-20 animate-fade-in">
-        <Header />
-        <div className="container mx-auto px-4 py-8 max-w-md">
-          <div className="mb-6 flex items-center justify-between">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowCategorySelection(true)}
-            >
-              ← {t('swipe.changeCategory')}
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              {showFilters ? t('swipe.hideFilters') : t('swipe.showFilters')}
-            </Button>
-          </div>
+    <div className="min-h-screen bg-background pb-20">
+      <Header />
+      
+      <div className="container mx-auto px-4 pt-24 pb-8 animate-fade-in">
+        <div className="max-w-md mx-auto mb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mb-4"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <SlidersHorizontal className="w-4 h-4 mr-2" />
+            {showFilters ? t('swipe.hideFilters') : t('swipe.showFilters')}
+          </Button>
 
-          {/* Distance Filter */}
           {showFilters && (
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">{t('swipe.maxDistance')}</label>
-                    <span className="text-sm text-muted-foreground">{distanceFilter} km</span>
-                  </div>
-                  <Slider
-                    value={[distanceFilter]}
-                    onValueChange={(value) => setDistanceFilter(value[0])}
-                    min={5}
-                    max={200}
-                    step={5}
-                    className="w-full"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <div className="bg-card border border-border rounded-lg p-4 animate-fade-in">
+              <label className="text-sm font-medium mb-2 block">
+                {t('swipe.maxDistance')}: {distanceFilter}km
+              </label>
+              <Slider
+                value={[distanceFilter]}
+                onValueChange={(value) => setDistanceFilter(value[0])}
+                min={5}
+                max={200}
+                step={5}
+                className="mb-2"
+              />
+            </div>
           )}
+        </div>
 
-          {/* Profile Card */}
-          <div className={`relative bg-card rounded-2xl overflow-hidden shadow-card transition-transform duration-300 ${
-            swipeDirection === 'left' ? '-translate-x-full opacity-0' : 
-            swipeDirection === 'right' ? 'translate-x-full opacity-0' : ''
-          }`}>
-            {/* Work Image */}
-            <div className="relative aspect-[3/4] bg-muted">
-              {currentImage && (
-                <img
-                  src={currentImage}
-                  alt={currentProfile.full_name}
-                  className="w-full h-full object-cover"
-                />
-              )}
+        <div className="max-w-md mx-auto">
+          <Card
+            className={`relative overflow-hidden transition-all duration-300 shadow-card ${
+              swipeDirection === "left"
+                ? "-translate-x-full opacity-0"
+                : swipeDirection === "right"
+                ? "translate-x-full opacity-0"
+                : ""
+            }`}
+          >
+            <div className="relative aspect-[3/4]">
+              <img
+                src={currentProfile.work_images?.[currentImageIndex] || currentProfile.avatar_url || '/placeholder.svg'}
+                alt={currentProfile.full_name}
+                className="w-full h-full object-cover"
+              />
               
-              {/* Image Navigation Dots */}
               {currentProfile.work_images && currentProfile.work_images.length > 1 && (
-                <div className="absolute top-4 left-0 right-0 flex justify-center gap-1 px-4">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                   {currentProfile.work_images.map((_, idx) => (
-                    <div
+                    <button
                       key={idx}
-                      className={`h-1 flex-1 rounded-full transition-all ${
-                        idx === currentImageIndex ? 'bg-white' : 'bg-white/30'
+                      onClick={() => setCurrentImageIndex(idx)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        idx === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'
                       }`}
                     />
                   ))}
                 </div>
               )}
-
-              {/* Tap Areas for Image Navigation */}
-              <div className="absolute inset-0 flex">
-                <button
-                  className="flex-1"
-                  onClick={() => setCurrentImageIndex(Math.max(0, currentImageIndex - 1))}
-                  disabled={currentImageIndex === 0}
-                />
-                <button
-                  className="flex-1"
-                  onClick={() => setCurrentImageIndex(Math.min((currentProfile.work_images?.length || 1) - 1, currentImageIndex + 1))}
-                  disabled={!currentProfile.work_images || currentImageIndex >= currentProfile.work_images.length - 1}
-                />
-              </div>
             </div>
 
-            {/* Profile Info */}
-            <div className="p-6 space-y-4">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">{currentProfile.full_name}</h2>
-                {currentProfile.location && (
-                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{currentProfile.location}</span>
-                    {userLocation && currentProfile.latitude && currentProfile.longitude && (
-                      <span className="text-sm">
-                        • {formatDistance(calculateDistance(
-                          userLocation.latitude,
-                          userLocation.longitude,
-                          currentProfile.latitude,
-                          currentProfile.longitude
-                        ))}
-                      </span>
-                    )}
-                  </div>
-                )}
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold mb-1">{currentProfile.full_name}</h2>
+                  {currentProfile.location_enabled && currentProfile.location && userLocation && (
+                    <div className="flex items-center text-muted-foreground text-sm gap-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>{currentProfile.location}</span>
+                      {currentProfile.latitude && currentProfile.longitude && (
+                        <span className="ml-1">
+                          ({formatDistance(calculateDistance(
+                            userLocation.latitude,
+                            userLocation.longitude,
+                            currentProfile.latitude,
+                            currentProfile.longitude
+                          ))})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {currentProfile.bio && (
-                <p className="text-muted-foreground">{currentProfile.bio}</p>
+                <p className="text-muted-foreground mb-4">{currentProfile.bio}</p>
               )}
 
               {currentProfile.skills && currentProfile.skills.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {currentProfile.skills.map((skill, idx) => (
-                    <Badge key={idx} variant="secondary">{skill}</Badge>
-                  ))}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Briefcase className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{t('profile.skills')}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {currentProfile.skills.slice(0, 5).map((skill, index) => (
+                      <Badge key={index} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {currentProfile.programs && currentProfile.programs.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Briefcase className="w-4 h-4 text-muted-foreground" />
-                  {currentProfile.programs.map((program, idx) => (
-                    <Badge key={idx} variant="outline">{program}</Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-6 mt-8">
-            <Button
-              size="lg"
-              variant="outline"
-              className="rounded-full w-16 h-16 p-0 border-2 hover:scale-110 transition-transform"
-              onClick={() => handleSwipe('left')}
-            >
-              <X className="w-8 h-8 text-muted-foreground" />
-            </Button>
-            <Button
-              size="lg"
-              className="rounded-full w-16 h-16 p-0 bg-gradient-primary text-white hover:scale-110 transition-transform"
-              onClick={() => handleSwipe('right')}
-            >
-              <Heart className="w-8 h-8 fill-current" />
-            </Button>
-          </div>
+              <div className="flex gap-4 mt-6">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleSwipe('left')}
+                >
+                  <X className="w-6 h-6" />
+                </Button>
+                <Button
+                  size="lg"
+                  className="flex-1 bg-gradient-primary text-white hover:opacity-90"
+                  onClick={() => handleSwipe('right')}
+                >
+                  <Heart className="w-6 h-6" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <BottomNav />
       </div>
+
+      {showUndo && lastSwipe && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
+          <Button
+            onClick={handleUndo}
+            variant="secondary"
+            className="shadow-lg"
+          >
+            <Undo2 className="w-4 h-4 mr-2" />
+            {t('swipe.undo')}
+          </Button>
+        </div>
+      )}
 
       {matchNotification && (
         <MatchNotification
+          onClose={() => setMatchNotification(null)}
           profileName={matchNotification.name}
           profileImage={matchNotification.image}
-          onClose={() => setMatchNotification(null)}
         />
       )}
-    </>
+
+      <BottomNav />
+    </div>
   );
 };
 
