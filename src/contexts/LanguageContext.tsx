@@ -27,6 +27,13 @@ const translations: Translations = {
     ar: 'البحث عن المستخدمين والأعمال والفرص...'
   },
   
+  // Navigation
+  'nav.home': { en: 'Home', fr: 'Accueil', it: 'Home', es: 'Inicio', zh: '首页', ja: 'ホーム', ar: 'الصفحة الرئيسية' },
+  'nav.swipe': { en: 'Swipe', fr: 'Swipe', it: 'Swipe', es: 'Swipe', zh: '滑动', ja: 'スワイプ', ar: 'سوايب' },
+  'nav.gallery': { en: 'Gallery', fr: 'Galerie', it: 'Galleria', es: 'Galería', zh: '画廊', ja: 'ギャラリー', ar: 'معرض' },
+  'nav.connections': { en: 'Connections', fr: 'Connexions', it: 'Connessioni', es: 'Conexiones', zh: '连接', ja: 'つながり', ar: 'الاتصالات' },
+  'nav.opportunities': { en: 'Opportunities', fr: 'Opportunités', it: 'Opportunità', es: 'Oportunidades', zh: '机会', ja: '機会', ar: 'فرص' },
+  
   // Index/Landing
   'landing.hero.title': { 
     en: 'Find Your Dream Job', 
