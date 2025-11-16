@@ -50,15 +50,37 @@ export default function Works() {
     work_type: "",
     work_style: "",
     made_with_ai: false,
+    nsfw: false,
   });
+
+  const [showNSFW, setShowNSFW] = useState(false);
+  const [selectedNSFWWork, setSelectedNSFWWork] = useState<string | null>(null);
+  const [userAge, setUserAge] = useState<number | null>(null);
 
   useEffect(() => {
     fetchWorks();
     setupRealtimeSubscription();
     if (user) {
       fetchUserLocation();
+      fetchUserAge();
     }
   }, [user]);
+
+  const fetchUserAge = async () => {
+    if (!user) return;
+    
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("birth_date")
+      .eq("id", user.id)
+      .single();
+    
+    if (profile?.birth_date) {
+      const birthDate = new Date(profile.birth_date);
+      const age = Math.floor((new Date().getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+      setUserAge(age);
+    }
+  };
 
   const fetchUserLocation = async () => {
     if (!user) return;
@@ -129,8 +151,9 @@ export default function Works() {
     const matchesType = filterType === "all" || work.work_type === filterType;
     const matchesStyle = filterStyle === "all" || work.work_style === filterStyle;
     const matchesAI = showAIWorks || !work.made_with_ai;
+    const matchesNSFW = showNSFW || !work.nsfw;
     
-    return matchesSearch && matchesHashtags && matchesType && matchesStyle && matchesAI;
+    return matchesSearch && matchesHashtags && matchesType && matchesStyle && matchesAI && matchesNSFW;
   });
 
   const toggleHashtag = (tag: string) => {
@@ -166,6 +189,15 @@ export default function Works() {
     
     if (!user || !file || !newWork.title || !newWork.work_type || !newWork.work_style) {
       toast({ title: 'Please fill all required fields (title, type, style)', variant: 'destructive' });
+      return;
+    }
+
+    if (newWork.nsfw && (!userAge || userAge < 18)) {
+      toast({
+        title: "Age Restriction",
+        description: "You must be 18+ to upload NSFW content",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -227,15 +259,16 @@ export default function Works() {
           file_type: fileType,
           watermark_url: profile?.watermark_url,
           hashtags,
-          work_type: newWork.work_type,
-          work_style: newWork.work_style,
-          made_with_ai: newWork.made_with_ai,
-        });
+        work_type: newWork.work_type,
+        work_style: newWork.work_style,
+        made_with_ai: newWork.made_with_ai,
+        nsfw: newWork.nsfw,
+      });
 
       if (insertError) throw insertError;
 
       toast({ title: 'Work uploaded successfully!' });
-      setNewWork({ title: "", description: "", hashtags: "", work_type: "", work_style: "", made_with_ai: false });
+      setNewWork({ title: "", description: "", hashtags: "", work_type: "", work_style: "", made_with_ai: false, nsfw: false });
       setFile(null);
       setIsDialogOpen(false);
     } catch (error) {
@@ -321,6 +354,7 @@ export default function Works() {
                         <SelectItem value="concept_art">Concept Art</SelectItem>
                         <SelectItem value="animation">Animation</SelectItem>
                         <SelectItem value="graphic_design">Graphic Design</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -343,18 +377,31 @@ export default function Works() {
                         <SelectItem value="abstract">Abstract</SelectItem>
                         <SelectItem value="minimalist">Minimalist</SelectItem>
                         <SelectItem value="pixel_art">Pixel Art</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
-                    <Checkbox
-                      id="made_with_ai"
-                      checked={newWork.made_with_ai}
-                      onCheckedChange={(checked) => setNewWork({ ...newWork, made_with_ai: checked as boolean })}
-                    />
-                    <Label htmlFor="made_with_ai" className="cursor-pointer font-medium">
-                      Made with AI *
-                    </Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
+                      <Checkbox
+                        id="made_with_ai"
+                        checked={newWork.made_with_ai}
+                        onCheckedChange={(checked) => setNewWork({ ...newWork, made_with_ai: checked as boolean })}
+                      />
+                      <Label htmlFor="made_with_ai" className="cursor-pointer font-medium">
+                        Made with AI *
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
+                      <Checkbox
+                        id="nsfw"
+                        checked={newWork.nsfw}
+                        onCheckedChange={(checked) => setNewWork({ ...newWork, nsfw: checked as boolean })}
+                      />
+                      <Label htmlFor="nsfw" className="cursor-pointer font-medium">
+                        NSFW (18+ content) *
+                      </Label>
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="description">Description</Label>
@@ -459,6 +506,18 @@ export default function Works() {
                 Show AI Works
               </Label>
             </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="show_nsfw"
+                checked={showNSFW}
+                onCheckedChange={(checked) => setShowNSFW(checked as boolean)}
+                disabled={!userAge || userAge < 18}
+              />
+              <Label htmlFor="show_nsfw" className="cursor-pointer text-sm">
+                Show NSFW {(!userAge || userAge < 18) && "(18+ only)"}
+              </Label>
+            </div>
           </div>
         </div>
 
@@ -480,11 +539,28 @@ export default function Works() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredWorks.map((work) => (
+          {filteredWorks.map((work) => {
+            const isNSFWBlurred = work.nsfw && selectedNSFWWork !== work.id;
+            
+            return (
             <Card
               key={work.id}
               className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setSelectedWork(work)}
+              onClick={() => {
+                if (work.nsfw && (!userAge || userAge < 18)) {
+                  toast({
+                    title: "Age Restriction",
+                    description: "You must be 18+ to view NSFW content",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                if (isNSFWBlurred) {
+                  setSelectedNSFWWork(work.id);
+                  return;
+                }
+                setSelectedWork(work);
+              }}
             >
               <div className="relative aspect-square overflow-hidden bg-muted">
                 {work.file_type === 'image' ? (
@@ -492,9 +568,14 @@ export default function Works() {
                     <img
                       src={work.file_url}
                       alt={work.title}
-                      className="w-full h-full object-cover"
+                      className={`w-full h-full object-cover ${isNSFWBlurred ? "blur-2xl" : ""}`}
                     />
-                    {work.watermark_url && (
+                    {isNSFWBlurred && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                        <span className="text-white font-bold text-lg">18+ NSFW</span>
+                      </div>
+                    )}
+                    {work.watermark_url && !isNSFWBlurred && (
                       <img
                         src={work.watermark_url}
                         alt="Watermark"
@@ -558,7 +639,8 @@ export default function Works() {
                 )}
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
 
         {filteredWorks.length === 0 && (
