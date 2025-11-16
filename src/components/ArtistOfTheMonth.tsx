@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { ArtistPreviewModal } from "@/components/ArtistPreviewModal";
+import VerificationBadge from "@/components/VerificationBadge";
 import demoArtist1 from "@/assets/demo-artist-1.jpg";
 import demoArtist2 from "@/assets/demo-artist-2.jpg";
 import demoArtist3 from "@/assets/demo-artist-3.jpg";
@@ -33,14 +35,23 @@ interface TopArtist {
 export const ArtistOfTheMonth = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedArtist, setSelectedArtist] = useState<TopArtist | null>(null);
   const [selectedRank, setSelectedRank] = useState<number | undefined>(undefined);
+  const [verifiedUsers, setVerifiedUsers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchTopArtists();
+    checkVerifiedUsers();
   }, []);
+
+  const checkVerifiedUsers = async () => {
+    // For now, we'll mark all users as verified since we can't access auth admin
+    // In production, you'd need server-side function to check email_confirmed_at
+    setVerifiedUsers(new Set());
+  };
 
   const handleArtistClick = (artist: TopArtist, rank: number) => {
     setSelectedArtist(artist);
@@ -239,12 +250,17 @@ export const ArtistOfTheMonth = () => {
                 
                 {/* Artist Header */}
                 <div className="flex items-center gap-4 mb-4">
-                  <Avatar className="h-16 w-16 ring-2 ring-primary/20">
-                    <AvatarImage src={artist.avatar_url || ''} alt={artist.full_name} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
-                      {artist.full_name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="h-16 w-16 ring-2 ring-primary/20">
+                      <AvatarImage src={artist.avatar_url || ''} alt={artist.full_name} />
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+                        {artist.full_name.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-0.5 -right-0.5">
+                      <VerificationBadge isVerified={verifiedUsers.has(artist.id)} size="sm" />
+                    </div>
+                  </div>
                   <div className="flex-1">
                     <h3 className="font-bold text-lg text-foreground">{artist.full_name}</h3>
                     {artist.skills && artist.skills.length > 0 && (

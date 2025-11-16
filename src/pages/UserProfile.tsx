@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useEmailVerified } from '@/hooks/useEmailVerified';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +14,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, MapPin, MessageCircle, Heart, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
+import VerificationBadge from '@/components/VerificationBadge';
+import AccountTypeBadge from '@/components/AccountTypeBadge';
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -20,6 +23,7 @@ const UserProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { isVerified } = useEmailVerified();
   
   const [profile, setProfile] = useState<any>(null);
   const [works, setWorks] = useState<any[]>([]);
@@ -263,13 +267,23 @@ const UserProfile = () => {
         <Card className="mb-6">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-6">
-              <Avatar className="h-32 w-32">
-                <AvatarImage src={profile.avatar_url || profile.work_images?.[0]} />
-                <AvatarFallback className="text-4xl">{profile.full_name?.[0]}</AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-32 w-32">
+                  <AvatarImage src={profile.avatar_url || profile.work_images?.[0]} />
+                  <AvatarFallback className="text-4xl">{profile.full_name?.[0]}</AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-1 -right-1">
+                  <VerificationBadge isVerified={isVerified} size="md" />
+                </div>
+              </div>
               
               <div className="flex-1">
-                <h2 className="text-3xl font-bold mb-2">{profile.full_name}</h2>
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-3xl font-bold">{profile.full_name}</h2>
+                </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <AccountTypeBadge accountType={profile.account_type} />
+                </div>
                 {profile.location && (
                   <div className="flex items-center gap-2 text-muted-foreground mb-3">
                     <MapPin className="w-4 h-4" />
