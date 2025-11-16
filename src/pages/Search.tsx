@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation as useUserLocation } from "@/hooks/useLocation";
@@ -28,6 +28,7 @@ interface Profile {
 export default function Search() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { location } = useUserLocation(user?.id);
   const [searchQuery, setSearchQuery] = useState("");
   const [maxDistance, setMaxDistance] = useState(50);
@@ -37,6 +38,23 @@ export default function Search() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [works, setWorks] = useState<any[]>([]);
+
+  // Read search query from URL on mount
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) {
+      setSearchQuery(q);
+    }
+  }, []);
+
+  // Update URL when search query changes
+  useEffect(() => {
+    if (searchQuery) {
+      setSearchParams({ q: searchQuery });
+    } else {
+      setSearchParams({});
+    }
+  }, [searchQuery]);
 
   useEffect(() => {
     if (user) {

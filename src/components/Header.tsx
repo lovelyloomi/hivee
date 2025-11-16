@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Settings, Search as SearchIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Settings, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 const Header = () => {
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const languages = [
     { code: "en" as const, name: "English", flag: "🇬🇧" },
@@ -26,25 +29,48 @@ const Header = () => {
     { code: "ar" as const, name: "العربية", flag: "🇵🇸" },
   ];
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/search');
+    }
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
         <div
-          className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent cursor-pointer"
+          className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent cursor-pointer whitespace-nowrap"
           onClick={() => navigate("/")}
         >
           {t('header.title')}
         </div>
 
+        {/* Desktop search bar */}
+        <form onSubmit={handleSearch} className="flex-1 max-w-md hidden sm:block">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder={t('header.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4"
+            />
+          </div>
+        </form>
+
         <div className="flex items-center gap-2">
-          {/* Search Button */}
+          {/* Mobile search button */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/search")}
-            className="rounded-full"
+            className="rounded-full sm:hidden"
           >
-            <SearchIcon className="h-5 w-5" />
+            <Search className="h-5 w-5" />
           </Button>
 
           {/* Notification Center */}
