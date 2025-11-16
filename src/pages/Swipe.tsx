@@ -50,6 +50,7 @@ const Swipe = () => {
   const { t } = useLanguage();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showCategorySelection, setShowCategorySelection] = useState(true);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
@@ -62,21 +63,23 @@ const Swipe = () => {
 
   useEffect(() => {
     const categoryParam = searchParams.get('category');
-    if (categoryParam) {
+    if (categoryParam === 'all') {
+      setSelectedCategory('all');
+      setShowCategorySelection(false);
+    } else if (categoryParam) {
       setSelectedCategory(categoryParam);
+      setShowCategorySelection(false);
     }
   }, [searchParams]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !showCategorySelection) {
       fetchUserLocation();
-      if (selectedCategory !== null || searchParams.get('category') === null) {
-        fetchProfiles();
-      } else {
-        setLoading(false);
-      }
+      fetchProfiles();
+    } else if (user) {
+      setLoading(false);
     }
-  }, [user, selectedCategory, distanceFilter]);
+  }, [user, selectedCategory, distanceFilter, showCategorySelection]);
 
   const fetchUserLocation = async () => {
     if (!user) return;
@@ -124,8 +127,8 @@ const Swipe = () => {
         // Filter out already swiped profiles
         if (swipedUserIds.has(profile.id)) return false;
         
-        // Filter by category if selected
-        if (selectedCategory && (!profile.skills || !profile.skills.includes(selectedCategory))) {
+        // Filter by category if selected (but not if "all" is selected)
+        if (selectedCategory && selectedCategory !== 'all' && (!profile.skills || !profile.skills.includes(selectedCategory))) {
           return false;
         }
         
@@ -254,19 +257,20 @@ const Swipe = () => {
     }
   };
 
-  const handleCategorySelect = (categoryId: string | null) => {
+  const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    if (categoryId) {
-      navigate(`/find?category=${categoryId}`);
+    setShowCategorySelection(false);
+    if (categoryId === 'all') {
+      navigate(`/find?category=all`);
     } else {
-      navigate('/find');
+      navigate(`/find?category=${categoryId}`);
     }
   };
 
   // Show category selection if no category is selected
-  if (!selectedCategory && searchParams.get('category') === null) {
+  if (showCategorySelection) {
     return (
-      <div className="min-h-screen bg-background pb-20">
+      <div className="min-h-screen bg-background pb-20 animate-fade-in">
         <Header />
         <div className="container mx-auto px-4 py-8 pt-24">
           <h1 className="text-3xl font-bold mb-8 text-center bg-gradient-primary bg-clip-text text-transparent">
@@ -276,7 +280,7 @@ const Swipe = () => {
           {/* All Artists Button */}
           <div className="max-w-md mx-auto mb-8">
             <Button
-              onClick={() => handleCategorySelect(null)}
+              onClick={() => handleCategorySelect('all')}
               className="w-full bg-gradient-primary text-white hover:opacity-90 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all"
               size="lg"
             >
@@ -288,16 +292,16 @@ const Swipe = () => {
           </div>
 
           {/* Categories Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
             {categories.map((category) => (
               <Card
                 key={category.id}
                 className="cursor-pointer hover:shadow-card-hover transition-all hover:scale-105"
                 onClick={() => handleCategorySelect(category.id)}
               >
-                <CardContent className="p-6 text-center">
-                  <div className="text-4xl mb-3">{category.icon}</div>
-                  <h3 className="font-semibold">{category.name}</h3>
+                <CardContent className="p-4 text-center">
+                  <div className="text-4xl mb-2">{category.icon}</div>
+                  <h3 className="font-semibold text-sm">{category.name}</h3>
                 </CardContent>
               </Card>
             ))}
@@ -310,7 +314,7 @@ const Swipe = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pb-20">
+      <div className="min-h-screen bg-background pb-20 animate-fade-in">
         <Header />
         <div className="flex items-center justify-center min-h-[80vh]">
           <p className="text-muted-foreground">{t('common.loading')}</p>
@@ -322,13 +326,13 @@ const Swipe = () => {
 
   if (profiles.length === 0 || currentIndex >= profiles.length) {
     return (
-      <div className="min-h-screen bg-background pb-20 pt-20">
+      <div className="min-h-screen bg-background pb-20 pt-20 animate-fade-in">
         <Header />
         <div className="container mx-auto px-4 py-8 max-w-md">
           <div className="mb-6">
             <Button 
               variant="outline" 
-              onClick={() => setSelectedCategory(null)}
+              onClick={() => setShowCategorySelection(true)}
             >
               ← {t('swipe.changeCategory')}
             </Button>
@@ -353,13 +357,13 @@ const Swipe = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-background pb-20 pt-20">
+      <div className="min-h-screen bg-background pb-20 pt-20 animate-fade-in">
         <Header />
         <div className="container mx-auto px-4 py-8 max-w-md">
           <div className="mb-6 flex items-center justify-between">
             <Button 
               variant="outline" 
-              onClick={() => setSelectedCategory(null)}
+              onClick={() => setShowCategorySelection(true)}
             >
               ← {t('swipe.changeCategory')}
             </Button>
