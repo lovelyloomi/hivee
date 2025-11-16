@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Card, CardContent } from "@/components/ui/card";
 import { X, Heart, MapPin, Briefcase } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
+import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -27,19 +30,26 @@ interface Profile {
 }
 
 const categories = [
-  { id: 'graphic-design', name: 'Graphic Design', color: 'bg-gradient-to-br from-pink-500 to-purple-500', skills: ['Graphic Design', 'Branding', 'Logo Design'] },
-  { id: 'illustration', name: 'Illustration', color: 'bg-gradient-to-br from-purple-500 to-blue-500', skills: ['Illustration', 'Digital Art', 'Character Design'] },
-  { id: 'photography', name: 'Photography', color: 'bg-gradient-to-br from-blue-500 to-cyan-500', skills: ['Photography', 'Photo Editing', 'Portrait'] },
-  { id: 'ui-ux', name: 'UI/UX Design', color: 'bg-gradient-to-br from-cyan-500 to-teal-500', skills: ['UI/UX Design', 'Web Design', 'Mobile Design'] },
-  { id: 'animation', name: 'Animation', color: 'bg-gradient-to-br from-teal-500 to-green-500', skills: ['Animation', '2D Animation', '3D Animation'] },
-  { id: 'video', name: 'Video Editing', color: 'bg-gradient-to-br from-green-500 to-yellow-500', skills: ['Video Editing', 'Motion Graphics'] },
-  { id: '3d', name: '3D Modeling', color: 'bg-gradient-to-br from-yellow-500 to-orange-500', skills: ['3D Modeling', '3D Design', 'Blender'] },
-  { id: 'music', name: 'Music Production', color: 'bg-gradient-to-br from-orange-500 to-red-500', skills: ['Music Production', 'Sound Design', 'Audio Editing'] },
-  { id: 'writing', name: 'Content Writing', color: 'bg-gradient-to-br from-red-500 to-pink-500', skills: ['Content Writing', 'Copywriting', 'Blogging'] },
+  { id: 'graphic-design', name: 'Graphic Design', icon: '🎨' },
+  { id: 'illustration', name: 'Illustration', icon: '✏️' },
+  { id: 'photography', name: 'Photography', icon: '📷' },
+  { id: 'ui-ux', name: 'UI/UX Design', icon: '💻' },
+  { id: 'animation', name: 'Animation', icon: '🎬' },
+  { id: 'video', name: 'Video Editing', icon: '🎥' },
+  { id: '3d', name: '3D Modeling', icon: '🗿' },
+  { id: 'music', name: 'Music Production', icon: '🎵' },
+  { id: 'writing', name: 'Content Writing', icon: '📝' },
 ];
 
 const Swipe = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { createNotification } = useNotifications();
+  const { t } = useLanguage();
+
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
@@ -47,27 +57,26 @@ const Swipe = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [matchNotification, setMatchNotification] = useState<{ name: string; image?: string } | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [showCategorySelection, setShowCategorySelection] = useState(true);
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { createNotification } = useNotifications();
-  const { t } = useLanguage();
+  const [distanceFilter, setDistanceFilter] = useState(50);
+  const [showFilters, setShowFilters] = useState(false);
 
-  const selectedCategory = searchParams.get('category');
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
       fetchUserLocation();
-      if (selectedCategory !== null) {
-        setShowCategorySelection(false);
+      if (selectedCategory !== null || searchParams.get('category') === null) {
         fetchProfiles();
       } else {
-        setShowCategorySelection(true);
         setLoading(false);
       }
     }
-  }, [user, selectedCategory]);
+  }, [user, selectedCategory, distanceFilter]);
 
   const fetchUserLocation = async () => {
     if (!user) return;
@@ -90,34 +99,163 @@ const Swipe = () => {
       let query = supabase
         .from('profiles')
         .select('*')
-        .eq('profile_completed', true)
-        .neq('id', user.id);
-
-      // Filter by category if selected
-      if (selectedCategory) {
-        const category = categories.find(c => c.id === selectedCategory);
-        if (category) {
-          // Filter profiles that have at least one matching skill
-          query = query.overlaps('skills', category.skills);
-        }
-      }
+        .neq('id', user.id)
+        .eq('profile_completed', true);
 
       const { data, error } = await query;
 
       if (error) throw error;
-      setProfiles(data || []);
-    } catch (error: any) {
+
+      // Get swipe history
+      const { data: swipes } = await supabase
+        .from('swipes')
+        .select('swiped_user_id')
+        .eq('user_id', user.id);
+
+      const swipedUserIds = new Set(swipes?.map(s => s.swiped_user_id) || []);
+
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('latitude, longitude')
+        .eq('id', user.id)
+        .single();
+
+      const filteredProfiles = data.filter((profile: Profile) => {
+        // Filter out already swiped profiles
+        if (swipedUserIds.has(profile.id)) return false;
+        
+        // Filter by category if selected
+        if (selectedCategory && (!profile.skills || !profile.skills.includes(selectedCategory))) {
+          return false;
+        }
+        
+        // Filter by distance if both user and profile have coordinates
+        if (userProfile?.latitude && userProfile?.longitude && profile.latitude && profile.longitude) {
+          const distance = calculateDistance(
+            userProfile.latitude,
+            userProfile.longitude,
+            profile.latitude,
+            profile.longitude
+          );
+          
+          if (distance > distanceFilter) {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+
+      setProfiles(filteredProfiles || []);
+    } catch (error) {
+      console.error('Error fetching profiles:', error);
       toast({
-        title: "Error loading profiles",
-        description: error.message,
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to load profiles",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSwipe = async (direction: 'left' | 'right') => {
+    if (!user || profiles.length === 0) return;
+
+    const currentProfile = profiles[currentIndex];
+    setSwipeDirection(direction);
+
+    try {
+      const { error } = await supabase
+        .from('swipes')
+        .insert({
+          user_id: user.id,
+          swiped_user_id: currentProfile.id,
+          action: direction === 'right' ? 'like' : 'pass',
+          swiped_on_work_index: currentImageIndex
+        });
+
+      if (error) throw error;
+
+      if (direction === 'right') {
+        const { data: mutualLike } = await supabase
+          .from('swipes')
+          .select()
+          .eq('user_id', currentProfile.id)
+          .eq('swiped_user_id', user.id)
+          .eq('action', 'like')
+          .single();
+
+        if (mutualLike) {
+          const { data: existingConversation } = await supabase
+            .from('conversations')
+            .select('id')
+            .or(`and(user1_id.eq.${user.id},user2_id.eq.${currentProfile.id}),and(user1_id.eq.${currentProfile.id},user2_id.eq.${user.id})`)
+            .single();
+
+          if (!existingConversation) {
+            const { data: conversation, error: conversationError } = await supabase
+              .from('conversations')
+              .insert({ user1_id: user.id, user2_id: currentProfile.id })
+              .select()
+              .single();
+
+            if (conversationError) throw conversationError;
+
+            await supabase
+              .from('matches')
+              .insert({
+                user1_id: user.id,
+                user2_id: currentProfile.id,
+                conversation_id: conversation.id
+              });
+
+            await createNotification(
+              currentProfile.id,
+              'match',
+              'New Match!',
+              `You matched with ${currentProfile.full_name}!`,
+              conversation.id,
+              user.id
+            );
+          }
+
+          setMatchNotification({
+            name: currentProfile.full_name,
+            image: currentProfile.avatar_url || undefined
+          });
+
+          await supabase
+            .from('favorites')
+            .insert({
+              user_id: user.id,
+              favorited_user_id: currentProfile.id
+            });
+        }
+      }
+
+      setTimeout(() => {
+        setSwipeDirection(null);
+        setCurrentImageIndex(0);
+        if (currentIndex < profiles.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        } else {
+          fetchProfiles();
+          setCurrentIndex(0);
+        }
+      }, 300);
+    } catch (error) {
+      console.error('Error recording swipe:', error);
+      toast({
+        title: "Error",
+        description: "Failed to record swipe",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCategorySelect = (categoryId: string | null) => {
+    setSelectedCategory(categoryId);
     if (categoryId) {
       navigate(`/find?category=${categoryId}`);
     } else {
@@ -125,301 +263,245 @@ const Swipe = () => {
     }
   };
 
-  const handleSwipe = async (direction: "left" | "right") => {
-    if (!user) return;
-    
-    setSwipeDirection(direction);
-    
-    // If swiped right (liked), add to favorites
-    if (direction === "right" && profiles[currentIndex]) {
-      try {
-        const { error } = await supabase
-          .from('favorites')
-          .insert({
-            user_id: user.id,
-            favorited_user_id: profiles[currentIndex].id
-          });
-
-        if (!error) {
-          // Check if it's a mutual match
-          const { data: mutualMatch } = await supabase
-            .from('favorites')
-            .select('*')
-            .eq('user_id', profiles[currentIndex].id)
-            .eq('favorited_user_id', user.id)
-            .single();
-
-          if (mutualMatch) {
-            // It's a match! Show notification
-            setMatchNotification({
-              name: profiles[currentIndex].full_name,
-              image: profiles[currentIndex].work_images?.[0]
-            });
-            
-            // Create notification for the other user
-            await createNotification(
-              profiles[currentIndex].id,
-              'match',
-              'New Match! 🎉',
-              `You matched with ${user.email?.split('@')[0] || 'someone'}!`,
-              user.id
-            );
-          } else {
-            toast({
-              title: "Liked! ❤️",
-              description: `You liked ${profiles[currentIndex].full_name}`
-            });
-          }
-        }
-      } catch (error: any) {
-        console.error("Error adding to favorites:", error);
-      }
-    }
-    
-    setTimeout(() => {
-      if (currentIndex < profiles.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-        setCurrentImageIndex(0);
-      } else {
-        setProfiles([]);
-      }
-      setSwipeDirection(null);
-    }, 300);
-  };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Please sign in to view profiles</h2>
-          <Button onClick={() => navigate('/auth')}>Sign In</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Category Selection View
-  if (showCategorySelection) {
+  // Show category selection if no category is selected
+  if (!selectedCategory && searchParams.get('category') === null) {
     return (
       <div className="min-h-screen bg-background pb-20">
         <Header />
-        
-        <main className="container mx-auto px-4 pt-24">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
-              {t('swipe.selectCategory')}
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              {t('swipe.selectSubtitle')}
+        <div className="container mx-auto px-4 py-8 pt-24">
+          <h1 className="text-3xl font-bold mb-8 text-center bg-gradient-primary bg-clip-text text-transparent">
+            {t('swipe.whatLookingFor')}
+          </h1>
+          
+          {/* All Artists Button */}
+          <div className="max-w-md mx-auto mb-8">
+            <Button
+              onClick={() => handleCategorySelect(null)}
+              className="w-full bg-gradient-primary text-white hover:opacity-90 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all"
+              size="lg"
+            >
+              {t('swipe.allArtists')}
+            </Button>
+            <p className="text-center text-muted-foreground text-sm mt-4">
+              {t('swipe.or')}
             </p>
           </div>
 
+          {/* Categories Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            {/* All Artists Option */}
-            <button
-              onClick={() => handleCategorySelect(null)}
-              className="group relative aspect-square rounded-2xl overflow-hidden transition-all hover:scale-105 hover:shadow-xl col-span-2 md:col-span-1"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/60 opacity-90 group-hover:opacity-100 transition-opacity" />
-              <div className="relative h-full flex items-center justify-center p-6">
-                <span className="text-white font-bold text-xl text-center drop-shadow-lg">
-                  {t('swipe.allArtists')}
-                </span>
-              </div>
-            </button>
-
-            {/* Category Cards */}
             {categories.map((category) => (
-              <button
+              <Card
                 key={category.id}
+                className="cursor-pointer hover:shadow-card-hover transition-all hover:scale-105"
                 onClick={() => handleCategorySelect(category.id)}
-                className="group relative aspect-square rounded-2xl overflow-hidden transition-all hover:scale-105 hover:shadow-xl"
               >
-                <div className={`absolute inset-0 ${category.color} opacity-90 group-hover:opacity-100 transition-opacity`} />
-                <div className="relative h-full flex items-center justify-center p-6">
-                  <span className="text-white font-bold text-lg text-center drop-shadow-lg">
-                    {category.name}
-                  </span>
-                </div>
-              </button>
+                <CardContent className="p-6 text-center">
+                  <div className="text-4xl mb-3">{category.icon}</div>
+                  <h3 className="font-semibold">{category.name}</h3>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </main>
+        </div>
+        <BottomNav />
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading profiles...</p>
+      <div className="min-h-screen bg-background pb-20">
+        <Header />
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
+        <BottomNav />
       </div>
     );
   }
 
   if (profiles.length === 0 || currentIndex >= profiles.length) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">All done!</h2>
-          <p className="text-muted-foreground mb-6">You've reviewed all available artists. Check your matches!</p>
-          <div className="flex gap-4 justify-center">
+      <div className="min-h-screen bg-background pb-20 pt-20">
+        <Header />
+        <div className="container mx-auto px-4 py-8 max-w-md">
+          <div className="mb-6">
             <Button 
-              onClick={() => navigate("/matches")}
-              className="bg-gradient-primary text-white hover:opacity-90"
+              variant="outline" 
+              onClick={() => setSelectedCategory(null)}
             >
-              View Matches
+              ← {t('swipe.changeCategory')}
             </Button>
-            <Button 
-              onClick={() => navigate("/")}
-              variant="outline"
-            >
-              Back to Home
+          </div>
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <p className="text-xl text-muted-foreground mb-4">{t('swipe.noMoreProfiles')}</p>
+            <Button onClick={() => {
+              setCurrentIndex(0);
+              fetchProfiles();
+            }}>
+              {t('swipe.refresh')}
             </Button>
           </div>
         </div>
+        <BottomNav />
       </div>
     );
   }
 
   const currentProfile = profiles[currentIndex];
-  const workImages = currentProfile.work_images || [];
+  const currentImage = currentProfile.work_images?.[currentImageIndex] || currentProfile.avatar_url;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <div className="container max-w-2xl mx-auto px-4 py-8 pt-24">
-        <div
-          className={`bg-card rounded-3xl shadow-card-hover overflow-hidden transition-transform duration-300 ${
-            swipeDirection === "left"
-              ? "-translate-x-full opacity-0"
-              : swipeDirection === "right"
-              ? "translate-x-full opacity-0"
-              : ""
-          }`}
-        >
-          {/* Portfolio Images */}
-          {workImages.length > 0 && (
-            <div className="relative h-96 bg-muted">
-              <img
-                src={workImages[currentImageIndex]}
-                alt={`${currentProfile.full_name}'s work`}
-                className="w-full h-full object-cover"
-              />
+    <>
+      <div className="min-h-screen bg-background pb-20 pt-20">
+        <Header />
+        <div className="container mx-auto px-4 py-8 max-w-md">
+          <div className="mb-6 flex items-center justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setSelectedCategory(null)}
+            >
+              ← {t('swipe.changeCategory')}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              {showFilters ? t('swipe.hideFilters') : t('swipe.showFilters')}
+            </Button>
+          </div>
+
+          {/* Distance Filter */}
+          {showFilters && (
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">{t('swipe.maxDistance')}</label>
+                    <span className="text-sm text-muted-foreground">{distanceFilter} km</span>
+                  </div>
+                  <Slider
+                    value={[distanceFilter]}
+                    onValueChange={(value) => setDistanceFilter(value[0])}
+                    min={5}
+                    max={200}
+                    step={5}
+                    className="w-full"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Profile Card */}
+          <div className={`relative bg-card rounded-2xl overflow-hidden shadow-card transition-transform duration-300 ${
+            swipeDirection === 'left' ? '-translate-x-full opacity-0' : 
+            swipeDirection === 'right' ? 'translate-x-full opacity-0' : ''
+          }`}>
+            {/* Work Image */}
+            <div className="relative aspect-[3/4] bg-muted">
+              {currentImage && (
+                <img
+                  src={currentImage}
+                  alt={currentProfile.full_name}
+                  className="w-full h-full object-cover"
+                />
+              )}
               
               {/* Image Navigation Dots */}
-              {workImages.length > 1 && (
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-                  {workImages.map((_, idx) => (
-                    <button
+              {currentProfile.work_images && currentProfile.work_images.length > 1 && (
+                <div className="absolute top-4 left-0 right-0 flex justify-center gap-1 px-4">
+                  {currentProfile.work_images.map((_, idx) => (
+                    <div
                       key={idx}
-                      onClick={() => setCurrentImageIndex(idx)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        idx === currentImageIndex 
-                          ? 'bg-white w-6' 
-                          : 'bg-white/50'
+                      className={`h-1 flex-1 rounded-full transition-all ${
+                        idx === currentImageIndex ? 'bg-white' : 'bg-white/30'
                       }`}
                     />
                   ))}
                 </div>
               )}
-              
-              {/* Image Counter */}
-              <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                {currentImageIndex + 1} / {workImages.length}
+
+              {/* Tap Areas for Image Navigation */}
+              <div className="absolute inset-0 flex">
+                <button
+                  className="flex-1"
+                  onClick={() => setCurrentImageIndex(Math.max(0, currentImageIndex - 1))}
+                  disabled={currentImageIndex === 0}
+                />
+                <button
+                  className="flex-1"
+                  onClick={() => setCurrentImageIndex(Math.min((currentProfile.work_images?.length || 1) - 1, currentImageIndex + 1))}
+                  disabled={!currentProfile.work_images || currentImageIndex >= currentProfile.work_images.length - 1}
+                />
               </div>
             </div>
-          )}
 
-          <div className="p-8">
-            <div className="mb-6">
-              <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-                {currentProfile.full_name}
-              </h2>
-              <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                <MapPin className="h-4 w-4" />
-                <span>{currentProfile.location}</span>
-                {userLocation && currentProfile.latitude && currentProfile.longitude && currentProfile.location_enabled && (
-                  <>
-                    <span>•</span>
-                    <span className="text-primary font-medium">
-                      {formatDistance(
-                        calculateDistance(
+            {/* Profile Info */}
+            <div className="p-6 space-y-4">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">{currentProfile.full_name}</h2>
+                {currentProfile.location && (
+                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{currentProfile.location}</span>
+                    {userLocation && currentProfile.latitude && currentProfile.longitude && (
+                      <span className="text-sm">
+                        • {formatDistance(calculateDistance(
                           userLocation.latitude,
                           userLocation.longitude,
                           currentProfile.latitude,
                           currentProfile.longitude
-                        )
-                      )} away
-                    </span>
-                  </>
+                        ))}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
-            </div>
 
-            {currentProfile.bio && (
-              <div className="mb-6">
-                <h3 className="font-semibold text-foreground mb-2">About</h3>
+              {currentProfile.bio && (
                 <p className="text-muted-foreground">{currentProfile.bio}</p>
-              </div>
-            )}
+              )}
 
-            {currentProfile.skills && currentProfile.skills.length > 0 && (
-              <div className="mb-6">
-                <h3 className="font-semibold text-foreground mb-2">Skills</h3>
+              {currentProfile.skills && currentProfile.skills.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {currentProfile.skills.map((skill, index) => (
-                    <Badge key={index} variant="secondary">
-                      {skill}
-                    </Badge>
+                  {currentProfile.skills.map((skill, idx) => (
+                    <Badge key={idx} variant="secondary">{skill}</Badge>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {currentProfile.programs && currentProfile.programs.length > 0 && (
-              <div className="mb-8">
-                <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" />
-                  Programs
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {currentProfile.programs.map((program, index) => (
-                    <Badge key={index} variant="outline">
-                      {program}
-                    </Badge>
+              {currentProfile.programs && currentProfile.programs.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Briefcase className="w-4 h-4 text-muted-foreground" />
+                  {currentProfile.programs.map((program, idx) => (
+                    <Badge key={idx} variant="outline">{program}</Badge>
                   ))}
                 </div>
-              </div>
-            )}
-
-            <div className="flex gap-4 justify-center pt-6 border-t border-border">
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => handleSwipe("left")}
-                className="rounded-full h-16 w-16 p-0 border-2 hover:border-destructive hover:bg-destructive/10"
-              >
-                <X className="h-8 w-8 text-destructive" />
-              </Button>
-              <Button
-                size="lg"
-                onClick={() => handleSwipe("right")}
-                className="rounded-full h-16 w-16 p-0 bg-gradient-primary text-white hover:opacity-90"
-              >
-                <Heart className="h-8 w-8" />
-              </Button>
+              )}
             </div>
           </div>
-        </div>
 
-        <div className="text-center mt-4 text-sm text-muted-foreground">
-          {profiles.length - currentIndex - 1} profiles remaining
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-6 mt-8">
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-full w-16 h-16 p-0 border-2 hover:scale-110 transition-transform"
+              onClick={() => handleSwipe('left')}
+            >
+              <X className="w-8 h-8 text-muted-foreground" />
+            </Button>
+            <Button
+              size="lg"
+              className="rounded-full w-16 h-16 p-0 bg-gradient-primary text-white hover:scale-110 transition-transform"
+              onClick={() => handleSwipe('right')}
+            >
+              <Heart className="w-8 h-8 fill-current" />
+            </Button>
+          </div>
         </div>
+        <BottomNav />
       </div>
 
       {matchNotification && (
@@ -429,7 +511,7 @@ const Swipe = () => {
           onClose={() => setMatchNotification(null)}
         />
       )}
-    </div>
+    </>
   );
 };
 
