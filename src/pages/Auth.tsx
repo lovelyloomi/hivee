@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useRateLimit } from "@/hooks/useRateLimit";
 import Header from "@/components/Header";
 
 const Auth = () => {
@@ -17,6 +18,8 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
+  const { checkRateLimit } = useRateLimit();
 
   useEffect(() => {
     if (user) {
@@ -26,7 +29,29 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check honeypot field (bots fill this, humans don't see it)
+    if (honeypot) {
+      toast({
+        title: "Suspicious activity detected",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
+    
+    // Rate limiting check
+    const rateLimitResult = await checkRateLimit(isLogin ? 'login' : 'signup');
+    if (!rateLimitResult.allowed) {
+      toast({
+        title: "Rate limit exceeded",
+        description: rateLimitResult.message || 'Too many attempts. Please try again later.',
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isLogin) {
@@ -169,6 +194,19 @@ const Auth = () => {
                 required
                 minLength={6}
                 className="bg-background border-border text-foreground"
+              />
+            </div>
+            
+            {/* Honeypot field - hidden from users, bots will fill it */}
+            <div className="absolute left-[-9999px]">
+              <label htmlFor="website">Website</label>
+              <Input
+                id="website"
+                type="text"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
               />
             </div>
             
