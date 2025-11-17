@@ -114,7 +114,7 @@ const Opportunities = () => {
       if (error) throw error;
       setFavorites(new Set(data?.map(f => f.favorited_user_id) || []));
     } catch (error: any) {
-      console.error("Error fetching favorites:", error);
+      console.error('Error fetching favorites:', error);
     }
   };
 
@@ -130,58 +130,48 @@ const Opportunities = () => {
       if (error) throw error;
       setOpportunityFavorites(new Set(data?.map(f => f.opportunity_id) || []));
     } catch (error: any) {
-      console.error("Error fetching opportunity favorites:", error);
+      console.error('Error fetching opportunity favorites:', error);
     }
   };
 
-  const toggleFavorite = async (creatorId: string) => {
+  const toggleFavorite = async (favoriteUserId: string) => {
     if (!user) {
       navigate('/auth');
       return;
     }
 
     try {
-      if (favorites.has(creatorId)) {
+      if (favorites.has(favoriteUserId)) {
         const { error } = await supabase
           .from('favorites')
           .delete()
           .eq('user_id', user.id)
-          .eq('favorited_user_id', creatorId);
+          .eq('favorited_user_id', favoriteUserId);
 
         if (error) throw error;
         setFavorites(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(creatorId);
-          return newSet;
-        });
-        toast({
-          title: "Removed from favorites"
+          const next = new Set(prev);
+          next.delete(favoriteUserId);
+          return next;
         });
       } else {
         const { error } = await supabase
           .from('favorites')
-          .insert({
-            user_id: user.id,
-            favorited_user_id: creatorId
-          });
+          .insert({ user_id: user.id, favorited_user_id: favoriteUserId });
 
         if (error) throw error;
-        setFavorites(prev => new Set([...prev, creatorId]));
-        toast({
-          title: "Added to favorites"
-        });
+        setFavorites(prev => new Set(prev).add(favoriteUserId));
       }
     } catch (error: any) {
       toast({
-        title: "Error updating favorites",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
     }
   };
 
-  const toggleOpportunityFavorite = async (opportunityId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleOpportunityFavorite = async (opportunityId: string) => {
     if (!user) {
       navigate('/auth');
       return;
@@ -197,30 +187,21 @@ const Opportunities = () => {
 
         if (error) throw error;
         setOpportunityFavorites(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(opportunityId);
-          return newSet;
-        });
-        toast({
-          title: "Removed from favorites"
+          const next = new Set(prev);
+          next.delete(opportunityId);
+          return next;
         });
       } else {
         const { error } = await supabase
           .from('opportunity_favorites')
-          .insert({
-            user_id: user.id,
-            opportunity_id: opportunityId
-          });
+          .insert({ user_id: user.id, opportunity_id: opportunityId });
 
         if (error) throw error;
-        setOpportunityFavorites(prev => new Set([...prev, opportunityId]));
-        toast({
-          title: "Added to favorites"
-        });
+        setOpportunityFavorites(prev => new Set(prev).add(opportunityId));
       }
     } catch (error: any) {
       toast({
-        title: "Error updating favorites",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
@@ -229,18 +210,9 @@ const Opportunities = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       navigate('/auth');
-      return;
-    }
-
-    if (!artistType || !description || !payment || !workType) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
       return;
     }
 
@@ -250,17 +222,17 @@ const Opportunities = () => {
           .from('opportunities')
           .update({
             artist_type: artistType,
+            work_type: workType,
             description,
             payment,
-            work_type: workType
           })
           .eq('id', editingOpportunity.id);
 
         if (error) throw error;
 
         toast({
-          title: "Opportunity updated!",
-          description: "Your changes have been saved."
+          title: "Success!",
+          description: "Opportunity updated successfully"
         });
       } else {
         const { error } = await supabase
@@ -268,63 +240,64 @@ const Opportunities = () => {
           .insert({
             creator_id: user.id,
             artist_type: artistType,
+            work_type: workType,
             description,
             payment,
-            work_type: workType
           });
 
         if (error) throw error;
 
         toast({
-          title: "Opportunity posted!",
-          description: "Your opportunity is now live."
+          title: "Success!",
+          description: "Opportunity posted successfully"
         });
       }
 
+      setShowForm(false);
       setArtistType("");
+      setWorkType("");
       setDescription("");
       setPayment("");
-      setWorkType("");
-      setShowForm(false);
       setEditingOpportunity(null);
       fetchOpportunities();
     } catch (error: any) {
       toast({
-        title: editingOpportunity ? "Error updating opportunity" : "Error posting opportunity",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
     }
   };
 
-  const handleEdit = (opp: Opportunity) => {
-    setEditingOpportunity(opp);
-    setArtistType(opp.artist_type);
-    setDescription(opp.description);
-    setPayment(opp.payment);
-    setWorkType(opp.work_type || "");
+  const handleEdit = (opportunity: Opportunity) => {
+    setEditingOpportunity(opportunity);
+    setArtistType(opportunity.artist_type);
+    setWorkType(opportunity.work_type || "");
+    setDescription(opportunity.description);
+    setPayment(opportunity.payment);
     setShowForm(true);
   };
 
-  const handleDelete = async (oppId: string) => {
-    if (!confirm('Are you sure you want to delete this opportunity?')) return;
-    
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this opportunity?")) return;
+
     try {
       const { error } = await supabase
         .from('opportunities')
         .delete()
-        .eq('id', oppId);
+        .eq('id', id);
 
       if (error) throw error;
 
       toast({
-        title: "Opportunity deleted",
-        description: "The opportunity has been removed."
+        title: "Success!",
+        description: "Opportunity deleted successfully"
       });
+
       fetchOpportunities();
     } catch (error: any) {
       toast({
-        title: "Error deleting opportunity",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
@@ -343,29 +316,36 @@ const Opportunities = () => {
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return "Just now";
-    if (diffInHours < 24) return `${diffInHours} hours ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return "1 day ago";
-    return `${diffInDays} days ago`;
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
   };
 
-  const filteredOpportunities = opportunities.filter(opp => {
-    if (filterArtistType && opp.artist_type !== filterArtistType) return false;
-    if (filterWorkType && opp.work_type !== filterWorkType) return false;
-    
-    if (userLocation && opp.profiles?.latitude && opp.profiles?.longitude) {
+  // Filter opportunities
+  const filteredOpportunities = opportunities.filter(opportunity => {
+    if (filterArtistType && opportunity.artist_type !== filterArtistType) {
+      return false;
+    }
+
+    if (filterWorkType && opportunity.work_type !== filterWorkType) {
+      return false;
+    }
+
+    if (userLocation && opportunity.profiles?.latitude && opportunity.profiles?.longitude && opportunity.profiles.location_enabled) {
       const distance = calculateDistance(
         userLocation.latitude,
         userLocation.longitude,
-        opp.profiles.latitude,
-        opp.profiles.longitude
+        opportunity.profiles.latitude,
+        opportunity.profiles.longitude
       );
-      if (distance > maxDistance) return false;
+      if (distance > maxDistance) {
+        return false;
+      }
     }
-    
+
     return true;
   });
 
@@ -468,7 +448,7 @@ const Opportunities = () => {
                   <Textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe the project, requirements, timeline, etc."
+                    placeholder="Describe the opportunity, requirements, and what you're looking for..."
                     className="min-h-[120px] bg-background border-border text-foreground"
                     required
                   />
@@ -476,20 +456,21 @@ const Opportunities = () => {
 
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
-                    Payment *
+                    Payment/Budget *
                   </label>
                   <Input
+                    type="text"
                     value={payment}
                     onChange={(e) => setPayment(e.target.value)}
-                    placeholder="e.g., $500, €1000, Negotiable"
+                    placeholder="e.g., $500-$1000, Negotiable, etc."
                     className="bg-background border-border text-foreground"
                     required
                   />
                 </div>
 
-                <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">
-                    {editingOpportunity ? 'Save Changes' : 'Post Opportunity'}
+                <div className="flex gap-2 justify-end pt-4">
+                  <Button type="submit">
+                    {editingOpportunity ? 'Update' : 'Post'} Opportunity
                   </Button>
                   <Button
                     type="button"
@@ -509,7 +490,6 @@ const Opportunities = () => {
               </form>
             </Card>
           )}
-
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1">
@@ -618,97 +598,6 @@ const Opportunities = () => {
                 })
               )}
             </div>
-          </div>
-            {opportunities.map((opportunity) => (
-              <Card
-                key={opportunity.id}
-                className="p-6 bg-card border-border hover:border-primary/50 transition-colors"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Briefcase className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg text-foreground">
-                          Looking for {opportunity.artist_type}
-                        </h3>
-                        <p className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
-                          <span>Posted by {opportunity.profiles.full_name}</span>
-                          <span>•</span>
-                          <span>{getTimeAgo(opportunity.created_at)}</span>
-                          {userLocation && opportunity.profiles.latitude && opportunity.profiles.longitude && opportunity.profiles.location_enabled && (
-                            <>
-                              <span>•</span>
-                              <span className="inline-flex items-center gap-1 text-primary font-medium">
-                                <MapPin className="h-3 w-3" />
-                                {formatDistanceRange(
-                                  calculateDistance(
-                                    userLocation.latitude,
-                                    userLocation.longitude,
-                                    opportunity.profiles.latitude,
-                                    opportunity.profiles.longitude
-                                  )
-                                )}
-                              </span>
-                            </>
-                          )}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <p className="text-xl font-bold text-primary">
-                          {opportunity.payment}
-                        </p>
-                        {user && (
-                          <button
-                            onClick={(e) => toggleOpportunityFavorite(opportunity.id, e)}
-                            className="p-2 hover:bg-accent rounded-full transition-colors"
-                            title={opportunityFavorites.has(opportunity.id) ? "Remove from favorites" : "Add to favorites"}
-                          >
-                            {opportunityFavorites.has(opportunity.id) ? (
-                              <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                            ) : (
-                              <Star className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-foreground/90 mb-4">{opportunity.description}</p>
-                    <div className="flex gap-2">
-                      {user && user.id !== opportunity.creator_id && (
-                        <Button
-                          variant="outline"
-                          className="gap-2"
-                          onClick={() => handleApplyClick(opportunity.id, opportunity.creator_id)}
-                        >
-                          Apply Now
-                        </Button>
-                      )}
-                      {user && user.id === opportunity.creator_id && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(opportunity)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(opportunity.id)}
-                          >
-                            Delete
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
           </div>
         </div>
       </div>
