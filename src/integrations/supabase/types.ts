@@ -17,30 +17,36 @@ export type Database = {
       applications: {
         Row: {
           applicant_id: string
+          conversation_id: string | null
           created_at: string
           cv_url: string | null
           id: string
           motivation: string
           opportunity_id: string
           portfolio_url: string | null
+          status: string | null
         }
         Insert: {
           applicant_id: string
+          conversation_id?: string | null
           created_at?: string
           cv_url?: string | null
           id?: string
           motivation: string
           opportunity_id: string
           portfolio_url?: string | null
+          status?: string | null
         }
         Update: {
           applicant_id?: string
+          conversation_id?: string | null
           created_at?: string
           cv_url?: string | null
           id?: string
           motivation?: string
           opportunity_id?: string
           portfolio_url?: string | null
+          status?: string | null
         }
         Relationships: [
           {
@@ -55,6 +61,13 @@ export type Database = {
             columns: ["applicant_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
           {
@@ -154,27 +167,40 @@ export type Database = {
       }
       conversations: {
         Row: {
+          application_id: string | null
           created_at: string
           id: string
+          is_application_chat: boolean | null
           updated_at: string
           user1_id: string
           user2_id: string
         }
         Insert: {
+          application_id?: string | null
           created_at?: string
           id?: string
+          is_application_chat?: boolean | null
           updated_at?: string
           user1_id: string
           user2_id: string
         }
         Update: {
+          application_id?: string | null
           created_at?: string
           id?: string
+          is_application_chat?: boolean | null
           updated_at?: string
           user1_id?: string
           user2_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_user1_id_fkey"
             columns: ["user1_id"]
@@ -444,6 +470,7 @@ export type Database = {
           expires_at: string | null
           id: string
           payment: string
+          work_type: string | null
         }
         Insert: {
           artist_type: string
@@ -453,6 +480,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           payment: string
+          work_type?: string | null
         }
         Update: {
           artist_type?: string
@@ -462,6 +490,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           payment?: string
+          work_type?: string | null
         }
         Relationships: [
           {

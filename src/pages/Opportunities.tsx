@@ -4,21 +4,24 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Briefcase, Star, StarOff, MapPin } from "lucide-react";
+import { Plus, Briefcase, Star, StarOff, MapPin, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { ApplicationDialog } from "@/components/ApplicationDialog";
+import { ApplicationsList } from "@/components/ApplicationsList";
+import { OpportunityFilters } from "@/components/OpportunityFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { calculateDistance, formatDistance } from "@/utils/distance";
+import { calculateDistance, formatDistanceRange } from "@/utils/distance";
 
 interface Opportunity {
   id: string;
   artist_type: string;
   description: string;
   payment: string;
+  work_type: string | null;
   creator_id: string;
   created_at: string;
   profiles: {
@@ -34,7 +37,9 @@ const Opportunities = () => {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const [showForm, setShowForm] = useState(false);
+  const [showApplications, setShowApplications] = useState(false);
   const [artistType, setArtistType] = useState("");
+  const [workType, setWorkType] = useState("");
   const [description, setDescription] = useState("");
   const [payment, setPayment] = useState("");
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -45,6 +50,11 @@ const Opportunities = () => {
   const [opportunityFavorites, setOpportunityFavorites] = useState<Set<string>>(new Set());
   const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  
+  // Filters
+  const [filterArtistType, setFilterArtistType] = useState("");
+  const [filterWorkType, setFilterWorkType] = useState("");
+  const [maxDistance, setMaxDistance] = useState(50);
 
   useEffect(() => {
     fetchOpportunities();
@@ -225,17 +235,24 @@ const Opportunities = () => {
       return;
     }
 
-    if (!artistType || !description || !payment) return;
+    if (!artistType || !description || !payment || !workType) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       if (editingOpportunity) {
-        // Update existing opportunity
         const { error } = await supabase
           .from('opportunities')
           .update({
             artist_type: artistType,
             description,
-            payment
+            payment,
+            work_type: workType
           })
           .eq('id', editingOpportunity.id);
 
@@ -246,14 +263,14 @@ const Opportunities = () => {
           description: "Your changes have been saved."
         });
       } else {
-        // Create new opportunity
         const { error } = await supabase
           .from('opportunities')
           .insert({
             creator_id: user.id,
             artist_type: artistType,
             description,
-            payment
+            payment,
+            work_type: workType
           });
 
         if (error) throw error;
@@ -267,6 +284,7 @@ const Opportunities = () => {
       setArtistType("");
       setDescription("");
       setPayment("");
+      setWorkType("");
       setShowForm(false);
       setEditingOpportunity(null);
       fetchOpportunities();
@@ -284,6 +302,7 @@ const Opportunities = () => {
     setArtistType(opp.artist_type);
     setDescription(opp.description);
     setPayment(opp.payment);
+    setWorkType(opp.work_type || "");
     setShowForm(true);
   };
 
@@ -333,6 +352,23 @@ const Opportunities = () => {
     return `${diffInDays} days ago`;
   };
 
+  const filteredOpportunities = opportunities.filter(opp => {
+    if (filterArtistType && opp.artist_type !== filterArtistType) return false;
+    if (filterWorkType && opp.work_type !== filterWorkType) return false;
+    
+    if (userLocation && opp.profiles?.latitude && opp.profiles?.longitude) {
+      const distance = calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        opp.profiles.latitude,
+        opp.profiles.longitude
+      );
+      if (distance > maxDistance) return false;
+    }
+    
+    return true;
+  });
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background pb-24">
@@ -350,22 +386,34 @@ const Opportunities = () => {
       <Header />
       
       <div className="container mx-auto px-4 pt-20">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold text-foreground">Opportunities</h1>
-            <Button
-              onClick={() => {
-                if (!user) {
-                  navigate('/auth');
-                  return;
-                }
-                setShowForm(!showForm);
-              }}
-              className="gap-2"
-            >
-              <Plus className="h-5 w-5" />
-              Post Opportunity
-            </Button>
+            <div className="flex gap-2">
+              {user && (
+                <Button
+                  onClick={() => setShowApplications(true)}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Mail className="h-5 w-5" />
+                  Applications
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  if (!user) {
+                    navigate('/auth');
+                    return;
+                  }
+                  setShowForm(!showForm);
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-5 w-5" />
+                Post Opportunity
+              </Button>
+            </div>
           </div>
 
           {showForm && (
@@ -376,46 +424,66 @@ const Opportunities = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
-                    Looking for...
+                    Looking for... *
                   </label>
-                  <Select value={artistType} onValueChange={setArtistType}>
+                  <Select value={artistType} onValueChange={setArtistType} required>
                     <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Select artist type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Photographer">Photographer</SelectItem>
                       <SelectItem value="Graphic Designer">Graphic Designer</SelectItem>
                       <SelectItem value="Illustrator">Illustrator</SelectItem>
-                      <SelectItem value="Videographer">Videographer</SelectItem>
-                      <SelectItem value="Animator">Animator</SelectItem>
                       <SelectItem value="3D Artist">3D Artist</SelectItem>
+                      <SelectItem value="Animator">Animator</SelectItem>
                       <SelectItem value="UI/UX Designer">UI/UX Designer</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                      <SelectItem value="Character Designer">Character Designer</SelectItem>
+                      <SelectItem value="Environment Artist">Environment Artist</SelectItem>
+                      <SelectItem value="Concept Artist">Concept Artist</SelectItem>
+                      <SelectItem value="VFX Artist">VFX Artist</SelectItem>
+                      <SelectItem value="Motion Designer">Motion Designer</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
-                    Job Description
+                    Work Type *
+                  </label>
+                  <Select value={workType} onValueChange={setWorkType} required>
+                    <SelectTrigger className="bg-background border-border">
+                      <SelectValue placeholder="Select work type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="commission">Commission</SelectItem>
+                      <SelectItem value="part_time">Part-Time</SelectItem>
+                      <SelectItem value="full_time">Full-Time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-2">
+                    Job Description *
                   </label>
                   <Textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe the project, requirements, timeline, etc."
                     className="min-h-[120px] bg-background border-border text-foreground"
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
-                    Payment
+                    Payment *
                   </label>
                   <Input
                     value={payment}
                     onChange={(e) => setPayment(e.target.value)}
                     placeholder="e.g., $500, €1000, Negotiable"
                     className="bg-background border-border text-foreground"
+                    required
                   />
                 </div>
 
@@ -432,6 +500,7 @@ const Opportunities = () => {
                       setArtistType("");
                       setDescription("");
                       setPayment("");
+                      setWorkType("");
                     }}
                   >
                     Cancel
@@ -441,7 +510,115 @@ const Opportunities = () => {
             </Card>
           )}
 
-          <div className="space-y-4">
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-1">
+              <OpportunityFilters
+                artistType={filterArtistType}
+                setArtistType={setFilterArtistType}
+                workType={filterWorkType}
+                setWorkType={setFilterWorkType}
+                maxDistance={maxDistance}
+                setMaxDistance={setMaxDistance}
+                locationEnabled={!!userLocation}
+              />
+            </div>
+
+            <div className="lg:col-span-3 space-y-4">
+              {filteredOpportunities.length === 0 ? (
+                <Card className="p-8 text-center bg-card border-border">
+                  <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground">No opportunities found</p>
+                </Card>
+              ) : (
+                filteredOpportunities.map((opportunity) => {
+                  const distance = userLocation && opportunity.profiles?.latitude && opportunity.profiles?.longitude
+                    ? calculateDistance(
+                        userLocation.latitude,
+                        userLocation.longitude,
+                        opportunity.profiles.latitude,
+                        opportunity.profiles.longitude
+                      )
+                    : null;
+
+                  return (
+                    <Card key={opportunity.id} className="p-6 bg-card border-border hover:border-primary/50 transition-colors">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-semibold text-lg text-foreground">{opportunity.artist_type}</h3>
+                            {opportunity.work_type && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                                {opportunity.work_type === 'commission' ? 'Commission' : 
+                                 opportunity.work_type === 'part_time' ? 'Part-Time' : 'Full-Time'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-1">Posted by {opportunity.profiles?.full_name}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{getTimeAgo(opportunity.created_at)}</span>
+                            {distance !== null && opportunity.profiles?.location_enabled && (
+                              <>
+                                <span>•</span>
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  <span>{formatDistanceRange(distance)}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => toggleFavorite(opportunity.creator_id)}
+                          >
+                            {favorites.has(opportunity.creator_id) ? (
+                              <Star className="h-5 w-5 fill-current" />
+                            ) : (
+                              <StarOff className="h-5 w-5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => toggleOpportunityFavorite(opportunity.id)}
+                          >
+                            {opportunityFavorites.has(opportunity.id) ? (
+                              <Briefcase className="h-5 w-5 fill-current" />
+                            ) : (
+                              <Briefcase className="h-5 w-5" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <p className="text-foreground mb-4 whitespace-pre-line">{opportunity.description}</p>
+
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-primary">{opportunity.payment}</span>
+                        {user?.id === opportunity.creator_id ? (
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEdit(opportunity)}>
+                              Edit
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => handleDelete(opportunity.id)}>
+                              Delete
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button size="sm" onClick={() => handleApplyClick(opportunity.id, opportunity.creator_id)}>
+                            Apply Now
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          </div>
             {opportunities.map((opportunity) => (
               <Card
                 key={opportunity.id}
@@ -466,14 +643,14 @@ const Opportunities = () => {
                               <span>•</span>
                               <span className="inline-flex items-center gap-1 text-primary font-medium">
                                 <MapPin className="h-3 w-3" />
-                                {formatDistance(
+                                {formatDistanceRange(
                                   calculateDistance(
                                     userLocation.latitude,
                                     userLocation.longitude,
                                     opportunity.profiles.latitude,
                                     opportunity.profiles.longitude
                                   )
-                                )} away
+                                )}
                               </span>
                             </>
                           )}
@@ -550,6 +727,14 @@ const Opportunities = () => {
           opportunityId={selectedOpportunity}
           userId={user.id}
           creatorId={selectedCreatorId}
+        />
+      )}
+
+      {user && (
+        <ApplicationsList
+          open={showApplications}
+          onOpenChange={setShowApplications}
+          userId={user.id}
         />
       )}
     </div>
