@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useRateLimit } from "@/hooks/useRateLimit";
 import { useCaptcha } from "@/hooks/useCaptcha";
+import { useBehavioralAnalysis } from "@/hooks/useBehavioralAnalysis";
 import { Turnstile } from '@marsidev/react-turnstile';
 import Header from "@/components/Header";
 
@@ -27,6 +28,9 @@ const Auth = () => {
   const turnstileRef = useRef<any>(null);
   const { checkRateLimit } = useRateLimit();
   const { verifyCaptcha } = useCaptcha();
+  const { trackInteraction, logSuspiciousActivity, isSuspicious } = useBehavioralAnalysis(
+    isLogin ? 'login' : 'signup'
+  );
 
   useEffect(() => {
     if (user) {
@@ -43,6 +47,19 @@ const Auth = () => {
         title: "Suspicious activity detected",
         variant: "destructive"
       });
+      return;
+    }
+    
+    // Check behavioral analysis
+    const suspicionScore = await logSuspiciousActivity();
+    if (suspicionScore >= 80) {
+      toast({
+        title: "Suspicious behavior detected",
+        description: "Please complete the verification to continue",
+        variant: "destructive"
+      });
+      setShowCaptcha(true);
+      setLoading(false);
       return;
     }
     
@@ -191,7 +208,10 @@ const Auth = () => {
                   <Input
                     type="text"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      trackInteraction();
+                    }}
                     placeholder="John Doe"
                     required={!isLogin}
                     className="bg-background border-border text-foreground"
@@ -204,7 +224,10 @@ const Auth = () => {
                   <Input
                     type="date"
                     value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
+                    onChange={(e) => {
+                      setBirthDate(e.target.value);
+                      trackInteraction();
+                    }}
                     required={!isLogin}
                     max={new Date().toISOString().split('T')[0]}
                     className="bg-background border-border text-foreground"
@@ -220,7 +243,10 @@ const Auth = () => {
               <Input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  trackInteraction();
+                }}
                 placeholder="you@example.com"
                 required
                 className="bg-background border-border text-foreground"
@@ -234,7 +260,10 @@ const Auth = () => {
               <Input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  trackInteraction();
+                }}
                 placeholder="••••••••"
                 required
                 minLength={6}
