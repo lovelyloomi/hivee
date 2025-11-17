@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useRateLimit } from "@/hooks/useRateLimit";
+import { useCaptcha } from "@/hooks/useCaptcha";
+import { Turnstile } from '@marsidev/react-turnstile';
 import Header from "@/components/Header";
 
 const Auth = () => {
@@ -19,7 +21,12 @@ const Auth = () => {
   const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [honeypot, setHoneypot] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const turnstileRef = useRef<any>(null);
   const { checkRateLimit } = useRateLimit();
+  const { verifyCaptcha } = useCaptcha();
 
   useEffect(() => {
     if (user) {
@@ -53,16 +60,53 @@ const Auth = () => {
       return;
     }
 
+    // CAPTCHA verification for signup or after failed login attempts
+    if (!isLogin || (isLogin && loginAttempts >= 2)) {
+      if (!captchaToken) {
+        toast({
+          title: "CAPTCHA required",
+          description: "Please complete the CAPTCHA verification",
+          variant: "destructive"
+        });
+        setShowCaptcha(true);
+        setLoading(false);
+        return;
+      }
+
+      const captchaValid = await verifyCaptcha(captchaToken);
+      if (!captchaValid) {
+        toast({
+          title: "CAPTCHA verification failed",
+          description: "Please try again",
+          variant: "destructive"
+        });
+        setCaptchaToken("");
+        turnstileRef.current?.reset();
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
+          const newAttempts = loginAttempts + 1;
+          setLoginAttempts(newAttempts);
+          
+          // Show CAPTCHA after 2 failed attempts
+          if (newAttempts >= 2) {
+            setShowCaptcha(true);
+          }
+          
           toast({
             title: "Error signing in",
             description: error.message,
             variant: "destructive"
           });
         } else {
+          setLoginAttempts(0);
+          setShowCaptcha(false);
           toast({
             title: "Welcome back!",
             description: "You've successfully signed in."
@@ -112,6 +156,7 @@ const Auth = () => {
             title: "Account created!",
             description: "Welcome to SwipeJob"
           });
+          setCaptchaToken("");
           navigate("/");
         }
       }
@@ -209,6 +254,29 @@ const Auth = () => {
                 autoComplete="off"
               />
             </div>
+            
+            {/* CAPTCHA - shown for signup or after failed login attempts */}
+            {(!isLogin || showCaptcha) && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground block">
+                  Security Verification
+                </label>
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"}
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  onError={() => {
+                    setCaptchaToken("");
+                    toast({
+                      title: "CAPTCHA error",
+                      description: "Please refresh and try again",
+                      variant: "destructive"
+                    });
+                  }}
+                  theme="auto"
+                />
+              </div>
+            )}
             
             <Button
               type="submit"
