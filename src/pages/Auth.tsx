@@ -273,7 +273,6 @@ const Auth = () => {
                       variant: "destructive"
                     });
                   }}
-                  theme="auto"
                 />
               </div>
             )}
