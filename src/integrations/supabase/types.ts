@@ -619,6 +619,7 @@ export type Database = {
           latitude: number | null
           location: string | null
           location_enabled: boolean | null
+          location_precision: string | null
           longitude: number | null
           max_distance_km: number | null
           onboarding_completed: boolean | null
@@ -645,6 +646,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           location_enabled?: boolean | null
+          location_precision?: string | null
           longitude?: number | null
           max_distance_km?: number | null
           onboarding_completed?: boolean | null
@@ -671,6 +673,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           location_enabled?: boolean | null
+          location_precision?: string | null
           longitude?: number | null
           max_distance_km?: number | null
           onboarding_completed?: boolean | null
