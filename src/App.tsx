@@ -20,6 +20,8 @@ import Opportunities from "./pages/Opportunities";
 import BlockedUsers from "./pages/BlockedUsers";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
+import Admin from "./pages/Admin";
+import { PrivacySettingsPage } from "./pages/PrivacySettings";
 import NotFound from "./pages/NotFound";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 
@@ -49,6 +51,8 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<UserProfile />} />
             <Route path="/blocked-users" element={<BlockedUsers />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/privacy-settings" element={<PrivacySettingsPage />} />
             <Route path="/onboarding" element={<Onboarding />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
