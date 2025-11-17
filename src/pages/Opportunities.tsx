@@ -53,7 +53,7 @@ const Opportunities = () => {
   
   // Filters
   const [filterArtistType, setFilterArtistType] = useState("");
-  const [filterWorkType, setFilterWorkType] = useState("");
+  const [filterWorkType, setFilterWorkType] = useState("all");
   const [maxDistance, setMaxDistance] = useState(50);
 
   useEffect(() => {
@@ -330,7 +330,7 @@ const Opportunities = () => {
       return false;
     }
 
-    if (filterWorkType && opportunity.work_type !== filterWorkType) {
+    if (filterWorkType && filterWorkType !== "all" && opportunity.work_type !== filterWorkType) {
       return false;
     }
 
