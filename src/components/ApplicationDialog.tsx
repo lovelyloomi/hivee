@@ -53,6 +53,15 @@ export const ApplicationDialog = ({ open, onOpenChange, opportunityId, userId, c
       return;
     }
 
+    if (motivation.length > 500) {
+      toast({
+        title: "Message too long",
+        description: "Initial message must be 500 characters or less",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setUploading(true);
     
     try {
@@ -76,18 +85,50 @@ export const ApplicationDialog = ({ open, onOpenChange, opportunityId, userId, c
         cvUrl = publicUrl;
       }
 
-      // Create application
-      const { error: insertError } = await supabase
+      // Create conversation first
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .insert({
+          user1_id: userId < creatorId ? userId : creatorId,
+          user2_id: userId < creatorId ? creatorId : userId,
+          is_application_chat: true
+        })
+        .select()
+        .single();
+
+      if (convError) throw convError;
+
+      // Create application linked to conversation
+      const { data: application, error: insertError } = await supabase
         .from('applications')
         .insert({
           opportunity_id: opportunityId,
           applicant_id: userId,
           portfolio_url: portfolioUrl || null,
           cv_url: cvUrl,
-          motivation: motivation
-        });
+          motivation: motivation,
+          conversation_id: conversation.id,
+          status: 'pending'
+        })
+        .select()
+        .single();
 
       if (insertError) throw insertError;
+
+      // Link application to conversation
+      await supabase
+        .from('conversations')
+        .update({ application_id: application.id })
+        .eq('id', conversation.id);
+
+      // Send initial message
+      await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversation.id,
+          sender_id: userId,
+          content: motivation
+        });
 
       // Create notification for opportunity creator
       await createNotification(
@@ -159,15 +200,19 @@ export const ApplicationDialog = ({ open, onOpenChange, opportunityId, userId, c
 
           <div>
             <label className="text-sm font-medium text-foreground block mb-2">
-              Motivational Letter *
+              Motivational Message * (max 500 characters)
             </label>
             <Textarea
               value={motivation}
               onChange={(e) => setMotivation(e.target.value)}
               placeholder="Tell them why you're perfect for this opportunity..."
               className="min-h-[150px] bg-background border-border text-foreground"
+              maxLength={500}
               required
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              {motivation.length}/500 characters
+            </p>
           </div>
 
           <div className="flex gap-2">
