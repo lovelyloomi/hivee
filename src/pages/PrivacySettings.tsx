@@ -3,10 +3,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { LocationPrecision } from '@/utils/distance';
+import { Shield } from 'lucide-react';
 
 export const PrivacySettingsPage = () => {
   const { user } = useAuth();
@@ -17,6 +20,7 @@ export const PrivacySettingsPage = () => {
     who_can_see_profile: 'everyone',
     who_can_message: 'everyone'
   });
+  const [locationPrecision, setLocationPrecision] = useState<LocationPrecision>('balanced');
 
   useEffect(() => {
     if (user) {
@@ -51,6 +55,17 @@ export const PrivacySettingsPage = () => {
           console.error('Error creating privacy settings:', insertError);
         }
       }
+
+      // Fetch location precision from profiles
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('location_precision')
+        .eq('id', user.id)
+        .single();
+
+      if (profileData?.location_precision) {
+        setLocationPrecision(profileData.location_precision as LocationPrecision);
+      }
     } catch (error) {
       console.error('Exception fetching privacy settings:', error);
     }
@@ -61,7 +76,8 @@ export const PrivacySettingsPage = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Update privacy settings
+      const { error: privacyError } = await supabase
         .from('privacy_settings')
         .upsert({
           user_id: user.id,
@@ -69,7 +85,15 @@ export const PrivacySettingsPage = () => {
           updated_at: new Date().toISOString()
         });
 
-      if (error) throw error;
+      if (privacyError) throw privacyError;
+
+      // Update location precision in profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ location_precision: locationPrecision })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
 
       toast.success('Privacy settings updated successfully');
     } catch (error) {
@@ -138,6 +162,54 @@ export const PrivacySettingsPage = () => {
                   <SelectItem value="nobody">Nobody</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="flex items-center gap-2 mb-3">
+                  <Shield className="w-4 h-4 text-primary" />
+                  Location Privacy Level
+                </Label>
+                <RadioGroup value={locationPrecision} onValueChange={(v) => setLocationPrecision(v as LocationPrecision)}>
+                  <div className="space-y-3">
+                    <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                      <RadioGroupItem value="high_privacy" id="high_privacy" />
+                      <div className="flex-1">
+                        <Label htmlFor="high_privacy" className="font-medium cursor-pointer">
+                          High Privacy
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Location fuzzy within ~2 km. Others see distance ranges only
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                      <RadioGroupItem value="balanced" id="balanced" />
+                      <div className="flex-1">
+                        <Label htmlFor="balanced" className="font-medium cursor-pointer">
+                          Balanced (Recommended)
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Location fuzzy within ~1 km. Good balance of privacy and accuracy
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                      <RadioGroupItem value="precise" id="precise" />
+                      <div className="flex-1">
+                        <Label htmlFor="precise" className="font-medium cursor-pointer">
+                          Precise
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Location fuzzy within ~500 m. More accurate for local matching
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
             </div>
 
             <div className="space-y-2">

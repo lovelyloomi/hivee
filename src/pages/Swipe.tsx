@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { MatchNotification } from "@/components/MatchNotification";
 import { useNotifications } from "@/hooks/useNotifications";
-import { calculateDistance, formatDistance } from "@/utils/distance";
+import { calculateDistance, formatDistanceRange } from "@/utils/distance";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Profile {
@@ -452,7 +452,7 @@ const Swipe = () => {
                       <span>{currentProfile.location}</span>
                       {currentProfile.latitude && currentProfile.longitude && (
                         <span className="ml-1">
-                          ({formatDistance(calculateDistance(
+                          ({formatDistanceRange(calculateDistance(
                             userLocation.latitude,
                             userLocation.longitude,
                             currentProfile.latitude,

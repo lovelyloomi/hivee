@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { fuzzCoordinates, LocationPrecision } from '@/utils/distance';
 
 interface LocationState {
   latitude: number | null;
@@ -31,7 +32,7 @@ export const useLocation = (userId: string | undefined) => {
 
     const { data } = await supabase
       .from('profiles')
-      .select('latitude, longitude, location_enabled')
+      .select('latitude, longitude, location_enabled, location_precision')
       .eq('id', userId)
       .single();
 
@@ -64,11 +65,23 @@ export const useLocation = (userId: string | undefined) => {
       async (position) => {
         const { latitude, longitude } = position.coords;
 
+        // Get user's location precision preference
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('location_precision')
+          .eq('id', userId!)
+          .single();
+
+        const precision: LocationPrecision = (profile?.location_precision as LocationPrecision) || 'balanced';
+        
+        // Fuzz coordinates based on privacy preference
+        const fuzzed = fuzzCoordinates(latitude, longitude, precision);
+
         const { error } = await supabase
           .from('profiles')
           .update({
-            latitude,
-            longitude,
+            latitude: fuzzed.latitude,
+            longitude: fuzzed.longitude,
             location_enabled: true,
           })
           .eq('id', userId!);
@@ -82,15 +95,15 @@ export const useLocation = (userId: string | undefined) => {
           });
         } else {
           setLocation({
-            latitude,
-            longitude,
+            latitude: fuzzed.latitude,
+            longitude: fuzzed.longitude,
             enabled: true,
             loading: false,
             error: null,
           });
           toast({
             title: 'Location enabled',
-            description: 'Your location has been saved',
+            description: 'Your approximate location has been saved',
           });
         }
       },

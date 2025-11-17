@@ -10,7 +10,7 @@ import { SearchFilters } from "@/components/SearchFilters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { calculateDistance, formatDistance } from "@/utils/distance";
+import { calculateDistance, formatDistanceRange } from "@/utils/distance";
 import { Users, Briefcase, Image as ImageIcon } from "lucide-react";
 
 interface Profile {
@@ -184,7 +184,7 @@ export default function Search() {
                             <div className="flex items-center justify-between">
                               <h3 className="font-semibold">{profile.full_name}</h3>
                               {distance && (
-                                <Badge variant="secondary">{formatDistance(distance)}</Badge>
+                                <Badge variant="secondary">{formatDistanceRange(distance)}</Badge>
                               )}
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2">{profile.bio}</p>
