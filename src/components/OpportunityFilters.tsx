@@ -27,7 +27,7 @@ const artistTypes = [
 ];
 
 const workTypes = [
-  { value: "", label: "All Types" },
+  { value: "all", label: "All Types" },
   { value: "commission", label: "Commission" },
   { value: "part_time", label: "Part-Time" },
   { value: "full_time", label: "Full-Time" }
