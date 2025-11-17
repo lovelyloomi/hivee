@@ -21,12 +21,26 @@ interface SearchFiltersProps {
 
 const commonSkills = [
   "3D Modeling", "Animation", "Texturing", "Rigging", "Lighting",
-  "Compositing", "VFX", "Character Design", "Environment Design"
+  "Compositing", "VFX", "Character Design", "Environment Design",
+  "Concept Art", "Illustration", "Digital Painting", "UI/UX Design",
+  "Motion Graphics", "Video Editing", "Game Design", "Sculpting"
 ];
 
 const commonPrograms = [
-  "Blender", "Maya", "3ds Max", "Cinema 4D", "Houdini",
-  "ZBrush", "Substance Painter", "Unreal Engine", "Unity"
+  // 3D Software
+  "Blender", "Maya", "3ds Max", "Cinema 4D", "Houdini", "ZBrush",
+  // Adobe Suite
+  "Adobe Photoshop", "Adobe Illustrator", "Adobe After Effects", "Adobe Premiere Pro",
+  "Adobe InDesign", "Adobe XD", "Adobe Animate", "Adobe Substance Painter",
+  "Adobe Substance Designer", "Adobe Dimension",
+  // Painting & Drawing
+  "Procreate", "Clip Studio Paint", "Krita", "ArtRage", "Corel Painter",
+  // Game Engines
+  "Unreal Engine", "Unity", "Godot", "CryEngine",
+  // Other Tools
+  "Substance Painter", "Marvelous Designer", "SpeedTree", "Mudbox",
+  "SketchUp", "Rhino", "KeyShot", "V-Ray", "Arnold", "Redshift",
+  "Octane Render", "Affinity Designer", "Affinity Photo"
 ];
 
 const categories = [

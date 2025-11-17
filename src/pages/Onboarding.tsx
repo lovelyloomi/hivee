@@ -13,6 +13,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 
+const commonPrograms = [
+  // 3D Software
+  "Blender", "Maya", "3ds Max", "Cinema 4D", "Houdini", "ZBrush",
+  // Adobe Suite
+  "Adobe Photoshop", "Adobe Illustrator", "Adobe After Effects", "Adobe Premiere Pro",
+  "Adobe InDesign", "Adobe XD", "Adobe Animate", "Adobe Substance Painter",
+  "Adobe Substance Designer", "Adobe Dimension",
+  // Painting & Drawing
+  "Procreate", "Clip Studio Paint", "Krita", "ArtRage", "Corel Painter",
+  // Game Engines
+  "Unreal Engine", "Unity", "Godot", "CryEngine",
+  // Other Tools
+  "Substance Painter", "Marvelous Designer", "SpeedTree", "Mudbox",
+  "SketchUp", "Rhino", "KeyShot", "V-Ray", "Arnold", "Redshift",
+  "Octane Render", "Affinity Designer", "Affinity Photo"
+];
+
+const commonSkills = [
+  "3D Modeling", "Animation", "Texturing", "Rigging", "Lighting",
+  "Compositing", "VFX", "Character Design", "Environment Design",
+  "Concept Art", "Illustration", "Digital Painting", "UI/UX Design",
+  "Motion Graphics", "Video Editing", "Game Design", "Sculpting"
+];
+
 const Onboarding = () => {
   const { user, checkProfileCompletion } = useAuth();
   const navigate = useNavigate();
@@ -220,13 +244,31 @@ const Onboarding = () => {
                   />
                   <Button onClick={addSkill} variant="outline">Add</Button>
                 </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {commonSkills.map((skill) => (
+                    <Badge
+                      key={skill}
+                      variant={skills.includes(skill) ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        if (skills.includes(skill)) {
+                          setSkills(prev => prev.filter(s => s !== skill));
+                        } else {
+                          setSkills(prev => [...prev, skill]);
+                        }
+                      }}
+                    >
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {skills.map((skill, index) => (
+                  {skills.filter(s => !commonSkills.includes(s)).map((skill, index) => (
                     <Badge key={index} variant="secondary" className="gap-1">
                       {skill}
                       <X
                         className="w-3 h-3 cursor-pointer"
-                        onClick={() => removeSkill(index)}
+                        onClick={() => removeSkill(skills.indexOf(skill))}
                       />
                     </Badge>
                   ))}
@@ -246,13 +288,31 @@ const Onboarding = () => {
                   />
                   <Button onClick={addProgram} variant="outline">Add</Button>
                 </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {commonPrograms.map((program) => (
+                    <Badge
+                      key={program}
+                      variant={programs.includes(program) ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        if (programs.includes(program)) {
+                          setPrograms(prev => prev.filter(p => p !== program));
+                        } else {
+                          setPrograms(prev => [...prev, program]);
+                        }
+                      }}
+                    >
+                      {program}
+                    </Badge>
+                  ))}
+                </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {programs.map((program, index) => (
+                  {programs.filter(p => !commonPrograms.includes(p)).map((program, index) => (
                     <Badge key={index} variant="secondary" className="gap-1">
                       {program}
                       <X
                         className="w-3 h-3 cursor-pointer"
-                        onClick={() => removeProgram(index)}
+                        onClick={() => removeProgram(programs.indexOf(program))}
                       />
                     </Badge>
                   ))}
