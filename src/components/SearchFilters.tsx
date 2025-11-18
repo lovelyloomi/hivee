@@ -17,6 +17,12 @@ interface SearchFiltersProps {
   category?: string;
   setCategory?: (value: string) => void;
   locationEnabled?: boolean;
+  showAllCategories?: boolean;
+  setShowAllCategories?: (value: boolean) => void;
+  showAllSkills?: boolean;
+  setShowAllSkills?: (value: boolean) => void;
+  showAllPrograms?: boolean;
+  setShowAllPrograms?: (value: boolean) => void;
 }
 
 const commonSkills = [
@@ -59,8 +65,15 @@ export const SearchFilters = ({
   setSelectedPrograms,
   category,
   setCategory,
-  locationEnabled
+  locationEnabled,
+  showAllCategories = false,
+  setShowAllCategories,
+  showAllSkills = false,
+  setShowAllSkills,
+  showAllPrograms = false,
+  setShowAllPrograms
 }: SearchFiltersProps) => {
+  const ITEMS_TO_SHOW = 10;
   const toggleSkill = (skill: string) => {
     setSelectedSkills(
       selectedSkills.includes(skill)
@@ -78,7 +91,7 @@ export const SearchFilters = ({
   };
 
   return (
-    <div className="space-y-6 p-4 bg-card rounded-lg border">
+    <div className="space-y-6 p-4 bg-background rounded-lg border">
       <div>
         <Label htmlFor="search" className="text-sm font-medium">
           Refine Search
@@ -110,7 +123,7 @@ export const SearchFilters = ({
         <div>
           <Label>Category</Label>
           <div className="flex flex-wrap gap-2 mt-2">
-            {categories.map((cat) => (
+            {(showAllCategories ? categories : categories.slice(0, ITEMS_TO_SHOW)).map((cat) => (
               <Badge
                 key={cat}
                 variant={category === cat ? "default" : "outline"}
@@ -120,6 +133,15 @@ export const SearchFilters = ({
                 {cat}
               </Badge>
             ))}
+            {categories.length > ITEMS_TO_SHOW && setShowAllCategories && (
+              <Badge
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => setShowAllCategories(!showAllCategories)}
+              >
+                {showAllCategories ? "Show less" : "..."}
+              </Badge>
+            )}
           </div>
         </div>
       )}
@@ -127,7 +149,7 @@ export const SearchFilters = ({
       <div>
         <Label>Skills</Label>
         <div className="flex flex-wrap gap-2 mt-2">
-          {commonSkills.map((skill) => (
+          {(showAllSkills ? commonSkills : commonSkills.slice(0, ITEMS_TO_SHOW)).map((skill) => (
             <Badge
               key={skill}
               variant={selectedSkills.includes(skill) ? "default" : "outline"}
@@ -138,13 +160,22 @@ export const SearchFilters = ({
               {selectedSkills.includes(skill) && <X className="ml-1 h-3 w-3" />}
             </Badge>
           ))}
+          {commonSkills.length > ITEMS_TO_SHOW && setShowAllSkills && (
+            <Badge
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => setShowAllSkills(!showAllSkills)}
+            >
+              {showAllSkills ? "Show less" : "..."}
+            </Badge>
+          )}
         </div>
       </div>
 
       <div>
         <Label>Programs</Label>
         <div className="flex flex-wrap gap-2 mt-2">
-          {commonPrograms.map((program) => (
+          {(showAllPrograms ? commonPrograms : commonPrograms.slice(0, ITEMS_TO_SHOW)).map((program) => (
             <Badge
               key={program}
               variant={selectedPrograms.includes(program) ? "default" : "outline"}
@@ -155,6 +186,15 @@ export const SearchFilters = ({
               {selectedPrograms.includes(program) && <X className="ml-1 h-3 w-3" />}
             </Badge>
           ))}
+          {commonPrograms.length > ITEMS_TO_SHOW && setShowAllPrograms && (
+            <Badge
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => setShowAllPrograms(!showAllPrograms)}
+            >
+              {showAllPrograms ? "Show less" : "..."}
+            </Badge>
+          )}
         </div>
       </div>
 
