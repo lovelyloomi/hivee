@@ -39,6 +39,9 @@ export const SearchModal = ({ open, onOpenChange, initialQuery = "" }: SearchMod
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
   const [category, setCategory] = useState<string>("");
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [showAllSkills, setShowAllSkills] = useState(false);
+  const [showAllPrograms, setShowAllPrograms] = useState(false);
   
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [opportunities, setOpportunities] = useState<any[]>([]);
@@ -143,7 +146,7 @@ export const SearchModal = ({ open, onOpenChange, initialQuery = "" }: SearchMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] p-0 gap-0">
+      <DialogContent className="max-w-4xl h-[90vh] p-0 gap-0 bg-card">
         <div className="flex flex-col h-full">
           {/* Search Header */}
           <div className="p-6 border-b border-border">
@@ -169,7 +172,7 @@ export const SearchModal = ({ open, onOpenChange, initialQuery = "" }: SearchMod
           </div>
 
           {/* Filters */}
-          <div className="px-6 py-4 border-b border-border">
+          <div className="px-6 py-4 border-b border-border overflow-y-auto max-h-[300px]">
             <SearchFilters
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
@@ -182,6 +185,12 @@ export const SearchModal = ({ open, onOpenChange, initialQuery = "" }: SearchMod
               category={category}
               setCategory={setCategory}
               locationEnabled={!!userLocation}
+              showAllCategories={showAllCategories}
+              setShowAllCategories={setShowAllCategories}
+              showAllSkills={showAllSkills}
+              setShowAllSkills={setShowAllSkills}
+              showAllPrograms={showAllPrograms}
+              setShowAllPrograms={setShowAllPrograms}
             />
           </div>
 
