@@ -19,6 +19,7 @@ import { applyWatermark } from "@/utils/watermark";
 import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { calculateDistance, formatDistance } from "@/utils/distance";
+import { HexagonImage } from "@/components/HexagonImage";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -497,17 +498,33 @@ export default function Works() {
             setSelectedWork(work);
           }}>
               <div className="relative aspect-square overflow-hidden bg-muted">
-                {work.file_type === 'image' ? <div className="relative w-full h-full">
-                    <img src={work.file_url} alt={work.title} className={`w-full h-full object-cover ${isNSFWBlurred ? "blur-2xl" : ""}`} />
-                    {isNSFWBlurred && <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                        <span className="text-white font-bold text-lg">18+ NSFW</span>
-                      </div>}
-                    {work.watermark_url && !isNSFWBlurred && <img src={work.watermark_url} alt="Watermark" className="absolute bottom-2 right-2 w-16 h-auto opacity-50" />}
-                  </div> : work.file_type === 'video' ? <video src={work.file_url} className="w-full h-full object-cover" muted /> : work.file_type === 'pdf' ? <div className="w-full h-full flex items-center justify-center bg-muted">
+                {work.file_type === 'image' ? (
+                  <HexagonImage 
+                    src={work.file_url} 
+                    alt={work.title}
+                    className={`w-full h-full ${isNSFWBlurred ? "blur-2xl" : ""}`}
+                  />
+                ) : work.file_type === 'video' ? (
+                  <div className="relative w-full h-full">
+                    <video src={work.file_url} className="w-full h-full object-cover" muted />
+                  </div>
+                ) : work.file_type === 'pdf' ? (
+                  <div className="w-full h-full flex items-center justify-center bg-muted">
                     <span className="text-4xl">📄</span>
-                  </div> : <div className="w-full h-full flex items-center justify-center bg-muted">
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-muted">
                     <span className="text-4xl">🎨</span>
-                  </div>}
+                  </div>
+                )}
+                {isNSFWBlurred && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <span className="text-white font-bold text-lg">18+ NSFW</span>
+                  </div>
+                )}
+                {work.watermark_url && !isNSFWBlurred && (
+                  <img src={work.watermark_url} alt="Watermark" className="absolute bottom-2 right-2 w-16 h-auto opacity-50" />
+                )}
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between mb-1">

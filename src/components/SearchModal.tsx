@@ -5,7 +5,8 @@ import { Search, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { HexagonAvatar } from "@/components/HexagonAvatar";
+import { HexagonImage } from "@/components/HexagonImage";
 import { supabase } from "@/integrations/supabase/client";
 import { SearchFilters } from "./SearchFilters";
 import { useNavigate } from "react-router-dom";
@@ -217,10 +218,11 @@ export const SearchModal = ({ open, onOpenChange, initialQuery = "" }: SearchMod
                             onClick={() => handleProfileClick(profile.id)}
                           >
                             <div className="flex items-center gap-4">
-                              <Avatar className="h-12 w-12">
-                                <AvatarImage src={profile.avatar_url || ""} />
-                                <AvatarFallback>{profile.full_name?.[0] || "?"}</AvatarFallback>
-                              </Avatar>
+                              <HexagonAvatar 
+                                src={profile.avatar_url}
+                                fallback={profile.full_name?.[0] || "?"}
+                                size="md"
+                              />
                               <div className="flex-1">
                                 <h4 className="font-semibold">{profile.full_name}</h4>
                                 <p className="text-sm text-muted-foreground line-clamp-1">{profile.bio}</p>
@@ -252,10 +254,10 @@ export const SearchModal = ({ open, onOpenChange, initialQuery = "" }: SearchMod
                               navigate(`/works`);
                             }}
                           >
-                            <img
+                            <HexagonImage
                               src={work.watermark_url || work.file_url}
                               alt={work.title}
-                              className="w-full h-40 object-cover"
+                              className="w-full h-40"
                             />
                             <div className="p-3">
                               <h4 className="font-semibold text-sm">{work.title}</h4>
@@ -302,10 +304,11 @@ export const SearchModal = ({ open, onOpenChange, initialQuery = "" }: SearchMod
                         onClick={() => handleProfileClick(profile.id)}
                       >
                         <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={profile.avatar_url || ""} />
-                            <AvatarFallback>{profile.full_name?.[0] || "?"}</AvatarFallback>
-                          </Avatar>
+                          <HexagonAvatar 
+                            src={profile.avatar_url}
+                            fallback={profile.full_name?.[0] || "?"}
+                            size="md"
+                          />
                           <div className="flex-1">
                             <h4 className="font-semibold">{profile.full_name}</h4>
                             <p className="text-sm text-muted-foreground">{profile.bio}</p>

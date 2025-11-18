@@ -16,6 +16,8 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import VerificationBadge from '@/components/VerificationBadge';
 import AccountTypeBadge from '@/components/AccountTypeBadge';
+import { HexagonAvatar } from '@/components/HexagonAvatar';
+import { HexagonImage } from '@/components/HexagonImage';
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -268,10 +270,11 @@ const UserProfile = () => {
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-6">
               <div className="relative">
-                <Avatar className="h-32 w-32">
-                  <AvatarImage src={profile.avatar_url || profile.work_images?.[0]} />
-                  <AvatarFallback className="text-4xl">{profile.full_name?.[0]}</AvatarFallback>
-                </Avatar>
+                <HexagonAvatar 
+                  src={profile.avatar_url || profile.work_images?.[0]}
+                  fallback={profile.full_name?.[0] || 'U'}
+                  size="xl"
+                />
                 <div className="absolute -bottom-1 -right-1">
                   <VerificationBadge isVerified={isVerified} size="md" />
                 </div>
