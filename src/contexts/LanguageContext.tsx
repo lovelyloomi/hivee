@@ -29,10 +29,10 @@ const translations: Translations = {
   
   // Navigation
   'nav.home': { en: 'Home', fr: 'Accueil', it: 'Home', es: 'Inicio', zh: '首页', ja: 'ホーム', ar: 'الصفحة الرئيسية' },
-  'nav.swipe': { en: 'Swipe', fr: 'Swipe', it: 'Swipe', es: 'Swipe', zh: '滑动', ja: 'スワイプ', ar: 'سوايب' },
-  'nav.gallery': { en: 'Gallery', fr: 'Galerie', it: 'Galleria', es: 'Galería', zh: '画廊', ja: 'ギャラリー', ar: 'معرض' },
-  'nav.connections': { en: 'Connections', fr: 'Connexions', it: 'Connessioni', es: 'Conexiones', zh: '连接', ja: 'つながり', ar: 'الاتصالات' },
-  'nav.opportunities': { en: 'Opportunities', fr: 'Opportunités', it: 'Opportunità', es: 'Oportunidades', zh: '机会', ja: '機会', ar: 'فرص' },
+  'nav.swipe': { en: 'BEEfriend', fr: 'BEEfriend', it: 'BEEfriend', es: 'BEEfriend', zh: 'BEEfriend', ja: 'BEEfriend', ar: 'BEEfriend' },
+  'nav.gallery': { en: 'BEEmade', fr: 'BEEmade', it: 'BEEmade', es: 'BEEmade', zh: 'BEEmade', ja: 'BEEmade', ar: 'BEEmade' },
+  'nav.connections': { en: 'BEEbond', fr: 'BEEbond', it: 'BEEbond', es: 'BEEbond', zh: 'BEEbond', ja: 'BEEbond', ar: 'BEEbond' },
+  'nav.opportunities': { en: 'HIVES', fr: 'HIVES', it: 'HIVES', es: 'HIVES', zh: 'HIVES', ja: 'HIVES', ar: 'HIVES' },
   
   // Verification
   'verification.emailVerified': { en: 'Email Verified', fr: 'Email vérifié', it: 'Email verificata', es: 'Email verificado', zh: '已验证邮箱', ja: 'メール確認済み', ar: 'البريد الإلكتروني موثق' },
