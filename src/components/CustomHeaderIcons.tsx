@@ -1,61 +1,44 @@
-import headerIcons from "@/assets/header-icons.png";
+import notificationIcon from "@/assets/notification-icon.png";
+import translateIcon from "@/assets/translate-icon.png";
+import sunIcon from "@/assets/sun-icon.png";
+import moonIcon from "@/assets/moon-icon.png";
 
 interface IconProps {
   className?: string;
 }
 
 export const BellIcon = ({ className }: IconProps) => (
-  <div 
+  <img 
+    src={notificationIcon} 
+    alt="Notifications" 
     className={className}
-    style={{
-      width: '20px',
-      height: '20px',
-      backgroundImage: `url(${headerIcons})`,
-      backgroundPosition: '0 0',
-      backgroundSize: '80px 20px',
-      backgroundRepeat: 'no-repeat'
-    }}
+    style={{ width: '20px', height: '20px' }}
   />
 );
 
 export const GlobeIcon = ({ className }: IconProps) => (
-  <div 
+  <img 
+    src={translateIcon} 
+    alt="Language" 
     className={className}
-    style={{
-      width: '20px',
-      height: '20px',
-      backgroundImage: `url(${headerIcons})`,
-      backgroundPosition: '-20px 0',
-      backgroundSize: '80px 20px',
-      backgroundRepeat: 'no-repeat'
-    }}
+    style={{ width: '20px', height: '20px' }}
   />
 );
 
 export const SunIcon = ({ className }: IconProps) => (
-  <div 
+  <img 
+    src={sunIcon} 
+    alt="Light mode" 
     className={className}
-    style={{
-      width: '20px',
-      height: '20px',
-      backgroundImage: `url(${headerIcons})`,
-      backgroundPosition: '-40px 0',
-      backgroundSize: '80px 20px',
-      backgroundRepeat: 'no-repeat'
-    }}
+    style={{ width: '20px', height: '20px' }}
   />
 );
 
 export const MoonIcon = ({ className }: IconProps) => (
-  <div 
+  <img 
+    src={moonIcon} 
+    alt="Dark mode" 
     className={className}
-    style={{
-      width: '20px',
-      height: '20px',
-      backgroundImage: `url(${headerIcons})`,
-      backgroundPosition: '-60px 0',
-      backgroundSize: '80px 20px',
-      backgroundRepeat: 'no-repeat'
-    }}
+    style={{ width: '20px', height: '20px' }}
   />
 );
