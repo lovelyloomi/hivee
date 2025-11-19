@@ -7,11 +7,16 @@ import BottomNav from "@/components/BottomNav";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArtistOfTheMonth } from "@/components/ArtistOfTheMonth";
-
 const Index = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
-  const { user, profileCompleted, loading } = useAuth();
+  const {
+    t
+  } = useLanguage();
+  const {
+    user,
+    profileCompleted,
+    loading
+  } = useAuth();
 
   // Redirect to onboarding if profile not completed
   useEffect(() => {
@@ -19,24 +24,24 @@ const Index = () => {
       navigate('/onboarding');
     }
   }, [user, profileCompleted, loading, navigate]);
-
-  return (
-    <div className="min-h-screen bg-background relative overflow-hidden pb-20">
+  return <div className="min-h-screen bg-background relative overflow-hidden pb-20">
       <Header />
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-accent/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse" style={{
+        animationDelay: '1s'
+      }}></div>
+        <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-accent/5 rounded-full blur-3xl animate-pulse" style={{
+        animationDelay: '2s'
+      }}></div>
       </div>
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12 pt-24">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto space-y-8 animate-fade-in">
-          <div className="inline-block px-4 py-2 bg-muted rounded-full text-muted-foreground text-sm font-medium mb-4">
-            🚀 The Future of Job Hunting
-          </div>
+          <div className="inline-block px-4 py-2 bg-muted rounded-full text-muted-foreground text-sm font-medium mb-4">FIND ART, MAKE ART, SHARE ART              </div>
           
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight bg-gradient-primary bg-clip-text text-transparent">
             ART IS MEANT TO<br />
@@ -48,31 +53,14 @@ const Index = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {!user ? (
-              <Button
-                size="lg"
-                onClick={() => navigate("/auth")}
-                className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group"
-              >
+            {!user ? <Button size="lg" onClick={() => navigate("/auth")} className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group">
                 Get Started
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            ) : (
-              <Button
-                size="lg"
-                onClick={() => navigate("/find")}
-                className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group"
-              >
+              </Button> : <Button size="lg" onClick={() => navigate("/find")} className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group">
                 Start Hunting
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            )}
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate("/opportunities")}
-              className="px-8 py-6 text-lg rounded-full"
-            >
+              </Button>}
+            <Button size="lg" variant="outline" onClick={() => navigate("/opportunities")} className="px-8 py-6 text-lg rounded-full">
               View Opportunities
             </Button>
           </div>
@@ -118,8 +106,6 @@ const Index = () => {
       <ArtistOfTheMonth />
 
       <BottomNav />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
