@@ -16,12 +16,12 @@ const BottomNav = () => {
       <div className="container mx-auto px-2">
         <div className="flex items-center justify-around py-0.5">
           <NavLink to="/find" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
-            <img src={beefindIcon} alt="BEEFIND" className="h-18 w-18" />
+            <img src={beefindIcon} alt="BEEFIND" className="h-17 w-17" />
             <span className="text-xs font-medium">{t('nav.find')}</span>
           </NavLink>
 
           <NavLink to="/matches" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-lg transition-colors text-muted-foreground relative" activeClassName="text-primary bg-primary/10">
-            <img src={beefriendIcon} alt="BEEhunt" className="h-18 w-18" />
+            <img src={beefriendIcon} alt="BEEhunt" className="h-17 w-17" />
             <span className="text-xs font-medium">{t('nav.connections')}</span>
             {unreadCount > 0 && (
               <Badge 
@@ -39,12 +39,12 @@ const BottomNav = () => {
           </NavLink>
 
           <NavLink to="/works" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
-            <img src={beemadeIcon} alt="BEEmade" className="h-18 w-18" />
+            <img src={beemadeIcon} alt="BEEmade" className="h-17 w-17" />
             <span className="text-xs font-medium">{t('nav.gallery')}</span>
           </NavLink>
 
           <NavLink to="/opportunities" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
-            <img src={beesinesIcon} alt="BEEsiness" className="h-18 w-18" />
+            <img src={beesinesIcon} alt="BEEsiness" className="h-17 w-17" />
             <span className="text-xs font-medium">{t('nav.opportunities')}</span>
           </NavLink>
         </div>
