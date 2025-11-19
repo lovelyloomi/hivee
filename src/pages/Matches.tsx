@@ -292,13 +292,12 @@ const Matches = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pt-20 pb-20">
       <Header />
-      <div className="container max-w-2xl mx-auto px-4 py-8 pt-24">
+      <div className="container max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
-          <Heart className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Your Matches
+            Bees U Matched With
           </h1>
         </div>
 

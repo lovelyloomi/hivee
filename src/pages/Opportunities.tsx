@@ -362,13 +362,13 @@ const Opportunities = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pt-20 pb-20">
       <Header />
       
-      <div className="container mx-auto px-4 pt-20">
+      <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-foreground">Opportunities</h1>
+            <h1 className="text-3xl font-bold text-foreground">Opportunities Around the Hives</h1>
             <div className="flex gap-2">
               {user && (
                 <Button
