@@ -29,10 +29,10 @@ const translations: Translations = {
   
   // Navigation
   'nav.home': { en: 'Home', fr: 'Accueil', it: 'Home', es: 'Inicio', zh: '首页', ja: 'ホーム', ar: 'الصفحة الرئيسية' },
-  'nav.swipe': { en: 'BEEfriend', fr: 'BEEfriend', it: 'BEEfriend', es: 'BEEfriend', zh: 'BEEfriend', ja: 'BEEfriend', ar: 'BEEfriend' },
+  'nav.find': { en: 'BEEFIND', fr: 'BEEFIND', it: 'BEEFIND', es: 'BEEFIND', zh: 'BEEFIND', ja: 'BEEFIND', ar: 'BEEFIND' },
   'nav.gallery': { en: 'BEEmade', fr: 'BEEmade', it: 'BEEmade', es: 'BEEmade', zh: 'BEEmade', ja: 'BEEmade', ar: 'BEEmade' },
-  'nav.connections': { en: 'BEEbond', fr: 'BEEbond', it: 'BEEbond', es: 'BEEbond', zh: 'BEEbond', ja: 'BEEbond', ar: 'BEEbond' },
-  'nav.opportunities': { en: 'HIVES', fr: 'HIVES', it: 'HIVES', es: 'HIVES', zh: 'HIVES', ja: 'HIVES', ar: 'HIVES' },
+  'nav.connections': { en: 'BEEfriend', fr: 'BEEfriend', it: 'BEEfriend', es: 'BEEfriend', zh: 'BEEfriend', ja: 'BEEfriend', ar: 'BEEfriend' },
+  'nav.opportunities': { en: 'BEEsiness', fr: 'BEEsiness', it: 'BEEsiness', es: 'BEEsiness', zh: 'BEEsiness', ja: 'BEEsiness', ar: 'BEEsiness' },
   
   // Verification
   'verification.emailVerified': { en: 'Email Verified', fr: 'Email vérifié', it: 'Email verificata', es: 'Email verificado', zh: '已验证邮箱', ja: 'メール確認済み', ar: 'البريد الإلكتروني موثق' },

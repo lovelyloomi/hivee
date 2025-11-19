@@ -24,24 +24,23 @@ export const HexagonAvatar = ({
   size = "md"
 }: HexagonAvatarProps) => {
   return (
-    <div className={cn("relative", sizeClasses[size], className)}>
-      <div 
-        className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20"
-        style={{
-          clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
-        }}
-      />
-      <Avatar 
-        className="absolute inset-[2px] border-0"
-        style={{
-          clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
-        }}
-      >
-        <AvatarImage src={src || undefined} alt={alt} className="object-cover" />
-        <AvatarFallback className="bg-gradient-to-br from-primary/10 to-accent/10 text-foreground">
-          {fallback}
-        </AvatarFallback>
-      </Avatar>
+    <div 
+      className={cn("relative", sizeClasses[size], className)}
+      style={{
+        clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+      }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
+      <div className="absolute inset-[2px]" style={{
+        clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+      }}>
+        <Avatar className="w-full h-full border-0 rounded-none">
+          <AvatarImage src={src || undefined} alt={alt} className="object-cover" />
+          <AvatarFallback className="bg-gradient-to-br from-primary/10 to-accent/10 text-foreground rounded-none">
+            {fallback}
+          </AvatarFallback>
+        </Avatar>
+      </div>
     </div>
   );
 };

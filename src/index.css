@@ -50,6 +50,9 @@ All colors MUST be HSL.
     /* Animation tokens */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* Honeycomb pattern */
+    --honeycomb-pattern: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill='none' stroke='%23FDB927' stroke-opacity='0.08' stroke-width='1'/%3E%3C/svg%3E");
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 20 5.3% 26.1%;
@@ -96,6 +99,8 @@ All colors MUST be HSL.
 
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
     --shadow-hover: 0 8px 30px -6px hsl(0 0% 0% / 0.6);
+    
+    --honeycomb-pattern: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill='none' stroke='%23FDB927' stroke-opacity='0.15' stroke-width='1'/%3E%3C/svg%3E");
 
     --sidebar-background: 20 5.9% 10%;
     --sidebar-foreground: 40 4.8% 95.9%;
@@ -129,4 +134,11 @@ All colors MUST be HSL.
 .no-screenshot img {
   pointer-events: none;
   -webkit-touch-callout: none;
+}
+
+/* Honeycomb background utility */
+.honeycomb-bg {
+  background-image: var(--honeycomb-pattern);
+  background-size: 60px 60px;
+  background-repeat: repeat;
 }
