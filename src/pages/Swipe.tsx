@@ -305,11 +305,11 @@ const Swipe = () => {
 
   if (showCategorySelection) {
     return (
-      <div className="min-h-screen bg-background pb-20">
+      <div className="min-h-screen bg-background pt-20 pb-20">
         <Header />
-        <div className="container mx-auto px-4 pt-24 pb-8 animate-fade-in">
+        <div className="container mx-auto px-4 pb-8 animate-fade-in">
           <div className="max-w-3xl mx-auto text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">{t('swipe.selectCategory')}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">Select Artist Bee Category</h1>
             <p className="text-muted-foreground text-lg">{t('swipe.selectSubtitle')}</p>
           </div>
 
@@ -378,10 +378,10 @@ const Swipe = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pt-20 pb-20">
       <Header />
       
-      <div className="container mx-auto px-4 pt-24 pb-8 animate-fade-in">
+      <div className="container mx-auto px-4 pb-8 animate-fade-in">
         <div className="max-w-md mx-auto mb-6">
           <Button
             variant="outline"

@@ -278,11 +278,11 @@ export default function Works() {
       setUploading(false);
     }
   };
-  return <div className="min-h-screen bg-background pb-20">
+  return <div className="min-h-screen bg-background pt-20 pb-20">
       <Header />
 
-      <main className="container mx-auto px-4 py-8 pt-24">
-        <h1 className="text-3xl font-bold text-foreground mb-6">Gallery</h1>
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-foreground mb-6">Bees Art Gallery</h1>
 
         <div className="space-y-4 mb-6">
           <div className="flex gap-3">
