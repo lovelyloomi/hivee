@@ -18,7 +18,7 @@ const BottomNav = () => {
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground"
             activeClassName="text-primary bg-primary/10"
           >
-            <img src={beefindIcon} alt="BEEFIND" className="h-10 w-10" />
+            <img src={beefindIcon} alt="BEEFIND" className="h-12 w-12" />
             <span className="text-xs font-medium">{t('nav.find')}</span>
           </NavLink>
 
@@ -27,7 +27,7 @@ const BottomNav = () => {
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground"
             activeClassName="text-primary bg-primary/10"
           >
-            <img src={beefriendIcon} alt="BEEfriend" className="h-10 w-10" />
+            <img src={beefriendIcon} alt="BEEfriend" className="h-12 w-12" />
             <span className="text-xs font-medium">{t('nav.connections')}</span>
           </NavLink>
 
@@ -36,7 +36,7 @@ const BottomNav = () => {
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground"
             activeClassName="text-primary bg-primary/10"
           >
-            <img src={hiveeLogo} alt="Home" className="h-11 w-11" />
+            <img src={hiveeLogo} alt="Home" className="h-14 w-14" />
             <span className="text-xs font-medium">{t('nav.home')}</span>
           </NavLink>
 
@@ -45,7 +45,7 @@ const BottomNav = () => {
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground"
             activeClassName="text-primary bg-primary/10"
           >
-            <img src={beemadeIcon} alt="BEEmade" className="h-10 w-10" />
+            <img src={beemadeIcon} alt="BEEmade" className="h-12 w-12" />
             <span className="text-xs font-medium">{t('nav.gallery')}</span>
           </NavLink>
 
@@ -54,7 +54,7 @@ const BottomNav = () => {
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground"
             activeClassName="text-primary bg-primary/10"
           >
-            <img src={beesinesIcon} alt="BEEsiness" className="h-10 w-10" />
+            <img src={beesinesIcon} alt="BEEsiness" className="h-12 w-12" />
             <span className="text-xs font-medium">{t('nav.opportunities')}</span>
           </NavLink>
         </div>

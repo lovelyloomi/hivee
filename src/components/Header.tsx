@@ -37,7 +37,7 @@ const Header = () => {
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          <img src={hiveeLogo} alt="HIVEE" className="h-16 w-auto" />
+          <img src={hiveeLogo} alt="HIVEE" className="h-20 w-auto" />
         </div>
 
         {/* Desktop search bar */}
