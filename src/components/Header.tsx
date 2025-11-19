@@ -15,11 +15,15 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import UserMenu from "@/components/UserMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SearchModal } from "@/components/SearchModal";
+import { useRealtimeMatches } from "@/hooks/useRealtimeMatches";
 
 const Header = () => {
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
+  
+  // Initialize real-time match notifications
+  useRealtimeMatches();
 
   const languages = [
     { code: "en" as const, name: "English", flag: "🇬🇧" },
@@ -33,12 +37,12 @@ const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-4 py-1 flex items-center justify-between gap-4">
+      <div className="container mx-auto px-4 py-0.5 flex items-center justify-between gap-4">
         <div
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          <img src={hiveeLogo} alt="HIVEE" className="h-20 w-auto" />
+          <img src={hiveeLogo} alt="HIVEE" className="h-14 w-auto" />
         </div>
 
         {/* Desktop search bar */}
