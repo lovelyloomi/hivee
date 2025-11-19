@@ -14,7 +14,7 @@ const steps = [
   {
     title: "Complete Your Profile",
     description: "Add your bio, skills, and portfolio to showcase your work and attract opportunities.",
-    action: "/profile"
+    action: "/profile-setup"
   },
   {
     title: "Upload Your Work",
@@ -24,7 +24,7 @@ const steps = [
   {
     title: "Enable Location",
     description: "Find nearby artists and opportunities by enabling location services.",
-    action: "/profile"
+    action: "/profile-setup"
   },
   {
     title: "Start Swiping",
