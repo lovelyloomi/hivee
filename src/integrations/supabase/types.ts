@@ -638,90 +638,129 @@ export type Database = {
       profiles: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"] | null
+          artist_specialization: string | null
+          artstation_url: string | null
+          availability_status: string | null
           avatar_url: string | null
+          behance_url: string | null
           bio: string | null
           birth_date: string | null
           created_at: string
           display_name_preference: string | null
+          education_level: string | null
           email: string | null
           full_name: string | null
           id: string
+          instagram_url: string | null
+          languages: string[] | null
           latitude: number | null
+          linkedin_url: string | null
           location: string | null
           location_enabled: boolean | null
           location_precision: string | null
           longitude: number | null
           max_distance_km: number | null
           onboarding_completed: boolean | null
+          other_portfolio_url: string | null
           portfolio_url: string | null
+          preferred_work_types: string[] | null
           profile_completed: boolean | null
           profile_visibility: string | null
           programs: string[] | null
           show_location: boolean | null
           skills: string[] | null
+          twitter_url: string | null
           updated_at: string
           username: string | null
           watermark_text: string | null
           watermark_url: string | null
+          website_url: string | null
           work_images: string[] | null
+          years_of_experience: number | null
         }
         Insert: {
           account_type?: Database["public"]["Enums"]["account_type"] | null
+          artist_specialization?: string | null
+          artstation_url?: string | null
+          availability_status?: string | null
           avatar_url?: string | null
+          behance_url?: string | null
           bio?: string | null
           birth_date?: string | null
           created_at?: string
           display_name_preference?: string | null
+          education_level?: string | null
           email?: string | null
           full_name?: string | null
           id: string
+          instagram_url?: string | null
+          languages?: string[] | null
           latitude?: number | null
+          linkedin_url?: string | null
           location?: string | null
           location_enabled?: boolean | null
           location_precision?: string | null
           longitude?: number | null
           max_distance_km?: number | null
           onboarding_completed?: boolean | null
+          other_portfolio_url?: string | null
           portfolio_url?: string | null
+          preferred_work_types?: string[] | null
           profile_completed?: boolean | null
           profile_visibility?: string | null
           programs?: string[] | null
           show_location?: boolean | null
           skills?: string[] | null
+          twitter_url?: string | null
           updated_at?: string
           username?: string | null
           watermark_text?: string | null
           watermark_url?: string | null
+          website_url?: string | null
           work_images?: string[] | null
+          years_of_experience?: number | null
         }
         Update: {
           account_type?: Database["public"]["Enums"]["account_type"] | null
+          artist_specialization?: string | null
+          artstation_url?: string | null
+          availability_status?: string | null
           avatar_url?: string | null
+          behance_url?: string | null
           bio?: string | null
           birth_date?: string | null
           created_at?: string
           display_name_preference?: string | null
+          education_level?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          instagram_url?: string | null
+          languages?: string[] | null
           latitude?: number | null
+          linkedin_url?: string | null
           location?: string | null
           location_enabled?: boolean | null
           location_precision?: string | null
           longitude?: number | null
           max_distance_km?: number | null
           onboarding_completed?: boolean | null
+          other_portfolio_url?: string | null
           portfolio_url?: string | null
+          preferred_work_types?: string[] | null
           profile_completed?: boolean | null
           profile_visibility?: string | null
           programs?: string[] | null
           show_location?: boolean | null
           skills?: string[] | null
+          twitter_url?: string | null
           updated_at?: string
           username?: string | null
           watermark_text?: string | null
           watermark_url?: string | null
+          website_url?: string | null
           work_images?: string[] | null
+          years_of_experience?: number | null
         }
         Relationships: []
       }

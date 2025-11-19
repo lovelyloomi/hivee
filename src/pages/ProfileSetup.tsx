@@ -5,12 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
-import { Upload, Link as LinkIcon, X, Loader2 } from "lucide-react";
+import { Upload, Link as LinkIcon, X, Loader2, Globe, Instagram, Linkedin, Twitter } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { z } from "zod";
+
+// Validation schema for URLs
+const urlSchema = z.string().url().optional().or(z.literal(""));
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
@@ -20,6 +26,7 @@ const ProfileSetup = () => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingPortfolio, setUploadingPortfolio] = useState(false);
   
+  // Basic profile info
   const [username, setUsername] = useState("");
   const [displayNamePreference, setDisplayNamePreference] = useState<"real_name" | "username">("real_name");
   const [portfolioType, setPortfolioType] = useState<"link" | "pdf">("link");
@@ -27,6 +34,24 @@ const ProfileSetup = () => {
   const [portfolioFile, setPortfolioFile] = useState<File | null>(null);
   const [workImages, setWorkImages] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+
+  // Social media links
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [behanceUrl, setBehanceUrl] = useState("");
+  const [artstationUrl, setArtstationUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [twitterUrl, setTwitterUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+
+  // Professional information
+  const [artistSpecialization, setArtistSpecialization] = useState("");
+  const [educationLevel, setEducationLevel] = useState("");
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [languageInput, setLanguageInput] = useState("");
+  const [yearsOfExperience, setYearsOfExperience] = useState("");
+  const [availabilityStatus, setAvailabilityStatus] = useState("open_to_opportunities");
+  const [preferredWorkTypes, setPreferredWorkTypes] = useState<string[]>([]);
+  const [workTypeInput, setWorkTypeInput] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -138,6 +163,55 @@ const ProfileSetup = () => {
     setWorkImages(workImages.filter((_, i) => i !== index));
   };
 
+  const addLanguage = () => {
+    if (languageInput.trim() && !languages.includes(languageInput.trim())) {
+      setLanguages([...languages, languageInput.trim()]);
+      setLanguageInput("");
+    }
+  };
+
+  const removeLanguage = (index: number) => {
+    setLanguages(languages.filter((_, i) => i !== index));
+  };
+
+  const addWorkType = () => {
+    if (workTypeInput.trim() && !preferredWorkTypes.includes(workTypeInput.trim())) {
+      setPreferredWorkTypes([...preferredWorkTypes, workTypeInput.trim()]);
+      setWorkTypeInput("");
+    }
+  };
+
+  const removeWorkType = (index: number) => {
+    setPreferredWorkTypes(preferredWorkTypes.filter((_, i) => i !== index));
+  };
+
+  const validateUrls = () => {
+    const urls = {
+      instagram: instagramUrl,
+      behance: behanceUrl,
+      artstation: artstationUrl,
+      linkedin: linkedinUrl,
+      twitter: twitterUrl,
+      website: websiteUrl
+    };
+
+    for (const [platform, url] of Object.entries(urls)) {
+      if (url) {
+        try {
+          urlSchema.parse(url);
+        } catch {
+          toast({
+            title: "URL non valido",
+            description: `L'URL di ${platform} non è valido`,
+            variant: "destructive"
+          });
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -159,6 +233,10 @@ const ProfileSetup = () => {
       return;
     }
 
+    if (!validateUrls()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -175,6 +253,20 @@ const ProfileSetup = () => {
           display_name_preference: displayNamePreference,
           portfolio_url: finalPortfolioUrl || null,
           work_images: workImages,
+          // Social media
+          instagram_url: instagramUrl || null,
+          behance_url: behanceUrl || null,
+          artstation_url: artstationUrl || null,
+          linkedin_url: linkedinUrl || null,
+          twitter_url: twitterUrl || null,
+          website_url: websiteUrl || null,
+          // Professional info
+          artist_specialization: artistSpecialization || null,
+          education_level: educationLevel || null,
+          languages: languages.length > 0 ? languages : null,
+          years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : null,
+          availability_status: availabilityStatus,
+          preferred_work_types: preferredWorkTypes.length > 0 ? preferredWorkTypes : null,
           profile_completed: true
         })
         .eq('id', user?.id);
@@ -360,6 +452,240 @@ const ProfileSetup = () => {
               <p className="text-sm text-muted-foreground">
                 {workImages.length}/10 immagini caricate
               </p>
+            </div>
+
+            {/* Professional Information Section */}
+            <div className="space-y-4 border-t border-border pt-6">
+              <h2 className="text-xl font-semibold text-foreground">Informazioni Professionali</h2>
+              
+              {/* Artist Specialization */}
+              <div className="space-y-2">
+                <Label htmlFor="specialization">Specializzazione Artistica</Label>
+                <Input
+                  id="specialization"
+                  type="text"
+                  placeholder="es. Character Design, 3D Modeling, Illustration"
+                  value={artistSpecialization}
+                  onChange={(e) => setArtistSpecialization(e.target.value)}
+                  className="bg-background border-border text-foreground"
+                  maxLength={100}
+                />
+              </div>
+
+              {/* Education Level */}
+              <div className="space-y-2">
+                <Label htmlFor="education">Livello di Istruzione</Label>
+                <Select value={educationLevel} onValueChange={setEducationLevel}>
+                  <SelectTrigger className="bg-background border-border text-foreground">
+                    <SelectValue placeholder="Seleziona il tuo livello di istruzione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="self_taught">Autodidatta</SelectItem>
+                    <SelectItem value="high_school">Scuola Superiore</SelectItem>
+                    <SelectItem value="bootcamp">Bootcamp</SelectItem>
+                    <SelectItem value="online_courses">Corsi Online</SelectItem>
+                    <SelectItem value="associate">Laurea Triennale</SelectItem>
+                    <SelectItem value="bachelor">Laurea</SelectItem>
+                    <SelectItem value="master">Magistrale</SelectItem>
+                    <SelectItem value="doctorate">Dottorato</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Years of Experience */}
+              <div className="space-y-2">
+                <Label htmlFor="experience">Anni di Esperienza</Label>
+                <Input
+                  id="experience"
+                  type="number"
+                  min="0"
+                  max="50"
+                  placeholder="0"
+                  value={yearsOfExperience}
+                  onChange={(e) => setYearsOfExperience(e.target.value)}
+                  className="bg-background border-border text-foreground"
+                />
+              </div>
+
+              {/* Availability Status */}
+              <div className="space-y-2">
+                <Label htmlFor="availability">Disponibilità</Label>
+                <Select value={availabilityStatus} onValueChange={setAvailabilityStatus}>
+                  <SelectTrigger className="bg-background border-border text-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open_to_opportunities">Aperto a Opportunità</SelectItem>
+                    <SelectItem value="available_for_freelance">Disponibile per Freelance</SelectItem>
+                    <SelectItem value="full_time_only">Solo Full-Time</SelectItem>
+                    <SelectItem value="not_available">Non Disponibile</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Languages */}
+              <div className="space-y-2">
+                <Label>Lingue</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="es. Italiano, Inglese"
+                    value={languageInput}
+                    onChange={(e) => setLanguageInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLanguage())}
+                    className="bg-background border-border text-foreground"
+                  />
+                  <Button type="button" onClick={addLanguage} variant="secondary">
+                    Aggiungi
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {languages.map((lang, index) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      {lang}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => removeLanguage(index)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preferred Work Types */}
+              <div className="space-y-2">
+                <Label>Tipi di Lavoro Preferiti</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="es. Commissioni, Progetti a Lungo Termine"
+                    value={workTypeInput}
+                    onChange={(e) => setWorkTypeInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addWorkType())}
+                    className="bg-background border-border text-foreground"
+                  />
+                  <Button type="button" onClick={addWorkType} variant="secondary">
+                    Aggiungi
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {preferredWorkTypes.map((type, index) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      {type}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => removeWorkType(index)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Social Media Links Section */}
+            <div className="space-y-4 border-t border-border pt-6">
+              <h2 className="text-xl font-semibold text-foreground">Social Media & Portfolio</h2>
+              <p className="text-sm text-muted-foreground">
+                Connetti i tuoi account social e portfolio per far vedere il tuo lavoro
+              </p>
+
+              <div className="grid gap-4">
+                {/* Instagram */}
+                <div className="space-y-2">
+                  <Label htmlFor="instagram" className="flex items-center gap-2">
+                    <Instagram className="h-4 w-4" />
+                    Instagram
+                  </Label>
+                  <Input
+                    id="instagram"
+                    type="url"
+                    placeholder="https://instagram.com/tuousername"
+                    value={instagramUrl}
+                    onChange={(e) => setInstagramUrl(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+
+                {/* Behance */}
+                <div className="space-y-2">
+                  <Label htmlFor="behance" className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Behance
+                  </Label>
+                  <Input
+                    id="behance"
+                    type="url"
+                    placeholder="https://behance.net/tuousername"
+                    value={behanceUrl}
+                    onChange={(e) => setBehanceUrl(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+
+                {/* ArtStation */}
+                <div className="space-y-2">
+                  <Label htmlFor="artstation" className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    ArtStation
+                  </Label>
+                  <Input
+                    id="artstation"
+                    type="url"
+                    placeholder="https://artstation.com/tuousername"
+                    value={artstationUrl}
+                    onChange={(e) => setArtstationUrl(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+
+                {/* LinkedIn */}
+                <div className="space-y-2">
+                  <Label htmlFor="linkedin" className="flex items-center gap-2">
+                    <Linkedin className="h-4 w-4" />
+                    LinkedIn
+                  </Label>
+                  <Input
+                    id="linkedin"
+                    type="url"
+                    placeholder="https://linkedin.com/in/tuousername"
+                    value={linkedinUrl}
+                    onChange={(e) => setLinkedinUrl(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+
+                {/* Twitter/X */}
+                <div className="space-y-2">
+                  <Label htmlFor="twitter" className="flex items-center gap-2">
+                    <Twitter className="h-4 w-4" />
+                    Twitter / X
+                  </Label>
+                  <Input
+                    id="twitter"
+                    type="url"
+                    placeholder="https://twitter.com/tuousername"
+                    value={twitterUrl}
+                    onChange={(e) => setTwitterUrl(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+
+                {/* Personal Website */}
+                <div className="space-y-2">
+                  <Label htmlFor="website" className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Sito Web Personale
+                  </Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    placeholder="https://tuosito.com"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+              </div>
             </div>
 
             <Button
