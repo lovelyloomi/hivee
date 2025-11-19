@@ -20,7 +20,16 @@ export default function UserMenu() {
     navigate('/auth');
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <Button 
+        onClick={() => navigate('/auth')}
+        size="sm"
+      >
+        Sign Up
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

@@ -43,7 +43,7 @@ const ProfileSetup = () => {
         .from('profiles')
         .select('username')
         .eq('username', cleanUsername)
-        .single();
+        .maybeSingle();
 
       if (data) {
         toast({
@@ -175,19 +175,18 @@ const ProfileSetup = () => {
           display_name_preference: displayNamePreference,
           portfolio_url: finalPortfolioUrl || null,
           work_images: workImages,
-          profile_completed: true,
-          onboarding_completed: true
+          profile_completed: true
         })
         .eq('id', user?.id);
 
       if (error) throw error;
 
       toast({
-        title: "Profilo completato!",
-        description: "Benvenuto su Hivee"
+        title: "Profilo salvato!",
+        description: "Procedi con i termini e condizioni"
       });
 
-      navigate("/");
+      navigate("/terms-and-conditions");
     } catch (error: any) {
       toast({
         title: "Errore",
