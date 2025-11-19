@@ -14,6 +14,7 @@ import { MatchNotification } from "@/components/MatchNotification";
 import { useNotifications } from "@/hooks/useNotifications";
 import { calculateDistance, formatDistanceRange } from "@/utils/distance";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { RecentMatches } from "@/components/RecentMatches";
 
 interface Profile {
   id: string;
@@ -336,14 +337,19 @@ const Swipe = () => {
     return (
       <div className="min-h-screen bg-background pb-20 animate-fade-in">
         <Header />
-        <div className="container mx-auto px-4 pt-24 pb-8 flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="text-center max-w-md">
-            <div className="text-6xl mb-4">🎨</div>
-            <h2 className="text-2xl font-bold mb-2">{t('swipe.noProfiles')}</h2>
-            <p className="text-muted-foreground mb-6">{t('swipe.noProfilesDesc')}</p>
-            <Button onClick={() => setShowCategorySelection(true)}>
-              {t('swipe.changeCategory')}
-            </Button>
+        <div className="container mx-auto px-4 pt-24 pb-8">
+          <div className="max-w-md mx-auto mb-6">
+            <RecentMatches />
+          </div>
+          <div className="flex flex-col items-center justify-center">
+            <div className="text-center max-w-md">
+              <div className="text-6xl mb-4">🎨</div>
+              <h2 className="text-2xl font-bold mb-2">{t('swipe.noProfiles')}</h2>
+              <p className="text-muted-foreground mb-6">{t('swipe.noProfilesDesc')}</p>
+              <Button onClick={() => setShowCategorySelection(true)}>
+                {t('swipe.changeCategory')}
+              </Button>
+            </div>
           </div>
         </div>
         <BottomNav />
@@ -368,7 +374,7 @@ const Swipe = () => {
           </Button>
 
           {showFilters && (
-            <div className="bg-card border border-border rounded-lg p-4 animate-fade-in">
+            <div className="bg-card border border-border rounded-lg p-4 mb-4 animate-fade-in">
               <label className="text-sm font-medium mb-2 block">
                 {t('swipe.maxDistance')}: {distanceFilter}km
               </label>
@@ -382,6 +388,10 @@ const Swipe = () => {
               />
             </div>
           )}
+
+          <div className="mb-6">
+            <RecentMatches />
+          </div>
         </div>
 
         <div className="max-w-md mx-auto">
