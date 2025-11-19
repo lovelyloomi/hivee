@@ -60,6 +60,114 @@ const translations: Translations = {
   'accountType.art_collector.description': { en: 'Collectors discovering artists', fr: 'Collectionneurs découvrant des artistes', it: 'Collezionisti alla scoperta di artisti', es: 'Coleccionistas descubriendo artistas', zh: '收藏家发现艺术家', ja: 'アーティスト発掘中のコレクター', ar: 'جامعون يكتشفون الفنانين' },
   
   // Index/Landing
+  'home.tagline': {
+    en: 'FIND ART, MAKE ART, SHARE ART',
+    fr: 'TROUVE L\'ART, CRÉE L\'ART, PARTAGE L\'ART',
+    it: 'TROVA ARTE, CREA ARTE, CONDIVIDI ARTE',
+    es: 'ENCUENTRA ARTE, CREA ARTE, COMPARTE ARTE',
+    zh: '寻找艺术，创作艺术，分享艺术',
+    ja: 'アートを見つけ、アートを作り、アートを共有',
+    ar: 'ابحث عن الفن، اصنع الفن، شارك الفن'
+  },
+  'home.hero.title': {
+    en: 'ART IS MEANT TO\nBE SHARED',
+    fr: 'L\'ART EST FAIT POUR\nÊTRE PARTAGÉ',
+    it: 'L\'ARTE È FATTA PER\nESSERE CONDIVISA',
+    es: 'EL ARTE ESTÁ HECHO PARA\nSER COMPARTIDO',
+    zh: '艺术注定\n要被分享',
+    ja: 'アートは\n共有されるべきもの',
+    ar: 'الفن مصنوع\nليتم مشاركته'
+  },
+  'home.hero.description': {
+    en: 'Hunt bees around you, bee friends, share your works, see bees around the world and find the best opportunity to work around you',
+    fr: 'Chasse les abeilles autour de toi, fais-toi des amis abeilles, partage tes œuvres, découvre les abeilles du monde entier et trouve les meilleures opportunités de travail',
+    it: 'Caccia le api intorno a te, fai amicizia con le api, condividi le tue opere, scopri le api in tutto il mondo e trova le migliori opportunità di lavoro',
+    es: 'Caza abejas a tu alrededor, haz amigos abejas, comparte tus obras, descubre abejas en todo el mundo y encuentra las mejores oportunidades de trabajo',
+    zh: '寻找周围的蜜蜂，结交蜜蜂朋友，分享你的作品，看到世界各地的蜜蜂，找到最佳工作机会',
+    ja: '周りのミツバチを探し、ミツバチの友達を作り、作品を共有し、世界中のミツバチを見て、最高の仕事の機会を見つけよう',
+    ar: 'اصطاد النحل من حولك، كون صداقات نحل، شارك أعمالك، اكتشف النحل حول العالم واعثر على أفضل فرصة عمل'
+  },
+  'home.cta.getStarted': {
+    en: 'Get Started',
+    fr: 'Commencer',
+    it: 'Inizia',
+    es: 'Empezar',
+    zh: '开始使用',
+    ja: '始める',
+    ar: 'ابدأ الآن'
+  },
+  'home.cta.startHunting': {
+    en: 'Start Hunting',
+    fr: 'Commencer la Chasse',
+    it: 'Inizia la Caccia',
+    es: 'Comenzar Búsqueda',
+    zh: '开始寻找',
+    ja: '探索を始める',
+    ar: 'ابدأ البحث'
+  },
+  'home.cta.viewOpportunities': {
+    en: 'View Opportunities',
+    fr: 'Voir les Opportunités',
+    it: 'Vedi Opportunità',
+    es: 'Ver Oportunidades',
+    zh: '查看机会',
+    ja: '機会を見る',
+    ar: 'عرض الفرص'
+  },
+  'home.feature1.title': {
+    en: 'Lightning Fast',
+    fr: 'Ultra Rapide',
+    it: 'Veloce come un Fulmine',
+    es: 'Súper Rápido',
+    zh: '闪电般快速',
+    ja: '電光石火',
+    ar: 'سريع كالبرق'
+  },
+  'home.feature1.description': {
+    en: 'Review dozens of job opportunities in minutes, not hours',
+    fr: 'Consultez des dizaines d\'opportunités en quelques minutes, pas en heures',
+    it: 'Esamina decine di opportunità in pochi minuti, non ore',
+    es: 'Revisa docenas de oportunidades en minutos, no horas',
+    zh: '几分钟内浏览数十个工作机会，而不是几小时',
+    ja: '数時間ではなく数分で数十の仕事の機会をレビュー',
+    ar: 'راجع عشرات الفرص في دقائق، وليس ساعات'
+  },
+  'home.feature2.title': {
+    en: 'Perfect Matches',
+    fr: 'Correspondances Parfaites',
+    it: 'Abbinamenti Perfetti',
+    es: 'Coincidencias Perfectas',
+    zh: '完美匹配',
+    ja: '完璧なマッチング',
+    ar: 'تطابقات مثالية'
+  },
+  'home.feature2.description': {
+    en: 'Smart algorithm shows you jobs that fit your skills and goals',
+    fr: 'Un algorithme intelligent vous montre des emplois qui correspondent à vos compétences et objectifs',
+    it: 'L\'algoritmo intelligente ti mostra lavori adatti alle tue competenze e obiettivi',
+    es: 'El algoritmo inteligente te muestra trabajos que se ajustan a tus habilidades y objetivos',
+    zh: '智能算法为您展示符合您技能和目标的工作',
+    ja: 'スマートアルゴリズムがあなたのスキルと目標に合った仕事を表示',
+    ar: 'الخوارزمية الذكية تعرض لك الوظائف التي تناسب مهاراتك وأهدافك'
+  },
+  'home.feature3.title': {
+    en: 'Career Growth',
+    fr: 'Croissance de Carrière',
+    it: 'Crescita Professionale',
+    es: 'Crecimiento Profesional',
+    zh: '职业发展',
+    ja: 'キャリア成長',
+    ar: 'النمو المهني'
+  },
+  'home.feature3.description': {
+    en: 'Discover opportunities from startups to established companies',
+    fr: 'Découvrez des opportunités des startups aux entreprises établies',
+    it: 'Scopri opportunità dalle startup alle aziende consolidate',
+    es: 'Descubre oportunidades desde startups hasta empresas establecidas',
+    zh: '从初创公司到成熟企业，发现各种机会',
+    ja: 'スタートアップから確立された企業まで機会を発見',
+    ar: 'اكتشف الفرص من الشركات الناشئة إلى الشركات الراسخة'
+  },
   'landing.hero.title': {
     en: 'Find Your Dream Job', 
     fr: 'Trouvez Votre Emploi de Rêve', 

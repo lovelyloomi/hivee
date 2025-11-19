@@ -74,9 +74,11 @@ const Index = () => {
             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Zap className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">Lightning Fast</h3>
+            <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+              {t('home.feature1.title')}
+            </h3>
             <p className="text-muted-foreground">
-              Review dozens of job opportunities in minutes, not hours
+              {t('home.feature1.description')}
             </p>
           </div>
 
@@ -84,9 +86,11 @@ const Index = () => {
             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Heart className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">Perfect Matches</h3>
+            <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+              {t('home.feature2.title')}
+            </h3>
             <p className="text-muted-foreground">
-              Smart algorithm shows you jobs that fit your skills and goals
+              {t('home.feature2.description')}
             </p>
           </div>
 
@@ -94,9 +98,11 @@ const Index = () => {
             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Briefcase className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">Career Growth</h3>
+            <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+              {t('home.feature3.title')}
+            </h3>
             <p className="text-muted-foreground">
-              Discover opportunities from startups to established companies
+              {t('home.feature3.description')}
             </p>
           </div>
         </div>
