@@ -272,19 +272,23 @@ const Swipe = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 gap-6">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-foreground">Accedi per Continuare</h2>
-          <p className="text-muted-foreground">Devi effettuare l'accesso per utilizzare questa funzione</p>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex flex-col items-center justify-center p-4 gap-6 min-h-[calc(100vh-80px)] pt-24">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold text-foreground">Accedi per Continuare</h2>
+            <p className="text-muted-foreground">Devi effettuare l'accesso per utilizzare questa funzione</p>
+          </div>
+          <div className="flex gap-3">
+            <Button onClick={() => navigate('/auth')} size="lg">
+              Accedi
+            </Button>
+            <Button onClick={() => navigate('/auth')} variant="outline" size="lg">
+              Registrati
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={() => navigate('/auth')} size="lg">
-            Accedi
-          </Button>
-          <Button onClick={() => navigate('/auth')} variant="outline" size="lg">
-            Registrati
-          </Button>
-        </div>
+        <BottomNav />
       </div>
     );
   }
