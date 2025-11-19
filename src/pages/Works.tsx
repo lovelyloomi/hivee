@@ -313,26 +313,6 @@ export default function Works() {
         <h1 className="text-3xl font-bold text-foreground mb-6">Bees Art Gallery</h1>
 
         <div className="space-y-4 mb-6">
-          {/* Location Filter */}
-          <div className="flex gap-2 justify-center">
-            <Button
-              variant={locationFilter === 'global' ? 'default' : 'outline'}
-              onClick={() => setLocationFilter('global')}
-              className="gap-2"
-            >
-              <Globe className="h-4 w-4" />
-              Global
-            </Button>
-            <Button
-              variant={locationFilter === 'local' ? 'default' : 'outline'}
-              onClick={() => setLocationFilter('local')}
-              className="gap-2"
-            >
-              <MapPin className="h-4 w-4" />
-              Local
-            </Button>
-          </div>
-
           <div className="flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -509,6 +489,24 @@ export default function Works() {
                 <SelectItem value="pixel_art">Pixel Art</SelectItem>
               </SelectContent>
             </Select>
+
+            <Button
+              variant="outline"
+              onClick={() => setLocationFilter(locationFilter === 'global' ? 'local' : 'global')}
+              className="gap-2"
+            >
+              {locationFilter === 'global' ? (
+                <>
+                  <Globe className="h-4 w-4" />
+                  Global
+                </>
+              ) : (
+                <>
+                  <MapPin className="h-4 w-4" />
+                  Local
+                </>
+              )}
+            </Button>
 
             <div className="flex items-center space-x-2">
               <Checkbox id="show_ai" checked={showAIWorks} onCheckedChange={checked => setShowAIWorks(checked as boolean)} />
