@@ -86,6 +86,26 @@ const translations: Translations = {
   'landing.feature3.title': { en: 'Grow Your Career', fr: 'Développez Votre Carrière', it: 'Fai Crescere la Tua Carriera', es: 'Crece Tu Carrera', zh: '发展您的职业', ja: 'キャリアを成長させる', ar: 'نمِّ مسيرتك المهنية' },
   'landing.feature3.desc': { en: 'Connect with top companies', fr: 'Connectez-vous avec les meilleures entreprises', it: 'Connettiti con le migliori aziende', es: 'Conecta con las mejores empresas', zh: '与顶尖公司联系', ja: 'トップ企業とつながる', ar: 'تواصل مع أفضل الشركات' },
   
+  // Home
+  'home.artistOfMonth': { 
+    en: 'BEES of the month', 
+    fr: 'BEES du mois', 
+    it: 'BEES del mese', 
+    es: 'BEES del mes', 
+    zh: '本月蜜蜂', 
+    ja: '今月のBEES', 
+    ar: 'نحل الشهر' 
+  },
+  'home.artistOfMonthSubtitle': { 
+    en: 'Discover the most talented artists of this month', 
+    fr: 'Découvrez les artistes les plus talentueux de ce mois', 
+    it: 'Scopri gli artisti più talentuosi di questo mese', 
+    es: 'Descubre los artistas más talentosos de este mes', 
+    zh: '探索本月最有才华的艺术家', 
+    ja: '今月最も才能のあるアーティストを発見', 
+    ar: 'اكتشف الفنانين الأكثر موهبة هذا الشهر' 
+  },
+  
   // Swipe
   'swipe.selectCategory': { 
     en: 'Select Artist Category', 
