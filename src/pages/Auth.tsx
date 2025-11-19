@@ -174,7 +174,7 @@ const Auth = () => {
             description: "Welcome to SwipeJob"
           });
           setCaptchaToken("");
-          navigate("/");
+          navigate("/profile-setup");
         }
       }
     } catch (error: any) {
@@ -314,6 +314,18 @@ const Auth = () => {
             >
               {loading ? "Loading..." : (isLogin ? "Sign In" : "Sign Up")}
             </Button>
+
+            {isLogin && (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Password dimenticata?
+                </button>
+              </div>
+            )}
           </form>
           
           <div className="mt-4 text-center">

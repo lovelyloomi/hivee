@@ -22,6 +22,9 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Admin from "./pages/Admin";
 import { PrivacySettingsPage } from "./pages/PrivacySettings";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ProfileSetup from "./pages/ProfileSetup";
 import NotFound from "./pages/NotFound";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 
@@ -47,6 +50,9 @@ const App = () => (
             <Route path="/matches" element={<Matches />} />
             <Route path="/opportunities" element={<Opportunities />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/chat/:matchId" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<UserProfile />} />

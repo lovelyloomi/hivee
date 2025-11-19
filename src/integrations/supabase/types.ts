@@ -642,6 +642,7 @@ export type Database = {
           bio: string | null
           birth_date: string | null
           created_at: string
+          display_name_preference: string | null
           email: string | null
           full_name: string | null
           id: string
@@ -659,6 +660,7 @@ export type Database = {
           show_location: boolean | null
           skills: string[] | null
           updated_at: string
+          username: string | null
           watermark_text: string | null
           watermark_url: string | null
           work_images: string[] | null
@@ -669,6 +671,7 @@ export type Database = {
           bio?: string | null
           birth_date?: string | null
           created_at?: string
+          display_name_preference?: string | null
           email?: string | null
           full_name?: string | null
           id: string
@@ -686,6 +689,7 @@ export type Database = {
           show_location?: boolean | null
           skills?: string[] | null
           updated_at?: string
+          username?: string | null
           watermark_text?: string | null
           watermark_url?: string | null
           work_images?: string[] | null
@@ -696,6 +700,7 @@ export type Database = {
           bio?: string | null
           birth_date?: string | null
           created_at?: string
+          display_name_preference?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
@@ -713,6 +718,7 @@ export type Database = {
           show_location?: boolean | null
           skills?: string[] | null
           updated_at?: string
+          username?: string | null
           watermark_text?: string | null
           watermark_url?: string | null
           work_images?: string[] | null

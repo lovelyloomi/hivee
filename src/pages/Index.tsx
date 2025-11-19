@@ -18,10 +18,10 @@ const Index = () => {
     loading
   } = useAuth();
 
-  // Redirect to onboarding if profile not completed
+  // Redirect to profile setup if profile not completed
   useEffect(() => {
     if (!loading && user && profileCompleted === false) {
-      navigate('/onboarding');
+      navigate('/profile-setup');
     }
   }, [user, profileCompleted, loading, navigate]);
   return <div className="min-h-screen bg-background relative overflow-hidden pb-20">
