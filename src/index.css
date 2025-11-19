@@ -121,6 +121,12 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground font-sans;
   }
+
+  /* Navigation items letter spacing */
+  nav a,
+  nav button {
+    letter-spacing: 0.025em;
+  }
 }
 
 /* Screenshot protection */
