@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Heart } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -31,169 +32,95 @@ const Matches = () => {
   const { toast } = useToast();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [demoMode, setDemoMode] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewMatch, setPreviewMatch] = useState<Match | null>(null);
 
-  // Demo data for testing
-  const demoMatches: Match[] = [
-    {
-      id: 'demo-1',
-      full_name: 'Sofia Martinez',
-      bio: 'Digital illustrator & concept artist. Love creating fantasy worlds and character designs.',
-      location: 'Barcelona, Spain',
-      work_images: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800', 'https://images.unsplash.com/photo-1634986666676-ec8fd927c23d?w=800'],
-      avatar_url: 'https://i.pravatar.cc/150?img=5',
-      matchScore: 92,
-      matchedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      lastMessage: "Hey! I love your portfolio work!",
-      lastMessageTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      lastMessageFromMe: false
-    },
-    {
-      id: 'demo-2',
-      full_name: 'Marcus Chen',
-      bio: '3D artist specializing in architectural visualization and product rendering.',
-      location: 'Singapore',
-      work_images: ['https://images.unsplash.com/photo-1618556450994-a6a128ef0d9d?w=800', 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800'],
-      avatar_url: 'https://i.pravatar.cc/150?img=12',
-      matchScore: 85,
-      matchedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      lastMessage: "Thanks! Would love to collaborate sometime",
-      lastMessageTime: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      lastMessageFromMe: true
-    },
-    {
-      id: 'demo-3',
-      full_name: 'Emma Thompson',
-      bio: 'Motion designer creating stunning animations for brands. Always experimenting!',
-      location: 'London, UK',
-      work_images: ['https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=800'],
-      avatar_url: 'https://i.pravatar.cc/150?img=9',
-      matchScore: 78,
-      matchedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      lastMessageFromMe: false
-    },
-    {
-      id: 'demo-4',
-      full_name: 'Diego Santos',
-      bio: 'Game artist & UI designer. Passionate about creating immersive gaming experiences.',
-      location: 'São Paulo, Brazil',
-      work_images: ['https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800', 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=800'],
-      avatar_url: 'https://i.pravatar.cc/150?img=15',
-      matchScore: 88,
-      matchedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      lastMessage: "Your game art is incredible! 🎮",
-      lastMessageTime: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      lastMessageFromMe: false
-    },
-    {
-      id: 'demo-5',
-      full_name: 'Yuki Tanaka',
-      bio: 'Graphic designer & brand identity specialist. Minimalist aesthetics with bold concepts.',
-      location: 'Tokyo, Japan',
-      work_images: ['https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800'],
-      avatar_url: 'https://i.pravatar.cc/150?img=47',
-      matchScore: 65,
-      matchedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      lastMessageFromMe: false
-    }
-  ];
-
   useEffect(() => {
     if (user) {
-      if (demoMode) {
-        setMatches(demoMatches);
-        setLoading(false);
-      } else {
-        fetchMatches();
-      }
+      fetchMatches();
     }
-  }, [user, demoMode]);
+  }, [user]);
 
   const fetchMatches = async () => {
     if (!user) return;
 
     try {
-      // Get mutual favorites (matches)
-      const { data: mutualFavorites, error } = await supabase
-        .from('favorites')
-        .select(`
-          favorited_user_id,
-          profiles:favorited_user_id(
-            id,
-            full_name,
-            bio,
-            location,
-            work_images,
-            avatar_url
-          )
-        `)
-        .eq('user_id', user.id);
+      // Fetch matches from the matches table
+      const { data: matchesData, error } = await supabase
+        .from('matches')
+        .select('*')
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+        .eq('status', 'active')
+        .order('matched_at', { ascending: false });
 
       if (error) throw error;
 
-      // Filter for mutual matches
-      const matchedUserIds = [];
-      for (const fav of mutualFavorites || []) {
-        const { data: reverseMatch } = await supabase
-          .from('favorites')
-          .select('id')
-          .eq('user_id', fav.favorited_user_id)
-          .eq('favorited_user_id', user.id)
-          .single();
-
-        if (reverseMatch) {
-          matchedUserIds.push(fav.favorited_user_id);
-        }
-      }
-
-      // If no real matches, show demo data
-      if (matchedUserIds.length === 0) {
-        setMatches(demoMatches);
+      if (!matchesData || matchesData.length === 0) {
+        setMatches([]);
         setLoading(false);
         return;
       }
 
-      // Get full profile data for matches
-      const { data: matchProfiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', matchedUserIds);
+      // Get the other user's ID for each match
+      const matchesWithProfiles = await Promise.all(
+        matchesData.map(async (match) => {
+          const otherUserId = match.user1_id === user.id ? match.user2_id : match.user1_id;
 
-      // Get conversations for these matches
-      const matchesWithConversations = await Promise.all(
-        (matchProfiles || []).map(async (profile) => {
-          const { data: conversation } = await supabase
-            .from('conversations')
-            .select(`
-              id,
-              messages(content, created_at)
-            `)
-            .or(`and(user1_id.eq.${user.id},user2_id.eq.${profile.id}),and(user1_id.eq.${profile.id},user2_id.eq.${user.id})`)
-            .order('updated_at', { ascending: false })
-            .limit(1)
+          // Get profile data
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', otherUserId)
             .single();
 
-          const lastMessage = conversation?.messages?.[0];
+          if (!profile) return null;
+
+          // Get last message from conversation
+          let lastMessage = null;
+          let lastMessageTime = null;
+          let lastMessageFromMe = false;
+
+          if (match.conversation_id) {
+            const { data: messages } = await supabase
+              .from('messages')
+              .select('content, created_at, sender_id')
+              .eq('conversation_id', match.conversation_id)
+              .order('created_at', { ascending: false })
+              .limit(1);
+
+            if (messages && messages.length > 0) {
+              lastMessage = messages[0].content;
+              lastMessageTime = messages[0].created_at;
+              lastMessageFromMe = messages[0].sender_id === user.id;
+            }
+          }
 
           return {
-            ...profile,
-            conversationId: conversation?.id,
-            lastMessage: lastMessage?.content,
-            lastMessageTime: lastMessage?.created_at
+            id: profile.id,
+            full_name: profile.full_name || 'Unknown',
+            bio: profile.bio || '',
+            location: profile.location || '',
+            work_images: profile.work_images || [],
+            avatar_url: profile.avatar_url,
+            conversationId: match.conversation_id || undefined,
+            lastMessage,
+            lastMessageTime,
+            lastMessageFromMe,
+            matchScore: match.match_score || 0,
+            matchedAt: match.matched_at
           };
         })
       );
 
-      setMatches(matchesWithConversations);
+      const validMatches = matchesWithProfiles.filter(m => m !== null) as Match[];
+      setMatches(validMatches);
     } catch (error: any) {
       console.error("Error fetching matches:", error);
-      // Fallback to demo data on error so UI is still testable
-      setMatches(demoMatches);
+      setMatches([]);
       toast({
-        title: "Showing demo matches",
-        description: "We couldn't load real matches yet. Displaying demo data for preview.",
+        title: "Error loading matches",
+        description: "Could not load your matches. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
@@ -204,15 +131,6 @@ const Matches = () => {
     e.stopPropagation();
     
     if (!user) return;
-
-    // Handle demo data
-    if (match.id?.startsWith('demo-')) {
-      toast({
-        title: "Demo Match",
-        description: "This is demo data. Real matches will have working chat!",
-      });
-      return;
-    }
 
     try {
       let conversationId = match.conversationId;
@@ -345,10 +263,17 @@ const Matches = () => {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg text-foreground truncate">
-                          {match.full_name}
-                        </h3>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-lg text-foreground truncate">
+                            {match.full_name}
+                          </h3>
+                          {match.matchScore !== undefined && match.matchScore > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {match.matchScore}% match
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           {match.location}
                         </p>

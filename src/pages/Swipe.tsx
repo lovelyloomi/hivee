@@ -187,52 +187,26 @@ const Swipe = () => {
       setShowUndo(true);
       setTimeout(() => setShowUndo(false), 5000);
 
+      // Check if a match was created by the database trigger
       if (direction === 'right') {
-        const { data: mutualLike } = await supabase
-          .from('swipes')
-          .select()
-          .eq('user_id', currentProfile.id)
-          .eq('swiped_user_id', user.id)
-          .eq('action', 'like')
+        // Wait a moment for the trigger to execute
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const orderedUser1 = user.id < currentProfile.id ? user.id : currentProfile.id;
+        const orderedUser2 = user.id < currentProfile.id ? currentProfile.id : user.id;
+
+        const { data: newMatch } = await supabase
+          .from('matches')
+          .select('*')
+          .eq('user1_id', orderedUser1)
+          .eq('user2_id', orderedUser2)
           .single();
 
-        if (mutualLike) {
-          const { data: existingConversation } = await supabase
-            .from('conversations')
-            .select('id')
-            .or(`and(user1_id.eq.${user.id},user2_id.eq.${currentProfile.id}),and(user1_id.eq.${currentProfile.id},user2_id.eq.${user.id})`)
-            .single();
-
-          if (!existingConversation) {
-            const { data: conversation, error: conversationError } = await supabase
-              .from('conversations')
-              .insert({ user1_id: user.id, user2_id: currentProfile.id })
-              .select()
-              .single();
-
-            if (conversationError) throw conversationError;
-
-            await supabase
-              .from('matches')
-              .insert({
-                user1_id: user.id,
-                user2_id: currentProfile.id,
-                conversation_id: conversation.id
-              });
-
-            await createNotification(
-              currentProfile.id,
-              'match',
-              'New Match!',
-              `You matched with ${user?.email || 'someone'}`,
-              user.id
-            );
-
-            setMatchNotification({
-              name: currentProfile.full_name || 'Unknown',
-              image: currentProfile.avatar_url || undefined
-            });
-          }
+        if (newMatch) {
+          setMatchNotification({
+            name: currentProfile.full_name || 'Unknown',
+            image: currentProfile.avatar_url || undefined
+          });
         }
       }
 
