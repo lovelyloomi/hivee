@@ -43,25 +43,24 @@ const Index = () => {
         <div className="text-center max-w-4xl mx-auto space-y-8 animate-fade-in">
           <div className="inline-block px-4 py-2 bg-muted rounded-full text-muted-foreground text-sm font-medium mb-4">FIND ART, MAKE ART, SHARE ART              </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight bg-gradient-primary bg-clip-text text-transparent">
-            ART IS MEANT TO<br />
-            BE SHARED
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight bg-gradient-primary bg-clip-text text-transparent whitespace-pre-line">
+            {t('home.hero.title')}
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Hunt bees around you, bee friends, share your works, see bees around the world and find the best opportunity to work around you
+            {t('home.hero.description')}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             {!user ? <Button size="lg" onClick={() => navigate("/auth")} className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group">
-                Get Started
+                {t('home.cta.getStarted')}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button> : <Button size="lg" onClick={() => navigate("/find")} className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group">
-                Start Hunting
+                {t('home.cta.startHunting')}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>}
             <Button size="lg" variant="outline" onClick={() => navigate("/opportunities")} className="px-8 py-6 text-lg rounded-full">
-              View Opportunities
+              {t('home.cta.viewOpportunities')}
             </Button>
           </div>
         </div>
