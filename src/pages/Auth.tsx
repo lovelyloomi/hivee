@@ -27,7 +27,7 @@ const Auth = () => {
   const [loginAttempts, setLoginAttempts] = useState(0);
   const turnstileRef = useRef<any>(null);
   const { checkRateLimit } = useRateLimit();
-  const { verifyCaptcha } = useCaptcha();
+  const { verifyCaptcha, isBypassed } = useCaptcha();
   const { trackInteraction, logSuspiciousActivity, isSuspicious } = useBehavioralAnalysis(
     isLogin ? 'login' : 'signup'
   );
@@ -285,7 +285,8 @@ const Auth = () => {
             </div>
             
             {/* CAPTCHA - shown for signup or after failed login attempts */}
-            {(!isLogin || showCaptcha) && (
+            {/* Hidden when CAPTCHA is bypassed */}
+            {!isBypassed && (!isLogin || showCaptcha) && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground block">
                   Security Verification
