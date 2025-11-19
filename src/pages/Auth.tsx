@@ -126,7 +126,7 @@ const Auth = () => {
         } else {
           toast({
             title: "Account created!",
-            description: "Welcome to SwipeJob"
+            description: "Welcome to HIVEE"
           });
           navigate("/profile-setup");
         }

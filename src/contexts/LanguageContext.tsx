@@ -16,7 +16,7 @@ interface Translations {
 
 const translations: Translations = {
   // Header
-  'header.title': { en: 'SwipeJob', fr: 'SwipeJob', it: 'SwipeJob', es: 'SwipeJob', zh: 'SwipeJob', ja: 'SwipeJob', ar: 'SwipeJob' },
+  'header.title': { en: 'HIVEE', fr: 'HIVEE', it: 'HIVEE', es: 'HIVEE', zh: 'HIVEE', ja: 'HIVEE', ar: 'HIVEE' },
   'header.searchPlaceholder': { 
     en: 'Search users, works, opportunities...', 
     fr: 'Rechercher utilisateurs, œuvres, opportunités...', 
