@@ -41,7 +41,7 @@ const Index = () => {
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12 pt-24">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto space-y-8 animate-fade-in">
-          <div className="inline-block px-4 py-2 bg-muted rounded-full text-muted-foreground text-sm font-medium mb-4">FIND ART, MAKE ART, SHARE ART              </div>
+          
           
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight bg-gradient-primary bg-clip-text text-transparent whitespace-pre-line">
             {t('home.hero.title')}
