@@ -6,9 +6,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useRateLimit } from "@/hooks/useRateLimit";
-import { useCaptcha } from "@/hooks/useCaptcha";
 import { useBehavioralAnalysis } from "@/hooks/useBehavioralAnalysis";
-import { Turnstile } from '@marsidev/react-turnstile';
 import Header from "@/components/Header";
 
 const Auth = () => {
@@ -22,12 +20,7 @@ const Auth = () => {
   const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [honeypot, setHoneypot] = useState("");
-  const [captchaToken, setCaptchaToken] = useState("");
-  const [showCaptcha, setShowCaptcha] = useState(false);
-  const [loginAttempts, setLoginAttempts] = useState(0);
-  const turnstileRef = useRef<any>(null);
   const { checkRateLimit } = useRateLimit();
-  const { verifyCaptcha, isBypassed } = useCaptcha();
   const { trackInteraction, logSuspiciousActivity, isSuspicious } = useBehavioralAnalysis(
     isLogin ? 'login' : 'signup'
   );
@@ -55,10 +48,9 @@ const Auth = () => {
     if (suspicionScore >= 80) {
       toast({
         title: "Suspicious behavior detected",
-        description: "Please complete the verification to continue",
+        description: "Too many rapid actions. Please slow down and try again.",
         variant: "destructive"
       });
-      setShowCaptcha(true);
       setLoading(false);
       return;
     }
@@ -77,53 +69,16 @@ const Auth = () => {
       return;
     }
 
-    // CAPTCHA verification for signup or after failed login attempts
-    if (!isLogin || (isLogin && loginAttempts >= 2)) {
-      if (!captchaToken) {
-        toast({
-          title: "CAPTCHA required",
-          description: "Please complete the CAPTCHA verification",
-          variant: "destructive"
-        });
-        setShowCaptcha(true);
-        setLoading(false);
-        return;
-      }
-
-      const captchaValid = await verifyCaptcha(captchaToken);
-      if (!captchaValid) {
-        toast({
-          title: "CAPTCHA verification failed",
-          description: "Please try again",
-          variant: "destructive"
-        });
-        setCaptchaToken("");
-        turnstileRef.current?.reset();
-        setLoading(false);
-        return;
-      }
-    }
-
     try {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
-          const newAttempts = loginAttempts + 1;
-          setLoginAttempts(newAttempts);
-          
-          // Show CAPTCHA after 2 failed attempts
-          if (newAttempts >= 2) {
-            setShowCaptcha(true);
-          }
-          
           toast({
             title: "Error signing in",
             description: error.message,
             variant: "destructive"
           });
         } else {
-          setLoginAttempts(0);
-          setShowCaptcha(false);
           toast({
             title: "Welcome back!",
             description: "You've successfully signed in."
@@ -173,7 +128,6 @@ const Auth = () => {
             title: "Account created!",
             description: "Welcome to SwipeJob"
           });
-          setCaptchaToken("");
           navigate("/profile-setup");
         }
       }
@@ -283,29 +237,6 @@ const Auth = () => {
                 autoComplete="off"
               />
             </div>
-            
-            {/* CAPTCHA - shown for signup or after failed login attempts */}
-            {/* Hidden when CAPTCHA is bypassed */}
-            {!isBypassed && (!isLogin || showCaptcha) && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground block">
-                  Security Verification
-                </label>
-                <Turnstile
-                  ref={turnstileRef}
-                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"}
-                  onSuccess={(token) => setCaptchaToken(token)}
-                  onError={() => {
-                    setCaptchaToken("");
-                    toast({
-                      title: "CAPTCHA error",
-                      description: "Please refresh and try again",
-                      variant: "destructive"
-                    });
-                  }}
-                />
-              </div>
-            )}
             
             <Button
               type="submit"
