@@ -29,6 +29,7 @@ type Work = Database['public']['Tables']['works']['Row'] & {
     longitude: number | null;
     location_enabled: boolean | null;
   } | null;
+  distance?: number | null;
 };
 export default function Works() {
   const { user } = useAuth();
@@ -151,15 +152,43 @@ export default function Works() {
     }
   };
   const allHashtags = Array.from(new Set(works.flatMap(work => work.hashtags || [])));
-  const filteredWorks = works.filter(work => {
-    const matchesSearch = work.title?.toLowerCase().includes(searchQuery.toLowerCase()) || work.description?.toLowerCase().includes(searchQuery.toLowerCase()) || (work.hashtags || []).some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesHashtags = selectedHashtags.length === 0 || selectedHashtags.every(selectedTag => (work.hashtags || []).includes(selectedTag));
-    const matchesType = filterType === "all" || work.work_type === filterType;
-    const matchesStyle = filterStyle === "all" || work.work_style === filterStyle;
-    const matchesAI = showAIWorks || !work.made_with_ai;
-    const matchesNSFW = showNSFW || !work.nsfw;
-    return matchesSearch && matchesHashtags && matchesType && matchesStyle && matchesAI && matchesNSFW;
-  });
+  
+  // Filter, calculate distances, and sort works
+  const filteredWorks = works
+    .filter(work => {
+      const matchesSearch = work.title?.toLowerCase().includes(searchQuery.toLowerCase()) || work.description?.toLowerCase().includes(searchQuery.toLowerCase()) || (work.hashtags || []).some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesHashtags = selectedHashtags.length === 0 || selectedHashtags.every(selectedTag => (work.hashtags || []).includes(selectedTag));
+      const matchesType = filterType === "all" || work.work_type === filterType;
+      const matchesStyle = filterStyle === "all" || work.work_style === filterStyle;
+      const matchesAI = showAIWorks || !work.made_with_ai;
+      const matchesNSFW = showNSFW || !work.nsfw;
+      return matchesSearch && matchesHashtags && matchesType && matchesStyle && matchesAI && matchesNSFW;
+    })
+    .map(work => {
+      // Calculate distance if in local mode and both locations are available
+      let distance: number | null = null;
+      if (locationFilter === 'local' && userLocation && work.profiles?.latitude && work.profiles?.longitude && work.profiles?.location_enabled) {
+        distance = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          work.profiles.latitude,
+          work.profiles.longitude
+        );
+      }
+      return { ...work, distance };
+    })
+    .sort((a, b) => {
+      // Sort by distance when in local mode
+      if (locationFilter === 'local') {
+        // Works without location go to the end
+        if (a.distance === null && b.distance === null) return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+      }
+      // Default sort by created_at (newest first)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   const toggleHashtag = (tag: string) => {
     setSelectedHashtags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   };
@@ -561,13 +590,23 @@ export default function Works() {
                 </p>
                 <p className="text-xs text-muted-foreground mb-3 flex items-center gap-2 flex-wrap">
                   <span>by {work.profiles?.full_name || 'Unknown Artist'}</span>
-                  {userLocation && work.profiles?.latitude && work.profiles?.longitude && work.profiles?.location_enabled && <>
+                  {locationFilter === 'local' && work.distance !== null ? (
+                    <>
+                      <span>•</span>
+                      <span className="inline-flex items-center gap-1 text-primary font-medium">
+                        <MapPin className="h-3 w-3" />
+                        {formatDistance(work.distance)} away
+                      </span>
+                    </>
+                  ) : userLocation && work.profiles?.latitude && work.profiles?.longitude && work.profiles?.location_enabled && (
+                    <>
                       <span>•</span>
                       <span className="inline-flex items-center gap-1 text-primary font-medium">
                         <MapPin className="h-3 w-3" />
                         {formatDistance(calculateDistance(userLocation.latitude, userLocation.longitude, work.profiles.latitude, work.profiles.longitude))} away
                       </span>
-                    </>}
+                    </>
+                  )}
                 </p>
                 {work.hashtags && work.hashtags.length > 0 && <div className="flex flex-wrap gap-1">
                     {work.hashtags.slice(0, 3).map(tag => <Badge key={tag} variant="secondary" className="text-xs">
