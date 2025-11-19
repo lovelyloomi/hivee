@@ -1,7 +1,8 @@
 import hiveeLogo from "@/assets/hivee-logo.png";
 import { Button } from "@/components/ui/button";
-import { Globe, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { GlobeIcon } from "@/components/CustomHeaderIcons";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -32,7 +33,7 @@ const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-4 py-2 flex items-center justify-between gap-4">
+      <div className="container mx-auto px-4 py-1 flex items-center justify-between gap-4">
         <div
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate("/")}
@@ -71,7 +72,7 @@ const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">
-                <Globe className="h-5 w-5" />
+                <GlobeIcon />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-card border-border z-50">

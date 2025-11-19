@@ -1,6 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Create a simple buzzing sound using Web Audio API
+const playBuzzSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Create a soft buzzing sound
+    oscillator.frequency.value = 300; // Hz
+    oscillator.type = 'sine';
+    
+    // Envelope for softer sound
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.05);
+    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.15);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.15);
+  } catch (error) {
+    console.log('Could not play notification sound:', error);
+  }
+};
 
 export interface Notification {
   id: string;
@@ -19,6 +45,7 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const previousCountRef = useRef(0);
 
   useEffect(() => {
     if (!user) return;
@@ -56,19 +83,12 @@ export const useNotifications = () => {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             setNotifications(prev => [payload.new as Notification, ...prev]);
-            setUnreadCount(prev => prev + 1);
           } else if (payload.eventType === 'UPDATE') {
             setNotifications(prev =>
               prev.map(n => (n.id === payload.new.id ? payload.new as Notification : n))
             );
-            if ((payload.new as Notification).read && !(payload.old as Notification).read) {
-              setUnreadCount(prev => Math.max(0, prev - 1));
-            }
           } else if (payload.eventType === 'DELETE') {
             setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
-            if (!(payload.old as Notification).read) {
-              setUnreadCount(prev => Math.max(0, prev - 1));
-            }
           }
         }
       )
@@ -78,6 +98,19 @@ export const useNotifications = () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  // Update unread count and play sound when notifications change
+  useEffect(() => {
+    const count = notifications.filter(n => !n.read).length;
+    
+    // Play sound only when count increases
+    if (count > previousCountRef.current && previousCountRef.current > 0) {
+      playBuzzSound();
+    }
+    
+    previousCountRef.current = count;
+    setUnreadCount(count);
+  }, [notifications]);
 
   const markAsRead = async (notificationId: string) => {
     const { error } = await supabase

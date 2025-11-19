@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Medal } from "lucide-react";
+import { Flame } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -200,20 +200,19 @@ export const ArtistOfTheMonth = () => {
   };
 
   const getRankBadge = (index: number) => {
+    if (index >= 3) return null;
+    
     const badges = [
-      { color: 'text-yellow-500', label: '1st' },
-      { color: 'text-gray-400', label: '2nd' },
-      { color: 'text-amber-700', label: '3rd' },
+      { bg: 'bg-gradient-to-br from-yellow-400 to-yellow-600', text: 'text-yellow-900', border: 'border-yellow-300' },
+      { bg: 'bg-gradient-to-br from-gray-300 to-gray-500', text: 'text-gray-800', border: 'border-gray-200' },
+      { bg: 'bg-gradient-to-br from-orange-400 to-orange-600', text: 'text-orange-900', border: 'border-orange-300' },
     ];
     
-    if (index < 3) {
-      return (
-        <div className={`absolute -top-2 -right-2 ${badges[index].color} bg-background rounded-full p-2 shadow-lg border-2 border-current`}>
-          <Medal className="w-6 h-6" fill="currentColor" />
-        </div>
-      );
-    }
-    return null;
+    return (
+      <div className={`absolute -top-2 -right-2 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg z-10 border-2 ${badges[index].bg} ${badges[index].text} ${badges[index].border}`}>
+        {index + 1}
+      </div>
+    );
   };
 
   if (loading || topArtists.length === 0) {
