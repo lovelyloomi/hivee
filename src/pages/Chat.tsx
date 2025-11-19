@@ -383,9 +383,13 @@ const Chat = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Please sign in to chat</h2>
-          <Button onClick={() => navigate('/auth')}>Sign In</Button>
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold">Accedi per Continuare</h2>
+          <p className="text-muted-foreground">Devi effettuare l'accesso per visualizzare le chat</p>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={() => navigate('/auth')} size="lg">Accedi</Button>
+            <Button onClick={() => navigate('/auth')} variant="outline" size="lg">Registrati</Button>
+          </div>
         </div>
       </div>
     );

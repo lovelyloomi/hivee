@@ -6,13 +6,15 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
-import { Upload, Link as LinkIcon, X, Loader2, Globe, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Upload, Link as LinkIcon, X, Loader2, Globe, Instagram, Linkedin, Twitter, Eye } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { ProfilePreview } from "@/components/ProfilePreview";
 import { z } from "zod";
 
 // Validation schema for URLs
@@ -53,11 +55,39 @@ const ProfileSetup = () => {
   const [preferredWorkTypes, setPreferredWorkTypes] = useState<string[]>([]);
   const [workTypeInput, setWorkTypeInput] = useState("");
 
+  // Profile data for preview
+  const [profile, setProfile] = useState<any>({
+    full_name: '',
+    bio: '',
+    location: '',
+    skills: [],
+    programs: []
+  });
+
   useEffect(() => {
     if (!user) {
       navigate("/auth");
+    } else {
+      fetchProfile();
     }
   }, [user, navigate]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, bio, location, skills, programs')
+        .eq('id', user.id)
+        .single();
+      
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const handleUsernameCheck = async (value: string) => {
     const cleanUsername = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -688,20 +718,59 @@ const ProfileSetup = () => {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading || uploadingImages || uploadingPortfolio}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Completamento...
-                </>
-              ) : (
-                "Completa Profilo"
-              )}
-            </Button>
+            {/* Preview Button and Submit */}
+            <div className="flex gap-3">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button type="button" variant="outline" className="flex-1">
+                    <Eye className="mr-2 h-4 w-4" />
+                    Anteprima Profilo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Anteprima del Tuo Profilo</DialogTitle>
+                  </DialogHeader>
+                  <ProfilePreview
+                    username={username}
+                    fullName={profile.full_name}
+                    bio={profile.bio}
+                    location={profile.location}
+                    workImages={workImages}
+                    portfolioUrl={portfolioType === 'link' ? portfolioUrl : undefined}
+                    instagramUrl={instagramUrl}
+                    behanceUrl={behanceUrl}
+                    artstationUrl={artstationUrl}
+                    linkedinUrl={linkedinUrl}
+                    twitterUrl={twitterUrl}
+                    websiteUrl={websiteUrl}
+                    artistSpecialization={artistSpecialization}
+                    educationLevel={educationLevel}
+                    languages={languages}
+                    yearsOfExperience={yearsOfExperience ? parseInt(yearsOfExperience) : undefined}
+                    availabilityStatus={availabilityStatus}
+                    preferredWorkTypes={preferredWorkTypes}
+                    skills={profile.skills}
+                    programs={profile.programs}
+                  />
+                </DialogContent>
+              </Dialog>
+
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={loading || uploadingImages || uploadingPortfolio}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Completamento...
+                  </>
+                ) : (
+                  "Completa Profilo"
+                )}
+              </Button>
+            </div>
           </form>
         </Card>
       </div>

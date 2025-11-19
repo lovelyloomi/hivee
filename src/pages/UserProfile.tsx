@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { ArrowLeft, MapPin, MessageCircle, Heart, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, MapPin, MessageCircle, Heart, Share2, ChevronLeft, ChevronRight, Instagram, Linkedin, Twitter, Globe, GraduationCap, Languages, Briefcase } from 'lucide-react';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import VerificationBadge from '@/components/VerificationBadge';
@@ -326,9 +326,72 @@ const UserProfile = () => {
           {/* About Tab */}
           <TabsContent value="about" className="space-y-4">
             <Card>
-              <CardContent className="p-6 space-y-4">
+              <CardContent className="p-6 space-y-6">
+                {/* Professional Info */}
+                {(profile.artist_specialization || profile.education_level || profile.years_of_experience || profile.availability_status) && (
+                  <div className="space-y-3 pb-4 border-b border-border">
+                    <h3 className="font-semibold text-lg">Informazioni Professionali</h3>
+                    
+                    {profile.artist_specialization && (
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm"><strong>Specializzazione:</strong> {profile.artist_specialization}</span>
+                      </div>
+                    )}
+                    
+                    {profile.education_level && (
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                        <Badge variant="secondary">
+                          {profile.education_level.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {profile.years_of_experience && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm"><strong>Esperienza:</strong> {profile.years_of_experience} anni</span>
+                      </div>
+                    )}
+                    
+                    {profile.availability_status && (
+                      <Badge variant={profile.availability_status === 'open_to_opportunities' ? 'default' : 'outline'}>
+                        {profile.availability_status.replace(/_/g, ' ')}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                {/* Languages */}
+                {profile.languages && profile.languages.length > 0 && (
+                  <div className="pb-4 border-b border-border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Languages className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="font-semibold">Lingue</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.languages.map((lang: string) => (
+                        <Badge key={lang} variant="secondary">{lang}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Preferred Work Types */}
+                {profile.preferred_work_types && profile.preferred_work_types.length > 0 && (
+                  <div className="pb-4 border-b border-border">
+                    <h3 className="font-semibold mb-2">Tipi di Lavoro Preferiti</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.preferred_work_types.map((type: string) => (
+                        <Badge key={type} variant="outline">{type}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Skills */}
                 {profile.skills && profile.skills.length > 0 && (
-                  <div>
+                  <div className="pb-4 border-b border-border">
                     <h3 className="font-semibold mb-2">{t('profile.skills')}</h3>
                     <div className="flex flex-wrap gap-2">
                       {profile.skills.map((skill: string) => (
@@ -338,13 +401,89 @@ const UserProfile = () => {
                   </div>
                 )}
                 
+                {/* Programs */}
                 {profile.programs && profile.programs.length > 0 && (
-                  <div>
+                  <div className="pb-4 border-b border-border">
                     <h3 className="font-semibold mb-2">{t('profile.programs')}</h3>
                     <div className="flex flex-wrap gap-2">
                       {profile.programs.map((program: string) => (
                         <Badge key={program} variant="outline">{program}</Badge>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Social Media Links */}
+                {(profile.instagram_url || profile.behance_url || profile.artstation_url || profile.linkedin_url || profile.twitter_url || profile.website_url) && (
+                  <div>
+                    <h3 className="font-semibold mb-3">Collegamenti Social & Portfolio</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {profile.instagram_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="justify-start"
+                          onClick={() => window.open(profile.instagram_url, '_blank')}
+                        >
+                          <Instagram className="h-4 w-4 mr-2" />
+                          Instagram
+                        </Button>
+                      )}
+                      {profile.behance_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="justify-start"
+                          onClick={() => window.open(profile.behance_url, '_blank')}
+                        >
+                          <Globe className="h-4 w-4 mr-2" />
+                          Behance
+                        </Button>
+                      )}
+                      {profile.artstation_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="justify-start"
+                          onClick={() => window.open(profile.artstation_url, '_blank')}
+                        >
+                          <Globe className="h-4 w-4 mr-2" />
+                          ArtStation
+                        </Button>
+                      )}
+                      {profile.linkedin_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="justify-start"
+                          onClick={() => window.open(profile.linkedin_url, '_blank')}
+                        >
+                          <Linkedin className="h-4 w-4 mr-2" />
+                          LinkedIn
+                        </Button>
+                      )}
+                      {profile.twitter_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="justify-start"
+                          onClick={() => window.open(profile.twitter_url, '_blank')}
+                        >
+                          <Twitter className="h-4 w-4 mr-2" />
+                          Twitter/X
+                        </Button>
+                      )}
+                      {profile.website_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="justify-start"
+                          onClick={() => window.open(profile.website_url, '_blank')}
+                        >
+                          <Globe className="h-4 w-4 mr-2" />
+                          Website
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
