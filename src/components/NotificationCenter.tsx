@@ -1,5 +1,6 @@
-import { Bell, X, Check, Heart, MessageCircle, Briefcase } from 'lucide-react';
+import { X, Check, Heart, MessageCircle, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { BellIcon } from '@/components/CustomHeaderIcons';
 import {
   Sheet,
   SheetContent,
@@ -28,7 +29,7 @@ export const NotificationCenter = () => {
       case 'application':
         return <Briefcase className="h-5 w-5 text-secondary" />;
       default:
-        return <Bell className="h-5 w-5" />;
+        return <div className="h-5 w-5"><BellIcon /></div>;
     }
   };
 
@@ -48,8 +49,8 @@ export const NotificationCenter = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="relative rounded-full">
+          <BellIcon />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
@@ -80,7 +81,9 @@ export const NotificationCenter = () => {
         <ScrollArea className="h-[calc(100vh-200px)] mt-4">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-              <Bell className="h-12 w-12 mb-2 opacity-50" />
+              <div className="h-12 w-12 mb-2 opacity-50 flex items-center justify-center scale-[2.4]">
+                <BellIcon />
+              </div>
               <p>No notifications yet</p>
             </div>
           ) : (

@@ -39,12 +39,12 @@ const Index = () => {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight bg-gradient-primary bg-clip-text text-transparent">
-            Swipe Your Way to<br />
-            Your Dream Job
+            ART IS MEANT TO<br />
+            BE SHARED
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Skip the endless scrolling. Find opportunities that match your skills with a simple swipe. Right for yes, left for pass.
+            Hunt bees around you, bee friends, share your works, see bees around the world and find the best opportunity to work around you
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -63,7 +63,7 @@ const Index = () => {
                 onClick={() => navigate("/find")}
                 className="bg-gradient-primary text-white hover:opacity-90 px-8 py-6 text-lg rounded-full shadow-card hover:shadow-card-hover transition-all hover:scale-105 group"
               >
-                Start Swiping
+                Start Hunting
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             )}

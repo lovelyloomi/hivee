@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Upload, MapPin, Filter, Flag } from "lucide-react";
+import { Heart, MessageSquare, Eye, Upload, Filter, Search, X, Globe, MapPin, Plus, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { calculateDistance, formatDistance } from "@/utils/distance";
 import { HexagonImage } from "@/components/HexagonImage";
+import { useQueryClient } from "@tanstack/react-query";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -30,18 +31,16 @@ type Work = Database['public']['Tables']['works']['Row'] & {
   } | null;
 };
 export default function Works() {
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [works, setWorks] = useState<Work[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [locationFilter, setLocationFilter] = useState<'global' | 'local'>('global');
   const [file, setFile] = useState<File | null>(null);
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
@@ -285,6 +284,26 @@ export default function Works() {
         <h1 className="text-3xl font-bold text-foreground mb-6">Bees Art Gallery</h1>
 
         <div className="space-y-4 mb-6">
+          {/* Location Filter */}
+          <div className="flex gap-2 justify-center">
+            <Button
+              variant={locationFilter === 'global' ? 'default' : 'outline'}
+              onClick={() => setLocationFilter('global')}
+              className="gap-2"
+            >
+              <Globe className="h-4 w-4" />
+              Global
+            </Button>
+            <Button
+              variant={locationFilter === 'local' ? 'default' : 'outline'}
+              onClick={() => setLocationFilter('local')}
+              className="gap-2"
+            >
+              <MapPin className="h-4 w-4" />
+              Local
+            </Button>
+          </div>
+
           <div className="flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />

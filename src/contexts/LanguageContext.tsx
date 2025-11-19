@@ -31,7 +31,7 @@ const translations: Translations = {
   'nav.home': { en: 'Home', fr: 'Accueil', it: 'Home', es: 'Inicio', zh: '首页', ja: 'ホーム', ar: 'الصفحة الرئيسية' },
   'nav.find': { en: 'BEEFIND', fr: 'BEEFIND', it: 'BEEFIND', es: 'BEEFIND', zh: 'BEEFIND', ja: 'BEEFIND', ar: 'BEEFIND' },
   'nav.gallery': { en: 'BEEmade', fr: 'BEEmade', it: 'BEEmade', es: 'BEEmade', zh: 'BEEmade', ja: 'BEEmade', ar: 'BEEmade' },
-  'nav.connections': { en: 'BEEfriend', fr: 'BEEfriend', it: 'BEEfriend', es: 'BEEfriend', zh: 'BEEfriend', ja: 'BEEfriend', ar: 'BEEfriend' },
+  'nav.connections': { en: 'BEEhunt', fr: 'BEEhunt', it: 'BEEhunt', es: 'BEEhunt', zh: 'BEEhunt', ja: 'BEEhunt', ar: 'BEEhunt' },
   'nav.opportunities': { en: 'BEEsiness', fr: 'BEEsiness', it: 'BEEsiness', es: 'BEEsiness', zh: 'BEEsiness', ja: 'BEEsiness', ar: 'BEEsiness' },
   
   // Verification
