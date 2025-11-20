@@ -23,6 +23,7 @@ import { HexagonImage } from "@/components/HexagonImage";
 import { useQueryClient } from "@tanstack/react-query";
 import { WorkEditor } from "@/components/WorkEditor";
 import FBXViewer from "@/components/FBXViewer";
+import { LoadingProgress } from "@/components/LoadingProgress";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -601,6 +602,10 @@ export default function Works() {
                 ) : work.file_type === 'pdf' ? (
                   <div className="w-full h-full flex items-center justify-center bg-muted">
                     <span className="text-4xl">📄</span>
+                  </div>
+                ) : work.file_type === 'model_3d' ? (
+                  <div className="w-full h-full">
+                    <FBXViewer url={work.file_url} autoRotate enableLOD />
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-muted">
