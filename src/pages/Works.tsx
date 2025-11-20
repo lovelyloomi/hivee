@@ -22,6 +22,7 @@ import { calculateDistance, formatDistance } from "@/utils/distance";
 import { HexagonImage } from "@/components/HexagonImage";
 import { useQueryClient } from "@tanstack/react-query";
 import { WorkEditor } from "@/components/WorkEditor";
+import FBXViewer from "@/components/FBXViewer";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -351,15 +352,13 @@ export default function Works() {
                       <div className="mt-4 space-y-3">
                         <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
                           {getFileType(file) === 'image' && (
-                            <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-contain" />
+                            <img src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-contain" />
                           )}
                           {getFileType(file) === 'video' && (
-                            <video src={URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
+                            <video src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
                           )}
                           {getFileType(file) === 'model_3d' && (
-                            <div className="flex items-center justify-center h-full text-muted-foreground">
-                              <p>3D Model: {file.name}</p>
-                            </div>
+                            <FBXViewer url={URL.createObjectURL(file)} />
                           )}
                         </div>
                         <div className="flex justify-between items-center">
