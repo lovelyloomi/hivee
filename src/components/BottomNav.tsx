@@ -12,17 +12,18 @@ const BottomNav = () => {
   const { t } = useLanguage();
   const unreadCount = useUnreadMessages();
 
-  return <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border honeycomb-bg">
-      <div className="container mx-auto px-2">
-        <div className="flex items-center justify-around py-0.5">
-          <NavLink to="/find" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
-            <img src={beefindIcon} alt="BEEFIND" className="h-16 w-16" />
-            <span className="text-xs font-medium">{t('nav.find')}</span>
+  return <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border">
+      <div className="honeycomb-bg absolute inset-0 opacity-50" />
+      <div className="container mx-auto px-2 relative z-10">
+        <div className="flex items-center justify-around py-2">
+          <NavLink to="/find" className="flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
+            <img src={beefindIcon} alt="BEEFIND" className="h-12 w-12" />
+            <span className="text-[10px] font-medium">{t('nav.find')}</span>
           </NavLink>
 
-          <NavLink to="/matches" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-lg transition-colors text-muted-foreground relative" activeClassName="text-primary bg-primary/10">
-            <img src={beefriendIcon} alt="BEEhunt" className="h-16 w-16" />
-            <span className="text-xs font-medium">{t('nav.connections')}</span>
+          <NavLink to="/matches" className="flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-colors text-muted-foreground relative" activeClassName="text-primary bg-primary/10">
+            <img src={beefriendIcon} alt="BEEhunt" className="h-12 w-12" />
+            <span className="text-[10px] font-medium">{t('nav.connections')}</span>
             {unreadCount > 0 && (
               <Badge 
                 variant="destructive" 
@@ -33,19 +34,18 @@ const BottomNav = () => {
             )}
           </NavLink>
 
-          <NavLink to="/" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
-            <img src={hiveeLogo} alt="Home" className="h-20 w-20" />
-            
+          <NavLink to="/" className="flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
+            <img src={hiveeLogo} alt="Home" className="h-14 w-14" />
           </NavLink>
 
-          <NavLink to="/works" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
-            <img src={beemadeIcon} alt="BEEmade" className="h-16 w-16" />
-            <span className="text-xs font-medium">{t('nav.gallery')}</span>
+          <NavLink to="/works" className="flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
+            <img src={beemadeIcon} alt="BEEmade" className="h-12 w-12" />
+            <span className="text-[10px] font-medium">{t('nav.gallery')}</span>
           </NavLink>
 
-          <NavLink to="/opportunities" className="flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
-            <img src={beesinesIcon} alt="BEEsiness" className="h-16 w-16" />
-            <span className="text-xs font-medium">{t('nav.opportunities')}</span>
+          <NavLink to="/opportunities" className="flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-colors text-muted-foreground" activeClassName="text-primary bg-primary/10">
+            <img src={beesinesIcon} alt="BEEsiness" className="h-12 w-12" />
+            <span className="text-[10px] font-medium">{t('nav.opportunities')}</span>
           </NavLink>
         </div>
       </div>
