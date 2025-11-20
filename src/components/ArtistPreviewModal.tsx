@@ -47,7 +47,8 @@ export const ArtistPreviewModal = ({ isOpen, onClose, artist, rank }: ArtistPrev
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh]">
+        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
         <DialogHeader>
           <DialogTitle className="sr-only">Artist Preview</DialogTitle>
         </DialogHeader>
@@ -126,6 +127,7 @@ export const ArtistPreviewModal = ({ isOpen, onClose, artist, rank }: ArtistPrev
               Close
             </Button>
           </div>
+        </div>
         </div>
       </DialogContent>
     </Dialog>

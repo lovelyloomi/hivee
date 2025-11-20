@@ -145,7 +145,8 @@ export const ApplicationsList = ({ open, onOpenChange, userId }: ApplicationsLis
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="max-w-4xl max-h-[80vh]">
+        <div className="overflow-y-auto max-h-[calc(80vh-80px)]">
         <DialogHeader>
           <DialogTitle className="text-foreground">Applications to Your Opportunities</DialogTitle>
         </DialogHeader>
@@ -247,6 +248,7 @@ export const ApplicationsList = ({ open, onOpenChange, userId }: ApplicationsLis
             ))}
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );

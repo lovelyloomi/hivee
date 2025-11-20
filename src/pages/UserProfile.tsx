@@ -547,7 +547,8 @@ const UserProfile = () => {
 
       {/* Work Detail Modal */}
       <Dialog open={!!selectedWork} onOpenChange={() => setSelectedWork(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
           {selectedWork && (
             <div className="space-y-4">
               <div className="relative">
@@ -596,6 +597,7 @@ const UserProfile = () => {
               </div>
             </div>
           )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
