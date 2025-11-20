@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, MessageSquare, Eye, Upload, Filter, Search, X, Globe, MapPin, Plus, Flag } from "lucide-react";
+import { Heart, MessageSquare, Eye, Upload, Filter, Search, X, Globe, MapPin, Plus, Flag, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { calculateDistance, formatDistance } from "@/utils/distance";
 import { HexagonImage } from "@/components/HexagonImage";
 import { useQueryClient } from "@tanstack/react-query";
+import { WorkEditor } from "@/components/WorkEditor";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -43,6 +44,9 @@ export default function Works() {
   const [uploading, setUploading] = useState(false);
   const [locationFilter, setLocationFilter] = useState<'global' | 'local'>('global');
   const [file, setFile] = useState<File | null>(null);
+  const [showEditor, setShowEditor] = useState(false);
+  const [editedFile, setEditedFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -203,7 +207,6 @@ export default function Works() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // Video max 60s check would require video loading, skip for now
       const maxSize = 50 * 1024 * 1024; // 50MB
       if (selectedFile.size > maxSize) {
         toast({
@@ -214,11 +217,20 @@ export default function Works() {
         return;
       }
       setFile(selectedFile);
+      setEditedFile(null);
+      setThumbnailFile(null);
     }
+  };
+
+  const handleEditSave = (edited: File, thumbnail?: File) => {
+    setEditedFile(edited);
+    setThumbnailFile(thumbnail || null);
+    setShowEditor(false);
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !file || !newWork.title || !newWork.work_type || !newWork.work_style) {
+    const fileToProcess = editedFile || file;
+    if (!user || !fileToProcess || !newWork.title || !newWork.work_type || !newWork.work_style) {
       toast({
         title: 'Please fill all required fields (title, type, style)',
         variant: 'destructive'
@@ -235,10 +247,10 @@ export default function Works() {
     }
     setUploading(true);
     try {
-      const fileType = getFileType(file);
-      const fileExt = file.name.split('.').pop();
+      const fileType = getFileType(fileToProcess);
+      const fileExt = fileToProcess.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      let fileToUpload = file;
+      let fileToUpload = fileToProcess;
 
       // Apply watermark to images
       if (fileType === 'image') {
@@ -334,9 +346,40 @@ export default function Works() {
                   <div>
                     <Label htmlFor="file">File (JPG, PNG, PDF, FBX, Video)</Label>
                     <Input id="file" type="file" accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm" onChange={handleFileChange} required />
-                    {file && <p className="text-sm text-muted-foreground mt-1">
-                        Selected: {file.name}
-                      </p>}
+                    {file && (
+                      <div className="mt-4 space-y-3">
+                        <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+                          {getFileType(file) === 'image' && (
+                            <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-contain" />
+                          )}
+                          {getFileType(file) === 'video' && (
+                            <video src={URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
+                          )}
+                          {getFileType(file) === 'model_3d' && (
+                            <div className="flex items-center justify-center h-full text-muted-foreground">
+                              <p>3D Model: {file.name}</p>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm text-muted-foreground">
+                            Selected: {file.name}
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowEditor(true)}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Modifica
+                          </Button>
+                        </div>
+                        {editedFile && (
+                          <p className="text-xs text-primary">✓ File modificato</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="title">Title</Label>
@@ -625,6 +668,16 @@ export default function Works() {
       </main>
 
       {selectedWork && <WorkDetailDialog work={selectedWork} open={!!selectedWork} onOpenChange={open => !open && setSelectedWork(null)} currentUserId={user?.id} />}
+
+      {file && (
+        <WorkEditor
+          open={showEditor}
+          onOpenChange={setShowEditor}
+          file={file}
+          fileType={getFileType(file) as 'image' | 'video' | 'model_3d'}
+          onSave={handleEditSave}
+        />
+      )}
 
       {reportWorkId && reportWorkOwnerId && <ReportWorkDialog open={!!reportWorkId} onOpenChange={open => {
       if (!open) {
