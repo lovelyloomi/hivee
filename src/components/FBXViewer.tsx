@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
 import { OrbitControls, Center } from "@react-three/drei";
 import { FBXLoader } from "three-stdlib";
@@ -8,15 +8,14 @@ interface FBXViewerProps {
   url: string;
 }
 
-const Model = ({ url }: { url: string }) => {
+const ScaledModel = ({ fbx }: { fbx: any }) => {
   const { camera } = useThree();
+  const hasScaled = useRef(false);
   
-  try {
-    const fbx = useLoader(FBXLoader, url);
+  useEffect(() => {
+    if (!fbx || hasScaled.current) return;
     
-    useEffect(() => {
-      if (!fbx) return;
-      
+    try {
       // Calculate bounding box to get model size
       const box = new THREE.Box3().setFromObject(fbx);
       const size = box.getSize(new THREE.Vector3());
@@ -31,18 +30,19 @@ const Model = ({ url }: { url: string }) => {
       const distance = targetSize * 2.5;
       camera.position.set(distance * 0.5, distance * 0.5, distance);
       camera.lookAt(0, 0, 0);
-    }, [fbx, camera]);
-    
-    return <primitive object={fbx} />;
-  } catch (error) {
-    console.error('Error loading FBX:', error);
-    return (
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="red" />
-      </mesh>
-    );
-  }
+      
+      hasScaled.current = true;
+    } catch (error) {
+      console.error('Error scaling model:', error);
+    }
+  }, [fbx, camera]);
+  
+  return <primitive object={fbx} />;
+};
+
+const Model = ({ url }: { url: string }) => {
+  const fbx = useLoader(FBXLoader, url);
+  return <ScaledModel fbx={fbx} />;
 };
 
 export default function FBXViewer({ url }: FBXViewerProps) {
