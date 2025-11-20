@@ -52,15 +52,15 @@ export default function FBXViewer({ url }: FBXViewerProps) {
           </div>
         }
       >
-        <Canvas shadows camera={{ position: [0, 0, 5], fov: 50 }}>
+        <Canvas shadows camera={{ position: [0, 0, 2], fov: 50 }}>
           <ambientLight intensity={0.6} />
           <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
           <directionalLight position={[-10, -10, -5]} intensity={0.5} />
           <pointLight position={[0, 5, 0]} intensity={0.8} />
-          <Stage environment="city" intensity={0.8}>
+          <Stage environment="city" intensity={0.8} adjustCamera={1.5}>
             <Model url={url} />
           </Stage>
-          <OrbitControls makeDefault />
+          <OrbitControls makeDefault minDistance={0.5} maxDistance={10} />
         </Canvas>
       </Suspense>
       <div className="absolute bottom-4 left-4 text-sm text-muted-foreground bg-background/80 px-3 py-1 rounded">
