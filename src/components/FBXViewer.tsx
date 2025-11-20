@@ -1,34 +1,23 @@
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stage } from '@react-three/drei';
-import { Suspense, useEffect, useState } from 'react';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import { Group } from 'three';
-import { Loader2 } from 'lucide-react';
+import { Suspense } from "react";
+import { Canvas, useLoader } from "@react-three/fiber";
+import { OrbitControls, Stage, Center } from "@react-three/drei";
+import { FBXLoader } from "three-stdlib";
+import { Loader2 } from "lucide-react";
 
 interface FBXViewerProps {
   url: string;
 }
 
-function Model({ url }: { url: string }) {
-  const [model, setModel] = useState<Group | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loader = new FBXLoader();
-    loader.load(
-      url,
-      (fbx) => {
-        setModel(fbx);
-      },
-      undefined,
-      (error) => {
-        console.error('Error loading FBX:', error);
-        setError('Failed to load 3D model');
-      }
+const Model = ({ url }: { url: string }) => {
+  try {
+    const fbx = useLoader(FBXLoader, url);
+    return (
+      <Center>
+        <primitive object={fbx} scale={0.01} />
+      </Center>
     );
-  }, [url]);
-
-  if (error) {
+  } catch (error) {
+    console.error('Error loading FBX:', error);
     return (
       <mesh>
         <boxGeometry args={[1, 1, 1]} />
@@ -36,36 +25,32 @@ function Model({ url }: { url: string }) {
       </mesh>
     );
   }
-
-  if (!model) return null;
-
-  return <primitive object={model} />;
-}
+};
 
 export default function FBXViewer({ url }: FBXViewerProps) {
   return (
-    <div className="w-full h-[500px] bg-muted rounded-lg overflow-hidden relative">
-      <Suspense
-        fallback={
-          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        }
-      >
-        <Canvas shadows camera={{ position: [0, 0, 2], fov: 50 }}>
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
-          <directionalLight position={[-10, -10, -5]} intensity={0.5} />
-          <pointLight position={[0, 5, 0]} intensity={0.8} />
-          <Stage environment="city" intensity={0.8} adjustCamera={1.5}>
+    <div className="w-full h-full">
+      <Canvas camera={{ position: [0, 1, 3], fov: 50 }}>
+        <Suspense 
+          fallback={
+            <mesh>
+              <boxGeometry args={[0.5, 0.5, 0.5]} />
+              <meshStandardMaterial color="gray" wireframe />
+            </mesh>
+          }
+        >
+          <Stage environment="studio" intensity={0.8}>
             <Model url={url} />
           </Stage>
-          <OrbitControls makeDefault minDistance={0.5} maxDistance={10} />
-        </Canvas>
-      </Suspense>
-      <div className="absolute bottom-4 left-4 text-sm text-muted-foreground bg-background/80 px-3 py-1 rounded">
-        Click and drag to rotate • Scroll to zoom
-      </div>
+          <OrbitControls 
+            enablePan={true} 
+            enableZoom={true} 
+            enableRotate={true}
+            minDistance={1}
+            maxDistance={20}
+          />
+        </Suspense>
+      </Canvas>
     </div>
   );
 }

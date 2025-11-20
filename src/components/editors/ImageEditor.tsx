@@ -2,7 +2,9 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from "@/components/ui/button";
-import { Check, RotateCw, FlipHorizontal, FlipVertical } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Check, RotateCw, FlipHorizontal, FlipVertical, Sun, Droplet, Palette } from "lucide-react";
 
 interface ImageEditorProps {
   file: File;
@@ -17,6 +19,10 @@ export const ImageEditor = ({ file, onSave, processing }: ImageEditorProps) => {
   const [rotation, setRotation] = useState(0);
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
+  const [blur, setBlur] = useState(0);
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -59,6 +65,9 @@ export const ImageEditor = ({ file, onSave, processing }: ImageEditorProps) => {
     ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
     ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
+    // Apply filters
+    ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) blur(${blur}px)`;
+
     ctx.drawImage(
       image,
       pixelCrop.x * scaleX,
@@ -93,30 +102,77 @@ export const ImageEditor = ({ file, onSave, processing }: ImageEditorProps) => {
   return (
     <div className="space-y-4">
       <div className="flex gap-2 flex-wrap">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setRotation((r) => (r + 90) % 360)}
-        >
+        <Button variant="outline" size="sm" onClick={() => setRotation((r) => (r + 90) % 360)}>
           <RotateCw className="h-4 w-4 mr-2" />
-          Ruota 90°
+          Ruota
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setFlipH(!flipH)}
-        >
+        <Button variant="outline" size="sm" onClick={() => setFlipH(!flipH)}>
           <FlipHorizontal className="h-4 w-4 mr-2" />
-          Capovolgi Orizzontale
+          Capovolgi H
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setFlipV(!flipV)}
-        >
+        <Button variant="outline" size="sm" onClick={() => setFlipV(!flipV)}>
           <FlipVertical className="h-4 w-4 mr-2" />
-          Capovolgi Verticale
+          Capovolgi V
         </Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg">
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Sun className="h-4 w-4" />
+            Luminosità
+          </Label>
+          <Slider
+            value={[brightness]}
+            onValueChange={(v) => setBrightness(v[0])}
+            min={0}
+            max={200}
+            step={1}
+          />
+          <span className="text-xs text-muted-foreground">{brightness}%</span>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Contrasto
+          </Label>
+          <Slider
+            value={[contrast]}
+            onValueChange={(v) => setContrast(v[0])}
+            min={0}
+            max={200}
+            step={1}
+          />
+          <span className="text-xs text-muted-foreground">{contrast}%</span>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Droplet className="h-4 w-4" />
+            Saturazione
+          </Label>
+          <Slider
+            value={[saturation]}
+            onValueChange={(v) => setSaturation(v[0])}
+            min={0}
+            max={200}
+            step={1}
+          />
+          <span className="text-xs text-muted-foreground">{saturation}%</span>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Sfocatura</Label>
+          <Slider
+            value={[blur]}
+            onValueChange={(v) => setBlur(v[0])}
+            min={0}
+            max={10}
+            step={0.5}
+          />
+          <span className="text-xs text-muted-foreground">{blur}px</span>
+        </div>
       </div>
 
       <div className="max-h-[500px] overflow-auto border rounded-lg">
@@ -133,6 +189,7 @@ export const ImageEditor = ({ file, onSave, processing }: ImageEditorProps) => {
               alt="Crop"
               style={{
                 transform: `rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
+                filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) blur(${blur}px)`,
                 maxWidth: '100%'
               }}
             />
