@@ -151,7 +151,10 @@ All colors MUST be HSL.
 .honeycomb-bg::before {
   content: '';
   position: absolute;
-  inset: 0;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
   background-image: var(--honeycomb-pattern);
   background-size: 140px 140px;
   background-repeat: repeat;
