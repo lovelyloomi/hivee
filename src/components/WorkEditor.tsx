@@ -32,7 +32,8 @@ export const WorkEditor = ({ open, onOpenChange, file, fileType, onSave }: WorkE
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh]">
+        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
         <DialogHeader>
           <DialogTitle>Modifica il tuo lavoro</DialogTitle>
         </DialogHeader>
@@ -49,6 +50,7 @@ export const WorkEditor = ({ open, onOpenChange, file, fileType, onSave }: WorkE
           {fileType === 'video' && (
             <VideoEditor file={file} onSave={handleSave} processing={processing} />
           )}
+        </div>
         </div>
       </DialogContent>
     </Dialog>

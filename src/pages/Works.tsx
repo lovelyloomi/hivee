@@ -338,7 +338,8 @@ export default function Works() {
                   Upload
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-h-[90vh]">
+                <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
                 <DialogHeader>
                   <DialogTitle>Upload New Work</DialogTitle>
                 </DialogHeader>
@@ -479,6 +480,7 @@ export default function Works() {
                       </>}
                   </Button>
                 </form>
+                </div>
               </DialogContent>
             </Dialog>
           </div>

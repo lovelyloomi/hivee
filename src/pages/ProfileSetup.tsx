@@ -727,7 +727,8 @@ const ProfileSetup = () => {
                     Anteprima Profilo
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[90vh]">
+                  <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
                   <DialogHeader>
                     <DialogTitle>Anteprima del Tuo Profilo</DialogTitle>
                   </DialogHeader>
@@ -753,6 +754,7 @@ const ProfileSetup = () => {
                     skills={profile.skills}
                     programs={profile.programs}
                   />
+                  </div>
                 </DialogContent>
               </Dialog>
 
