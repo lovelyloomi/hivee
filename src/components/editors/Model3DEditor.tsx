@@ -1,6 +1,6 @@
 import { useState, Suspense, useEffect } from "react";
-import { Canvas, useLoader } from "@react-three/fiber";
-import { OrbitControls, Environment, Center } from "@react-three/drei";
+import { Canvas, useLoader, useThree } from "@react-three/fiber";
+import { OrbitControls, Environment } from "@react-three/drei";
 import { FBXLoader } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -40,10 +40,27 @@ const Model3DViewer = ({
   envPreset
 }: Model3DViewerProps) => {
   const fbx = useLoader(FBXLoader, url);
+  const { camera } = useThree();
   
   useEffect(() => {
     if (!fbx) return;
     
+    // Calculate bounding box and auto-scale model
+    const box = new THREE.Box3().setFromObject(fbx);
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    
+    // Auto-scale to fit nicely in view
+    const targetSize = 2;
+    const scale = targetSize / maxDim;
+    fbx.scale.setScalar(scale);
+    
+    // Position camera based on model size
+    const distance = targetSize * 2.5;
+    camera.position.set(distance * 0.5, distance * 0.5, distance);
+    camera.lookAt(0, 0, 0);
+    
+    // Apply materials
     fbx.traverse((child: any) => {
       if (child.isMesh) {
         let newMaterial;
@@ -83,7 +100,7 @@ const Model3DViewer = ({
         child.material = newMaterial;
       }
     });
-  }, [fbx, materialType, renderMode, metalness, roughness]);
+  }, [fbx, materialType, renderMode, metalness, roughness, camera]);
   
   return (
     <>
@@ -92,15 +109,13 @@ const Model3DViewer = ({
       <directionalLight position={[10, 10, 5]} intensity={lightIntensity} />
       <directionalLight position={[-10, -10, -5]} intensity={lightIntensity * 0.5} />
       <pointLight position={[0, 10, 0]} intensity={lightIntensity * 0.3} />
-      <Center>
-        <primitive object={fbx} scale={0.01} />
-      </Center>
+      <primitive object={fbx} />
       <OrbitControls 
         enablePan={true} 
         enableZoom={true} 
         enableRotate={true}
-        minDistance={1}
-        maxDistance={20}
+        minDistance={0.5}
+        maxDistance={50}
       />
       <Environment preset={envPreset as any} />
     </>
@@ -147,7 +162,7 @@ export const Model3DEditor = ({ file, onSave, processing }: Model3DEditorProps) 
     <div className="space-y-4">
       <div className="h-[500px] border rounded-lg overflow-hidden bg-background">
         {modelUrl && (
-          <Canvas camera={{ position: [0, 1, 3], fov: 50 }}>
+          <Canvas camera={{ position: [3, 3, 5], fov: 50 }}>
             <Suspense fallback={null}>
               <Model3DViewer
                 url={modelUrl}
