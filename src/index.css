@@ -144,12 +144,24 @@ All colors MUST be HSL.
 
 /* Honeycomb background utility - diagonal pattern */
 .honeycomb-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.honeycomb-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
   background-image: var(--honeycomb-pattern);
   background-size: 140px 140px;
   background-repeat: repeat;
-  transform: rotate(-15deg) scale(1.2);
+  transform: rotate(-15deg);
   transform-origin: center;
-  position: absolute;
-  inset: -20%;
+  z-index: 0;
   pointer-events: none;
+}
+
+.honeycomb-bg > * {
+  position: relative;
+  z-index: 1;
 }
