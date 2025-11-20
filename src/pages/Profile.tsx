@@ -6,7 +6,8 @@ import { ProfileEditor } from "@/components/ProfileEditor";
 import { ProfileAnalytics } from "@/components/ProfileAnalytics";
 import { PrivacySettings } from "@/components/PrivacySettings";
 import { NotificationSettings } from "@/components/NotificationSettings";
-import { LogOut, BarChart, Shield, Bell, User } from "lucide-react";
+import { MyContent } from "@/components/MyContent";
+import { LogOut, BarChart, Shield, Bell, User, FolderOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -39,10 +40,14 @@ const Profile = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">
               <User className="mr-2 h-4 w-4" />
               Profilo
+            </TabsTrigger>
+            <TabsTrigger value="content">
+              <FolderOpen className="mr-2 h-4 w-4" />
+              I Miei Post
             </TabsTrigger>
             <TabsTrigger value="analytics">
               <BarChart className="mr-2 h-4 w-4" />
@@ -60,6 +65,10 @@ const Profile = () => {
 
           <TabsContent value="profile" className="space-y-6">
             <ProfileEditor />
+          </TabsContent>
+
+          <TabsContent value="content">
+            <MyContent />
           </TabsContent>
 
           <TabsContent value="analytics">
