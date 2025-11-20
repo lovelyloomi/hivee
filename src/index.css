@@ -51,8 +51,8 @@ All colors MUST be HSL.
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     
-    /* Honeycomb pattern */
-    --honeycomb-pattern: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill='none' stroke='%23FDB927' stroke-opacity='0.08' stroke-width='1'/%3E%3C/svg%3E");
+    /* Honeycomb pattern - diagonal with random sizes */
+    --honeycomb-pattern: url("data:image/svg+xml,%3Csvg width='140' height='140' viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23FDB927' stroke-width='1'%3E%3Cpath d='M20 10l17.32 10v20L20 50 2.68 40V20z' stroke-opacity='0.05'/%3E%3Cpath d='M70 25l25.98 15v30L70 85 44.02 70V40z' stroke-opacity='0.08'/%3E%3Cpath d='M110 5l12.99 7.5v15L110 35 97.01 27.5v-15z' stroke-opacity='0.06'/%3E%3Cpath d='M50 75l20.78 12v24L50 123 29.22 111V87z' stroke-opacity='0.07'/%3E%3Cpath d='M120 90l10.39 6v12L120 114 109.61 108V96z' stroke-opacity='0.05'/%3E%3Cpath d='M15 100l15.59 9v18L15 136 -0.59 127V109z' stroke-opacity='0.06'/%3E%3C/g%3E%3C/svg%3E");
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 20 5.3% 26.1%;
@@ -100,7 +100,7 @@ All colors MUST be HSL.
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
     --shadow-hover: 0 8px 30px -6px hsl(0 0% 0% / 0.6);
     
-    --honeycomb-pattern: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill='none' stroke='%23FDB927' stroke-opacity='0.15' stroke-width='1'/%3E%3C/svg%3E");
+    --honeycomb-pattern: url("data:image/svg+xml,%3Csvg width='140' height='140' viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23FDB927' stroke-width='1'%3E%3Cpath d='M20 10l17.32 10v20L20 50 2.68 40V20z' stroke-opacity='0.10'/%3E%3Cpath d='M70 25l25.98 15v30L70 85 44.02 70V40z' stroke-opacity='0.15'/%3E%3Cpath d='M110 5l12.99 7.5v15L110 35 97.01 27.5v-15z' stroke-opacity='0.12'/%3E%3Cpath d='M50 75l20.78 12v24L50 123 29.22 111V87z' stroke-opacity='0.13'/%3E%3Cpath d='M120 90l10.39 6v12L120 114 109.61 108V96z' stroke-opacity='0.10'/%3E%3Cpath d='M15 100l15.59 9v18L15 136 -0.59 127V109z' stroke-opacity='0.11'/%3E%3C/g%3E%3C/svg%3E");
 
     --sidebar-background: 20 5.9% 10%;
     --sidebar-foreground: 40 4.8% 95.9%;
@@ -142,9 +142,14 @@ All colors MUST be HSL.
   -webkit-touch-callout: none;
 }
 
-/* Honeycomb background utility */
+/* Honeycomb background utility - diagonal pattern */
 .honeycomb-bg {
   background-image: var(--honeycomb-pattern);
-  background-size: 60px 60px;
+  background-size: 140px 140px;
   background-repeat: repeat;
+  transform: rotate(-15deg) scale(1.2);
+  transform-origin: center;
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
 }
