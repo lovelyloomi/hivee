@@ -1,4 +1,4 @@
-import { useState, Suspense, useEffect } from "react";
+import { useState, useRef, Suspense, useEffect } from "react";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
 import { OrbitControls, Environment } from "@react-three/drei";
 import { FBXLoader } from "three-stdlib";
@@ -28,37 +28,48 @@ interface Model3DViewerProps {
   envPreset: string;
 }
 
-const Model3DViewer = ({ 
-  url, 
-  lightIntensity, 
-  ambientIntensity,
-  backgroundColor,
+const ScaledModel = ({ 
+  fbx,
   materialType,
   renderMode,
   metalness,
-  roughness,
-  envPreset
-}: Model3DViewerProps) => {
-  const fbx = useLoader(FBXLoader, url);
+  roughness
+}: { 
+  fbx: any;
+  materialType: string;
+  renderMode: string;
+  metalness: number;
+  roughness: number;
+}) => {
   const { camera } = useThree();
+  const hasScaled = useRef(false);
   
   useEffect(() => {
     if (!fbx) return;
     
-    // Calculate bounding box and auto-scale model
-    const box = new THREE.Box3().setFromObject(fbx);
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    
-    // Auto-scale to fit nicely in view
-    const targetSize = 2;
-    const scale = targetSize / maxDim;
-    fbx.scale.setScalar(scale);
-    
-    // Position camera based on model size
-    const distance = targetSize * 2.5;
-    camera.position.set(distance * 0.5, distance * 0.5, distance);
-    camera.lookAt(0, 0, 0);
+    // Scale model only once
+    if (!hasScaled.current) {
+      try {
+        // Calculate bounding box and auto-scale model
+        const box = new THREE.Box3().setFromObject(fbx);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        
+        // Auto-scale to fit nicely in view
+        const targetSize = 2;
+        const scale = targetSize / maxDim;
+        fbx.scale.setScalar(scale);
+        
+        // Position camera based on model size
+        const distance = targetSize * 2.5;
+        camera.position.set(distance * 0.5, distance * 0.5, distance);
+        camera.lookAt(0, 0, 0);
+        
+        hasScaled.current = true;
+      } catch (error) {
+        console.error('Error scaling model:', error);
+      }
+    }
     
     // Apply materials
     fbx.traverse((child: any) => {
@@ -102,6 +113,22 @@ const Model3DViewer = ({
     });
   }, [fbx, materialType, renderMode, metalness, roughness, camera]);
   
+  return <primitive object={fbx} />;
+};
+
+const Model3DViewer = ({ 
+  url, 
+  lightIntensity, 
+  ambientIntensity,
+  backgroundColor,
+  materialType,
+  renderMode,
+  metalness,
+  roughness,
+  envPreset
+}: Model3DViewerProps) => {
+  const fbx = useLoader(FBXLoader, url);
+  
   return (
     <>
       <color attach="background" args={[backgroundColor]} />
@@ -109,7 +136,13 @@ const Model3DViewer = ({
       <directionalLight position={[10, 10, 5]} intensity={lightIntensity} />
       <directionalLight position={[-10, -10, -5]} intensity={lightIntensity * 0.5} />
       <pointLight position={[0, 10, 0]} intensity={lightIntensity * 0.3} />
-      <primitive object={fbx} />
+      <ScaledModel
+        fbx={fbx}
+        materialType={materialType}
+        renderMode={renderMode}
+        metalness={metalness}
+        roughness={roughness}
+      />
       <OrbitControls 
         enablePan={true} 
         enableZoom={true} 
