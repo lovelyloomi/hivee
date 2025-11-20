@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Heart, MessageSquare, Eye, Upload, Filter, Search, X, Globe, MapPin, Plus, Flag, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,6 +74,15 @@ export default function Works() {
   }[]>([]);
   const [reportWorkId, setReportWorkId] = useState<string | null>(null);
   const [reportWorkOwnerId, setReportWorkOwnerId] = useState<string | null>(null);
+
+  // Memoized 3D viewer to prevent re-renders when form state changes
+  const Memoized3DViewer = useMemo(() => {
+    return ({ file }: { file: File }) => {
+      const url = useMemo(() => URL.createObjectURL(file), [file]);
+      return <FBXViewer url={url} enableLOD={true} autoRotate={false} />;
+    };
+  }, []);
+
   useEffect(() => {
     fetchWorks();
     fetchTrendingHashtags();
@@ -359,7 +368,7 @@ export default function Works() {
                             <video src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
                           )}
                           {getFileType(file) === 'model_3d' && (
-                            <FBXViewer url={URL.createObjectURL(file)} />
+                            <Memoized3DViewer file={file} />
                           )}
                         </div>
                         <div className="flex justify-between items-center">

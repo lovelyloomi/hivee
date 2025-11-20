@@ -1,4 +1,4 @@
-import { useState, useRef, Suspense, useEffect } from "react";
+import { useState, useRef, Suspense, useEffect, memo } from "react";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
 import { OrbitControls, Environment } from "@react-three/drei";
 import { FBXLoader } from "three-stdlib";
@@ -172,7 +172,7 @@ const Model3DViewer = ({
   );
 };
 
-export const Model3DEditor = ({ file, onSave, processing }: Model3DEditorProps) => {
+const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps) => {
   const [modelUrl, setModelUrl] = useState<string>('');
   const [lightIntensity, setLightIntensity] = useState(1.5);
   const [ambientIntensity, setAmbientIntensity] = useState(0.5);
@@ -367,3 +367,5 @@ export const Model3DEditor = ({ file, onSave, processing }: Model3DEditorProps) 
     </div>
   );
 };
+
+export const Model3DEditor = memo(Model3DEditorComponent);
