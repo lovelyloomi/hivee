@@ -1,10 +1,11 @@
-import { useState, useRef, Suspense, useEffect } from "react";
-import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, Environment, Center } from "@react-three/drei";
+import { useState, Suspense, useEffect } from "react";
+import { Canvas, useLoader } from "@react-three/fiber";
+import { OrbitControls, Environment, Center } from "@react-three/drei";
 import { FBXLoader } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { Camera, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as THREE from "three";
@@ -164,14 +165,93 @@ export const Model3DEditor = ({ file, onSave, processing }: Model3DEditorProps) 
         )}
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label>Tipo Materiale</Label>
+          <Select value={materialType} onValueChange={setMaterialType}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="standard">Standard (PBR)</SelectItem>
+              <SelectItem value="physical">Physical (Avanzato)</SelectItem>
+              <SelectItem value="toon">Toon (Cartoon)</SelectItem>
+              <SelectItem value="basic">Basic (Piatto)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Modalità Rendering</Label>
+          <Select value={renderMode} onValueChange={setRenderMode}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="solid">Solido</SelectItem>
+              <SelectItem value="wireframe">Wireframe</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Ambiente</Label>
+          <Select value={envPreset} onValueChange={setEnvPreset}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="studio">Studio</SelectItem>
+              <SelectItem value="sunset">Tramonto</SelectItem>
+              <SelectItem value="dawn">Alba</SelectItem>
+              <SelectItem value="night">Notte</SelectItem>
+              <SelectItem value="warehouse">Magazzino</SelectItem>
+              <SelectItem value="forest">Foresta</SelectItem>
+              <SelectItem value="apartment">Appartamento</SelectItem>
+              <SelectItem value="city">Città</SelectItem>
+              <SelectItem value="park">Parco</SelectItem>
+              <SelectItem value="lobby">Lobby</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
+        {(materialType === 'standard' || materialType === 'physical') && (
+          <>
+            <div className="space-y-2">
+              <Label>Metallicità</Label>
+              <Slider
+                value={[metalness]}
+                onValueChange={(v) => setMetalness(v[0])}
+                min={0}
+                max={1}
+                step={0.01}
+              />
+              <span className="text-xs text-muted-foreground">{metalness.toFixed(2)}</span>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Rugosità</Label>
+              <Slider
+                value={[roughness]}
+                onValueChange={(v) => setRoughness(v[0])}
+                min={0}
+                max={1}
+                step={0.01}
+              />
+              <span className="text-xs text-muted-foreground">{roughness.toFixed(2)}</span>
+            </div>
+          </>
+        )}
+
         <div className="space-y-2">
           <Label>Intensità Luce Principale</Label>
           <Slider
             value={[lightIntensity]}
             onValueChange={(v) => setLightIntensity(v[0])}
             min={0}
-            max={3}
+            max={5}
             step={0.1}
           />
           <span className="text-xs text-muted-foreground">{lightIntensity.toFixed(1)}</span>
@@ -189,21 +269,13 @@ export const Model3DEditor = ({ file, onSave, processing }: Model3DEditorProps) 
           <span className="text-xs text-muted-foreground">{ambientIntensity.toFixed(1)}</span>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 col-span-2">
           <Label>Colore Sfondo</Label>
           <Input
             type="color"
             value={backgroundColor}
             onChange={(e) => setBackgroundColor(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Carica Texture</Label>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={handleTextureUpload}
+            className="h-12 cursor-pointer"
           />
         </div>
       </div>
@@ -213,10 +285,9 @@ export const Model3DEditor = ({ file, onSave, processing }: Model3DEditorProps) 
           <Camera className="h-4 w-4 mr-2" />
           Cattura Screenshot
         </Button>
-        
         <Button onClick={handleSave} disabled={processing}>
           <Check className="h-4 w-4 mr-2" />
-          {processing ? 'Salvataggio...' : 'Salva e Pubblica'}
+          {processing ? 'Salvataggio...' : 'Salva'}
         </Button>
       </div>
     </div>

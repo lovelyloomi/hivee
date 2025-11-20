@@ -48,7 +48,6 @@ export const VideoEditor = ({ file, onSave, processing }: VideoEditorProps) => {
     const time = videoRef.current.currentTime;
     setCurrentTime(time);
     
-    // Auto-stop at trim end
     if (time >= trimEnd) {
       videoRef.current.pause();
       setPlaying(false);
@@ -113,7 +112,6 @@ export const VideoEditor = ({ file, onSave, processing }: VideoEditorProps) => {
   };
 
   const handleSave = async () => {
-    // If no trimming or volume changes, use original file
     if (trimStart === 0 && trimEnd === duration && volume === 1 && !muted) {
       onSave(file);
       return;
@@ -136,12 +134,10 @@ export const VideoEditor = ({ file, onSave, processing }: VideoEditorProps) => {
           ref={videoRef}
           src={videoUrl}
           className="w-full h-full"
-          onLoadedMetadata={(e) => {
-            handleDuration(e.currentTarget.duration);
-            if (videoRef.current) {
-              videoRef.current.volume = volume;
-            }
+          style={{
+            filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`
           }}
+          onLoadedMetadata={(e) => handleDuration(e.currentTarget.duration)}
           onTimeUpdate={handleTimeUpdate}
           muted={muted}
         />
@@ -311,9 +307,8 @@ export const VideoEditor = ({ file, onSave, processing }: VideoEditorProps) => {
         </div>
       </div>
 
-      <div className="text-sm text-muted-foreground pt-4">
+      <div className="text-sm text-muted-foreground">
         Durata finale: {formatTime(trimEnd - trimStart)}
-        </div>
       </div>
 
       <div className="flex justify-end pt-4 border-t">
