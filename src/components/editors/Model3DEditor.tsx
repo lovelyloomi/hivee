@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Camera, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LoadingProgress } from "@/components/LoadingProgress";
 import * as THREE from "three";
 
 interface Model3DEditorProps {
@@ -26,6 +27,8 @@ interface Model3DViewerProps {
   metalness: number;
   roughness: number;
   envPreset: string;
+  onLoadProgress?: (progress: number) => void;
+  onLoadComplete?: () => void;
 }
 
 const ScaledModel = ({ 
@@ -125,9 +128,23 @@ const Model3DViewer = ({
   renderMode,
   metalness,
   roughness,
-  envPreset
+  envPreset,
+  onLoadProgress,
+  onLoadComplete
 }: Model3DViewerProps) => {
-  const fbx = useLoader(FBXLoader, url);
+  const fbx = useLoader(
+    FBXLoader,
+    url,
+    (loader) => {
+      loader.manager.onProgress = (url, loaded, total) => {
+        const progress = (loaded / total) * 100;
+        onLoadProgress?.(progress);
+        if (progress === 100) {
+          onLoadComplete?.();
+        }
+      };
+    }
+  );
   
   return (
     <>
@@ -165,10 +182,14 @@ export const Model3DEditor = ({ file, onSave, processing }: Model3DEditorProps) 
   const [metalness, setMetalness] = useState(0.5);
   const [roughness, setRoughness] = useState(0.5);
   const [envPreset, setEnvPreset] = useState('studio');
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const url = URL.createObjectURL(file);
     setModelUrl(url);
+    setIsLoading(true);
+    setLoadProgress(0);
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
@@ -193,7 +214,10 @@ export const Model3DEditor = ({ file, onSave, processing }: Model3DEditorProps) 
 
   return (
     <div className="space-y-4">
-      <div className="h-[500px] border rounded-lg overflow-hidden bg-background">
+      <div className="h-[500px] border rounded-lg overflow-hidden bg-background relative">
+        {isLoading && loadProgress < 100 && (
+          <LoadingProgress progress={loadProgress} label="Caricamento Modello 3D..." />
+        )}
         {modelUrl && (
           <Canvas camera={{ position: [3, 3, 5], fov: 50 }}>
             <Suspense fallback={null}>
@@ -207,6 +231,8 @@ export const Model3DEditor = ({ file, onSave, processing }: Model3DEditorProps) 
                 metalness={metalness}
                 roughness={roughness}
                 envPreset={envPreset}
+                onLoadProgress={setLoadProgress}
+                onLoadComplete={() => setIsLoading(false)}
               />
             </Suspense>
           </Canvas>
