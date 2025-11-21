@@ -686,7 +686,7 @@ export default function Works() {
                   </div>
                 ) : work.file_type === 'model_3d' ? (
                   <div className="w-full h-full">
-                    <FBXViewer url={work.file_url} autoRotate enableLOD />
+                    <FBXViewer url={work.file_url} autoRotate={false} enableLOD={true} />
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-muted">

@@ -12,7 +12,15 @@ interface MediaViewerProps {
 
 export default function MediaViewer({ fileUrl, fileType, watermarkUrl, title }: MediaViewerProps) {
   if (fileType === 'model_3d') {
-    return <FBXViewer url={fileUrl} />;
+    return (
+      <div className="w-full h-full min-h-[500px]">
+        <FBXViewer 
+          url={fileUrl} 
+          enableLOD={true}
+          autoRotate={false}
+        />
+      </div>
+    );
   }
 
   if (fileType === 'video') {
