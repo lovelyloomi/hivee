@@ -107,3 +107,86 @@ export const pdfToImages = async (pdfFile: File): Promise<Blob[]> => {
 
   return images;
 };
+
+// Apply watermark overlay to displayed images
+export const applyWatermarkOverlay = async (
+  imageUrl: string,
+  watermarkText: string,
+  watermarkStyle: 'center' | 'repeat' | 'disabled' = 'center'
+): Promise<string> => {
+  if (watermarkStyle === 'disabled') return imageUrl;
+
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      if (!ctx) {
+        resolve(imageUrl);
+        return;
+      }
+
+      // Draw original image
+      ctx.drawImage(img, 0, 0);
+
+      // Setup watermark style
+      const fontSize = Math.max(20, Math.min(img.width, img.height) * 0.05);
+      ctx.font = `bold ${fontSize}px Arial`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      if (watermarkStyle === 'center') {
+        // Single watermark in center
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(-Math.PI / 6);
+        ctx.fillText(watermarkText, 0, 0);
+        ctx.restore();
+      } else if (watermarkStyle === 'repeat') {
+        // Repeated watermark pattern
+        const spacing = fontSize * 4;
+        ctx.save();
+        ctx.rotate(-Math.PI / 6);
+        
+        for (let y = -canvas.height; y < canvas.height * 2; y += spacing) {
+          for (let x = -canvas.width; x < canvas.width * 2; x += spacing) {
+            ctx.fillText(watermarkText, x, y);
+          }
+        }
+        ctx.restore();
+      }
+
+      resolve(canvas.toDataURL('image/jpeg', 0.95));
+    };
+
+    img.onerror = () => resolve(imageUrl);
+    img.src = imageUrl;
+  });
+};
+
+// Block right-click context menu on images
+export const preventImageSave = (element: HTMLElement) => {
+  element.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    return false;
+  });
+
+  element.addEventListener('dragstart', (e) => {
+    e.preventDefault();
+    return false;
+  });
+
+  // Disable keyboard shortcuts for saving
+  element.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+};

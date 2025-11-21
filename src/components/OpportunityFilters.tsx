@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface OpportunityFiltersProps {
   artistType: string;
@@ -11,6 +12,10 @@ interface OpportunityFiltersProps {
   maxDistance: number;
   setMaxDistance: (value: number) => void;
   locationEnabled?: boolean;
+  showDownloadable?: boolean;
+  setShowDownloadable?: (value: boolean) => void;
+  showAiMade?: boolean;
+  setShowAiMade?: (value: boolean) => void;
 }
 
 const artistTypes = [
@@ -40,7 +45,11 @@ export const OpportunityFilters = ({
   setWorkType,
   maxDistance,
   setMaxDistance,
-  locationEnabled
+  locationEnabled,
+  showDownloadable,
+  setShowDownloadable,
+  showAiMade,
+  setShowAiMade
 }: OpportunityFiltersProps) => {
   return (
     <div className="space-y-6 p-4 bg-card rounded-lg border border-border">
@@ -94,6 +103,32 @@ export const OpportunityFilters = ({
             step={1}
             className="mt-2"
           />
+        </div>
+      )}
+
+      {setShowDownloadable && (
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="show-downloadable"
+            checked={showDownloadable}
+            onCheckedChange={(checked) => setShowDownloadable(checked as boolean)}
+          />
+          <Label htmlFor="show-downloadable" className="cursor-pointer">
+            Solo opere scaricabili
+          </Label>
+        </div>
+      )}
+
+      {setShowAiMade && (
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="show-ai-made"
+            checked={showAiMade}
+            onCheckedChange={(checked) => setShowAiMade(checked as boolean)}
+          />
+          <Label htmlFor="show-ai-made" className="cursor-pointer">
+            Mostra opere create con AI
+          </Label>
         </div>
       )}
     </div>

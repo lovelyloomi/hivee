@@ -284,9 +284,24 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between gap-3">
+      <DialogContent className="max-w-[98vw] w-[98vw] max-h-[98vh] h-[98vh] overflow-hidden flex flex-col p-0">
+        <div className="flex flex-col md:flex-row h-full">
+          {/* Media Section - Full height on desktop, scrollable on mobile */}
+          <div className="w-full md:w-2/3 bg-black flex items-center justify-center relative">
+            <div className="w-full h-full flex items-center justify-center p-4">
+              <MediaViewer
+                fileUrl={work.file_url}
+                fileType={work.file_type}
+                watermarkUrl={work.watermark_url}
+                title={work.title}
+              />
+            </div>
+          </div>
+
+          {/* Info Section - Scrollable sidebar */}
+          <div className="w-full md:w-1/3 bg-background flex flex-col overflow-hidden border-l">
+            <DialogHeader className="p-6 border-b">
+              <DialogTitle className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Avatar>
                 <AvatarImage src={work.profiles?.avatar_url || ''} />
@@ -316,19 +331,12 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
                 </Button>
               </div>
             )}
-          </DialogTitle>
-        </DialogHeader>
+            </DialogTitle>
+            </DialogHeader>
 
-        <ScrollArea className="flex-1">
-          <div className="space-y-4">
-            <MediaViewer
-              fileUrl={work.file_url}
-              fileType={work.file_type}
-              watermarkUrl={work.watermark_url}
-              title={work.title}
-            />
-
-            {isEditing ? (
+            <ScrollArea className="flex-1 px-6">
+              <div className="space-y-4 py-4">
+                {isEditing ? (
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="edit-description">Description</Label>
@@ -435,9 +443,11 @@ export default function WorkDetailDialog({ work, open, onOpenChange, currentUser
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
+              </div>
             </div>
+            </ScrollArea>
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

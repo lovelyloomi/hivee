@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { X } from "lucide-react";
 
 interface SearchFiltersProps {
@@ -23,6 +24,10 @@ interface SearchFiltersProps {
   setShowAllSkills?: (value: boolean) => void;
   showAllPrograms?: boolean;
   setShowAllPrograms?: (value: boolean) => void;
+  showDownloadable?: boolean;
+  setShowDownloadable?: (value: boolean) => void;
+  showAiMade?: boolean;
+  setShowAiMade?: (value: boolean) => void;
 }
 
 const commonSkills = [
@@ -71,7 +76,11 @@ export const SearchFilters = ({
   showAllSkills = false,
   setShowAllSkills,
   showAllPrograms = false,
-  setShowAllPrograms
+  setShowAllPrograms,
+  showDownloadable,
+  setShowDownloadable,
+  showAiMade,
+  setShowAiMade
 }: SearchFiltersProps) => {
   const ITEMS_TO_SHOW = 10;
   const toggleSkill = (skill: string) => {
@@ -197,6 +206,32 @@ export const SearchFilters = ({
           )}
         </div>
       </div>
+
+      {setShowDownloadable && (
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="show-downloadable-search"
+            checked={showDownloadable}
+            onCheckedChange={(checked) => setShowDownloadable(checked as boolean)}
+          />
+          <Label htmlFor="show-downloadable-search" className="cursor-pointer">
+            Solo opere scaricabili
+          </Label>
+        </div>
+      )}
+
+      {setShowAiMade && (
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="show-ai-made-search"
+            checked={showAiMade}
+            onCheckedChange={(checked) => setShowAiMade(checked as boolean)}
+          />
+          <Label htmlFor="show-ai-made-search" className="cursor-pointer">
+            Mostra opere create con AI
+          </Label>
+        </div>
+      )}
 
       <Button
         variant="outline"
