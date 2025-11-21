@@ -672,6 +672,9 @@ export type Database = {
           twitter_url: string | null
           updated_at: string
           username: string | null
+          watermark_enabled: boolean | null
+          watermark_sections: string[] | null
+          watermark_style: string | null
           watermark_text: string | null
           watermark_url: string | null
           website_url: string | null
@@ -714,6 +717,9 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           username?: string | null
+          watermark_enabled?: boolean | null
+          watermark_sections?: string[] | null
+          watermark_style?: string | null
           watermark_text?: string | null
           watermark_url?: string | null
           website_url?: string | null
@@ -756,6 +762,9 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           username?: string | null
+          watermark_enabled?: boolean | null
+          watermark_sections?: string[] | null
+          watermark_style?: string | null
           watermark_text?: string | null
           watermark_url?: string | null
           website_url?: string | null
@@ -1117,8 +1126,10 @@ export type Database = {
           file_url: string
           hashtags: string[] | null
           id: string
+          is_downloadable: boolean | null
           made_with_ai: boolean
           nsfw: boolean
+          screenshot_url: string | null
           title: string
           updated_at: string
           user_id: string
@@ -1133,8 +1144,10 @@ export type Database = {
           file_url: string
           hashtags?: string[] | null
           id?: string
+          is_downloadable?: boolean | null
           made_with_ai?: boolean
           nsfw?: boolean
+          screenshot_url?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -1149,8 +1162,10 @@ export type Database = {
           file_url?: string
           hashtags?: string[] | null
           id?: string
+          is_downloadable?: boolean | null
           made_with_ai?: boolean
           nsfw?: boolean
+          screenshot_url?: string | null
           title?: string
           updated_at?: string
           user_id?: string

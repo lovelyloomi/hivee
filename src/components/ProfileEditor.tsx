@@ -12,6 +12,7 @@ import { Upload, Link as LinkIcon, X, Loader2, Globe, Instagram, Linkedin, Twitt
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { z } from "zod";
+import { WatermarkSettings } from "./WatermarkSettings";
 
 const urlSchema = z.string().url().optional().or(z.literal(""));
 
@@ -332,6 +333,9 @@ export const ProfileEditor = ({ onSave }: ProfileEditorProps) => {
 
   return (
     <div className="space-y-6 pb-20">
+      {/* Watermark Settings - Place this first or in appropriate section */}
+      <WatermarkSettings />
+
       {/* Basic Information */}
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Informazioni Base</h2>

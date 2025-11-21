@@ -15,7 +15,7 @@ import WorkDetailDialog from "@/components/WorkDetailDialog";
 import { ReportWorkDialog } from "@/components/ReportWorkDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { applyWatermark } from "@/utils/watermark";
+import { applyWatermark, preventImageSave } from "@/utils/watermark";
 import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { calculateDistance, formatDistance } from "@/utils/distance";
@@ -24,6 +24,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { WorkEditor } from "@/components/WorkEditor";
 import FBXViewer from "@/components/FBXViewer";
 import { LoadingProgress } from "@/components/LoadingProgress";
+import { useAutosave, loadAutosave, clearAutosave } from "@/hooks/useAutosave";
+import { capture3DScreenshot, blobToFile } from "@/utils/screenshot";
+import { useRef } from "react";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -63,7 +66,8 @@ export default function Works() {
     work_type: "",
     work_style: "",
     made_with_ai: false,
-    nsfw: false
+    nsfw: false,
+    is_downloadable: true
   });
   const [showNSFW, setShowNSFW] = useState(false);
   const [selectedNSFWWork, setSelectedNSFWWork] = useState<string | null>(null);
@@ -74,6 +78,28 @@ export default function Works() {
   }[]>([]);
   const [reportWorkId, setReportWorkId] = useState<string | null>(null);
   const [reportWorkOwnerId, setReportWorkOwnerId] = useState<string | null>(null);
+  const [showDownloadable, setShowDownloadable] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Load autosaved draft
+  useEffect(() => {
+    const saved = loadAutosave<{
+      title: string;
+      description: string;
+      hashtags: string;
+      work_type: string;
+      work_style: string;
+      made_with_ai: boolean;
+      nsfw: boolean;
+      is_downloadable: boolean;
+    }>('works_draft');
+    if (saved) {
+      setNewWork(saved);
+    }
+  }, []);
+
+  // Autosave draft
+  useAutosave({ key: 'works_draft', data: newWork });
 
   // Memoized 3D viewer to prevent re-renders when form state changes
   const Memoized3DViewer = useMemo(() => {
@@ -262,13 +288,41 @@ export default function Works() {
       const fileExt = fileToProcess.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       let fileToUpload = fileToProcess;
+      let screenshotUrl: string | null = null;
+
+      // Capture screenshot for 3D models
+      if (fileType === 'model_3d' && thumbnailFile) {
+        const screenshotExt = 'jpg';
+        const screenshotFileName = `${user.id}/${Date.now()}_screenshot.${screenshotExt}`;
+        
+        const { error: screenshotError } = await supabase.storage
+          .from('works')
+          .upload(screenshotFileName, thumbnailFile);
+
+        if (!screenshotError) {
+          const { data: { publicUrl: screenshotPublicUrl } } = supabase.storage
+            .from('works')
+            .getPublicUrl(screenshotFileName);
+          screenshotUrl = screenshotPublicUrl;
+        }
+      }
 
       // Apply watermark to images
       if (fileType === 'image') {
         const {
           data: profile
-        } = await supabase.from('profiles').select('watermark_text, watermark_url').eq('id', user.id).single();
-        if (profile?.watermark_text || profile?.watermark_url) {
+        } = await supabase.from('profiles').select('watermark_text, watermark_url, watermark_enabled, watermark_style, watermark_sections, username')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.watermark_enabled && profile?.watermark_sections?.includes('works')) {
+          const watermarkText = profile.username || profile.watermark_text || '';
+          const watermarkedBlob = await applyWatermark(file, watermarkText, profile.watermark_url || undefined);
+          fileToUpload = new File([watermarkedBlob], file.name, {
+            type: file.type
+          });
+        } else if (profile?.watermark_text || profile?.watermark_url) {
+          // Legacy watermark support
           const watermarkedBlob = await applyWatermark(file, profile.watermark_text || '', profile.watermark_url || undefined);
           fileToUpload = new File([watermarkedBlob], file.name, {
             type: file.type
@@ -302,9 +356,15 @@ export default function Works() {
         work_type: newWork.work_type,
         work_style: newWork.work_style,
         made_with_ai: newWork.made_with_ai,
-        nsfw: newWork.nsfw
+        nsfw: newWork.nsfw,
+        screenshot_url: screenshotUrl,
+        is_downloadable: newWork.is_downloadable
       });
       if (insertError) throw insertError;
+      
+      // Clear autosaved draft
+      clearAutosave('works_draft');
+      
       toast({
         title: 'Work uploaded successfully!'
       });
@@ -315,9 +375,12 @@ export default function Works() {
         work_type: "",
         work_style: "",
         made_with_ai: false,
-        nsfw: false
+        nsfw: false,
+        is_downloadable: true
       });
       setFile(null);
+      setEditedFile(null);
+      setThumbnailFile(null);
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Upload error:', error);
@@ -459,6 +522,15 @@ export default function Works() {
                     })} />
                       <Label htmlFor="nsfw" className="cursor-pointer font-medium">
                         NSFW (18+ content) *
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
+                      <Checkbox id="is_downloadable" checked={newWork.is_downloadable} onCheckedChange={checked => setNewWork({
+                      ...newWork,
+                      is_downloadable: checked as boolean
+                    })} />
+                      <Label htmlFor="is_downloadable" className="cursor-pointer font-medium">
+                        Downloadable
                       </Label>
                     </div>
                   </div>
