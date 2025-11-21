@@ -83,11 +83,7 @@ const ScaledModel = ({
     return <primitive object={lodRef.current} />;
   }
   
-  return (
-    <group rotation={autoRotate ? [0, Date.now() * 0.001, 0] : undefined}>
-      <primitive object={fbx} />
-    </group>
-  );
+  return <primitive object={fbx} />;
 };
 
 const Model = ({ 
@@ -122,9 +118,34 @@ export default function FBXViewer({
   enableLOD = true,
   autoRotate = false
 }: FBXViewerProps) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useEffect(() => {
+    if (autoRotate && groupRef.current) {
+      const animate = () => {
+        if (groupRef.current) {
+          groupRef.current.rotation.y += 0.005;
+        }
+        requestAnimationFrame(animate);
+      };
+      const animationId = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(animationId);
+    }
+  }, [autoRotate]);
+
   return (
-    <div className="w-full h-full relative">
-      <Canvas camera={{ position: [3, 3, 5], fov: 50 }}>
+    <div className="w-full h-full relative bg-gradient-to-b from-gray-900 to-gray-800">
+      <Canvas 
+        camera={{ position: [3, 3, 5], fov: 50 }}
+        gl={{ 
+          antialias: true,
+          alpha: true,
+          preserveDrawingBuffer: true
+        }}
+      >
+        <color attach="background" args={['#1a1a1a']} />
+        <fog attach="fog" args={['#1a1a1a', 10, 50]} />
+        
         <Suspense 
           fallback={
             <mesh>
@@ -133,26 +154,54 @@ export default function FBXViewer({
             </mesh>
           }
         >
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
-          <directionalLight position={[-10, -10, -5]} intensity={0.5} />
-          <pointLight position={[0, 10, 0]} intensity={0.3} />
-          <Center>
-            <Model 
-              url={url} 
-              onLoadProgress={onLoadProgress}
-              enableLOD={enableLOD}
-              autoRotate={autoRotate}
-            />
-          </Center>
+          {/* Lighting setup similar to Sketchfab */}
+          <ambientLight intensity={0.4} />
+          
+          {/* Key light */}
+          <directionalLight 
+            position={[5, 5, 5]} 
+            intensity={1.2} 
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+          />
+          
+          {/* Fill light */}
+          <directionalLight 
+            position={[-5, 3, -5]} 
+            intensity={0.5} 
+          />
+          
+          {/* Back light */}
+          <directionalLight 
+            position={[0, 5, -5]} 
+            intensity={0.3} 
+          />
+          
+          {/* Rim light */}
+          <pointLight position={[0, 10, 0]} intensity={0.4} />
+          <pointLight position={[10, 0, 10]} intensity={0.2} color="#4a90e2" />
+          
+          <group ref={groupRef}>
+            <Center>
+              <Model 
+                url={url} 
+                onLoadProgress={onLoadProgress}
+                enableLOD={enableLOD}
+                autoRotate={false}
+              />
+            </Center>
+          </group>
+          
           <OrbitControls 
             enablePan={true} 
             enableZoom={true} 
             enableRotate={true}
             minDistance={0.5}
             maxDistance={50}
-            autoRotate={autoRotate}
-            autoRotateSpeed={2}
+            autoRotate={false}
+            dampingFactor={0.05}
+            enableDamping={true}
           />
         </Suspense>
       </Canvas>
