@@ -321,7 +321,7 @@ const ProfileSetup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       <Header />
       
       <div className="container max-w-3xl mx-auto px-4 py-8 pt-24">

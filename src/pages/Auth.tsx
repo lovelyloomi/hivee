@@ -143,7 +143,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       <Header />
       
       <div className="container mx-auto px-4 pt-20 flex items-center justify-center min-h-[calc(100vh-80px)]">

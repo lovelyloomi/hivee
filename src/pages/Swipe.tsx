@@ -272,7 +272,7 @@ const Swipe = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="flex flex-col items-center justify-center p-4 gap-6 min-h-[calc(100vh-80px)] pt-24">
           <div className="text-center space-y-2">
@@ -295,7 +295,7 @@ const Swipe = () => {
 
   if (showCategorySelection) {
     return (
-      <div className="min-h-screen bg-background pt-20 pb-20">
+      <div className="min-h-screen bg-background pt-24 pb-20">
         <Header />
         <div className="container mx-auto px-4 pb-8 animate-fade-in">
           <div className="max-w-3xl mx-auto text-center mb-8">
@@ -350,7 +350,7 @@ const Swipe = () => {
 
   if (profiles.length === 0 || !currentProfile) {
     return (
-      <div className="min-h-screen bg-background pb-20 animate-fade-in">
+      <div className="min-h-screen bg-background pb-20 animate-fade-in pt-16">
         <Header />
         <div className="container mx-auto px-4 pt-24 pb-8">
           <div className="max-w-md mx-auto mb-6">
@@ -373,7 +373,7 @@ const Swipe = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-20">
+    <div className="min-h-screen bg-background pt-24 pb-20">
       <Header />
       
       <div className="container mx-auto px-4 pb-8 animate-fade-in">

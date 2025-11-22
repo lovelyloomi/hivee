@@ -87,7 +87,7 @@ export default function BlockedUsers() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pb-20">
+      <div className="min-h-screen bg-background pb-20 pt-16">
         <Header />
         <div className="container mx-auto px-4 pt-24">
           <p className="text-muted-foreground">Loading...</p>
@@ -98,7 +98,7 @@ export default function BlockedUsers() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 pt-16">
       <Header />
       
       <main className="container mx-auto px-4 py-8 pt-24">

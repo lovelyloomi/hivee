@@ -351,7 +351,7 @@ const Opportunities = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-24 pt-16">
         <Header />
         <div className="container mx-auto px-4 pt-20 flex items-center justify-center">
           <p className="text-muted-foreground">Loading...</p>
@@ -362,7 +362,7 @@ const Opportunities = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-24">
+    <div className="min-h-screen bg-background pt-28 pb-24">
       <Header />
       
       <div className="container mx-auto px-4">

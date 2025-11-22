@@ -392,7 +392,7 @@ export default function Works() {
       setUploading(false);
     }
   };
-  return <div className="min-h-screen bg-background pt-20 pb-20">
+  return <div className="min-h-screen bg-background pt-24 pb-20">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
@@ -635,6 +635,13 @@ export default function Works() {
             </Button>
 
             <div className="flex items-center space-x-2">
+              <Checkbox id="show_downloadable" checked={showDownloadable} onCheckedChange={checked => setShowDownloadable(checked as boolean)} />
+              <Label htmlFor="show_downloadable" className="cursor-pointer text-sm">
+                Show Downloadable
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
               <Checkbox id="show_ai" checked={showAIWorks} onCheckedChange={checked => setShowAIWorks(checked as boolean)} />
               <Label htmlFor="show_ai" className="cursor-pointer text-sm">
                 Show AI Works
@@ -669,12 +676,12 @@ export default function Works() {
             }
             setSelectedWork(work);
           }}>
-              <div className="relative aspect-square overflow-hidden bg-muted">
+              <div className="relative aspect-square overflow-hidden bg-muted rounded-lg">
                 {work.file_type === 'image' ? (
-                  <HexagonImage 
+                  <img 
                     src={work.file_url} 
                     alt={work.title}
-                    className={`w-full h-full ${isNSFWBlurred ? "blur-2xl" : ""}`}
+                    className={`w-full h-full object-cover ${isNSFWBlurred ? "blur-2xl" : ""}`}
                   />
                 ) : work.file_type === 'video' ? (
                   <div className="relative w-full h-full">
@@ -686,7 +693,15 @@ export default function Works() {
                   </div>
                 ) : work.file_type === 'model_3d' ? (
                   <div className="w-full h-full">
-                    <FBXViewer url={work.file_url} autoRotate={false} enableLOD={true} />
+                    {work.screenshot_url ? (
+                      <img 
+                        src={work.screenshot_url} 
+                        alt={work.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <FBXViewer url={work.file_url} autoRotate={false} enableLOD={true} />
+                    )}
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-muted">
