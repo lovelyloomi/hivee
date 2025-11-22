@@ -18,6 +18,8 @@ export default function MediaViewer({ fileUrl, fileType, watermarkUrl, title }: 
           url={fileUrl} 
           enableLOD={true}
           autoRotate={false}
+          backgroundColor="#1a1a1a"
+          lightingPreset="detail"
         />
       </div>
     );
