@@ -22,7 +22,7 @@ const ScaledModel = ({
   enableLOD?: boolean;
   autoRotate?: boolean;
 }) => {
-  const { camera } = useThree();
+  const { camera, gl, invalidate } = useThree();
   const hasScaled = useRef(false);
   const lodRef = useRef<THREE.LOD | null>(null);
   
@@ -76,10 +76,13 @@ const ScaledModel = ({
       }
       
       hasScaled.current = true;
+      
+      // Force a render to ensure lights are applied
+      invalidate();
     } catch (error) {
       console.error('Error scaling model:', error);
     }
-  }, [fbx, camera, enableLOD]);
+  }, [fbx, camera, enableLOD, invalidate]);
   
   if (enableLOD && lodRef.current) {
     return <primitive object={lodRef.current} />;
@@ -149,6 +152,7 @@ export default function FBXViewer({
           alpha: true,
           preserveDrawingBuffer: true
         }}
+        frameloop="always"
       >
         <color attach="background" args={[bgColor]} />
         {!isGalleryPreset && <fog attach="fog" args={[bgColor, 10, 50]} />}
