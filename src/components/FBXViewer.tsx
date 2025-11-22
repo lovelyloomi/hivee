@@ -9,6 +9,8 @@ interface FBXViewerProps {
   onLoadProgress?: (progress: number) => void;
   enableLOD?: boolean;
   autoRotate?: boolean;
+  backgroundColor?: string;
+  lightingPreset?: 'gallery' | 'detail';
 }
 
 const ScaledModel = ({ 
@@ -116,7 +118,9 @@ export default function FBXViewer({
   url, 
   onLoadProgress,
   enableLOD = true,
-  autoRotate = false
+  autoRotate = false,
+  backgroundColor = '#1a1a1a',
+  lightingPreset = 'detail'
 }: FBXViewerProps) {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -133,8 +137,11 @@ export default function FBXViewer({
     }
   }, [autoRotate]);
 
+  const isGalleryPreset = lightingPreset === 'gallery';
+  const bgColor = isGalleryPreset ? '#ffffff' : backgroundColor;
+
   return (
-    <div className="w-full h-full relative bg-gradient-to-b from-gray-900 to-gray-800">
+    <div className="w-full h-full relative" style={{ background: bgColor }}>
       <Canvas 
         camera={{ position: [3, 3, 5], fov: 50 }}
         gl={{ 
@@ -143,10 +150,10 @@ export default function FBXViewer({
           preserveDrawingBuffer: true
         }}
       >
-        <color attach="background" args={['#1a1a1a']} />
-        <fog attach="fog" args={['#1a1a1a', 10, 50]} />
+        <color attach="background" args={[bgColor]} />
+        {!isGalleryPreset && <fog attach="fog" args={[bgColor, 10, 50]} />}
         
-        <Suspense 
+        <Suspense
           fallback={
             <mesh>
               <boxGeometry args={[0.5, 0.5, 0.5]} />
@@ -154,33 +161,32 @@ export default function FBXViewer({
             </mesh>
           }
         >
-          {/* Lighting setup similar to Sketchfab */}
-          <ambientLight intensity={0.4} />
-          
-          {/* Key light */}
-          <directionalLight 
-            position={[5, 5, 5]} 
-            intensity={1.2} 
-            castShadow
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
-          />
-          
-          {/* Fill light */}
-          <directionalLight 
-            position={[-5, 3, -5]} 
-            intensity={0.5} 
-          />
-          
-          {/* Back light */}
-          <directionalLight 
-            position={[0, 5, -5]} 
-            intensity={0.3} 
-          />
-          
-          {/* Rim light */}
-          <pointLight position={[0, 10, 0]} intensity={0.4} />
-          <pointLight position={[10, 0, 10]} intensity={0.2} color="#4a90e2" />
+          {/* Lighting setup - Gallery preset is brighter and cleaner like Sketchfab */}
+          {isGalleryPreset ? (
+            <>
+              <ambientLight intensity={0.8} />
+              <directionalLight position={[5, 5, 5]} intensity={1.5} castShadow />
+              <directionalLight position={[-5, 3, -5]} intensity={0.8} />
+              <directionalLight position={[0, 5, -5]} intensity={0.6} />
+              <hemisphereLight color="#ffffff" groundColor="#f0f0f0" intensity={0.5} />
+            </>
+          ) : (
+            <>
+              {/* Detail view - darker, more dramatic */}
+              <ambientLight intensity={0.4} />
+              <directionalLight 
+                position={[5, 5, 5]} 
+                intensity={1.2} 
+                castShadow
+                shadow-mapSize-width={2048}
+                shadow-mapSize-height={2048}
+              />
+              <directionalLight position={[-5, 3, -5]} intensity={0.5} />
+              <directionalLight position={[0, 5, -5]} intensity={0.3} />
+              <pointLight position={[0, 10, 0]} intensity={0.4} />
+              <pointLight position={[10, 0, 10]} intensity={0.2} color="#4a90e2" />
+            </>
+          )}
           
           <group ref={groupRef}>
             <Center>
