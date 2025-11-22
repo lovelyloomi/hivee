@@ -27,7 +27,7 @@ const Index = () => {
   return <div className="min-h-screen bg-background relative overflow-hidden pb-20">
       <Header />
       {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none pt-16">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse" style={{
         animationDelay: '1s'
@@ -38,7 +38,7 @@ const Index = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12 pt-24">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12 pt-28">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto space-y-8 animate-fade-in">
           
@@ -67,7 +67,7 @@ const Index = () => {
       </div>
 
       {/* Features Section */}
-      <div className="relative z-10 px-4 py-12">
+      <div className="relative z-10 px-4 py-12 pt-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full animate-slide-in">
           <div className="bg-card border border-border rounded-2xl p-6 text-center hover:shadow-card-hover transition-all hover:scale-105 shadow-card">
             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">

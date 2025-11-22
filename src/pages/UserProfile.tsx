@@ -230,7 +230,7 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="container mx-auto px-4 pt-20 pb-24 flex items-center justify-center">
           <p>{t('common.loading')}</p>
@@ -242,7 +242,7 @@ const UserProfile = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="container mx-auto px-4 pt-20 pb-24 flex flex-col items-center justify-center gap-4">
           <p className="text-xl">Profile not found</p>
@@ -254,7 +254,7 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       <Header />
       <div className="container mx-auto px-4 pt-20 pb-24 max-w-4xl">
         {/* Header */}

@@ -384,7 +384,7 @@ const Chat = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="flex items-center justify-center p-4 min-h-[calc(100vh-80px)] pt-24">
           <div className="text-center space-y-4">
