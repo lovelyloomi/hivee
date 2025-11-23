@@ -700,13 +700,9 @@ export default function Works() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <FBXViewer 
-                        url={work.file_url} 
-                        autoRotate={false} 
-                        enableLOD={true}
-                        backgroundColor="#ffffff"
-                        lightingPreset="gallery"
-                      />
+                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <span className="text-4xl">🎨</span>
+                      </div>
                     )}
                   </div>
                 ) : (
