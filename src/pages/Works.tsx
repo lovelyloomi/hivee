@@ -27,6 +27,7 @@ import { LoadingProgress } from "@/components/LoadingProgress";
 import { useAutosave, loadAutosave, clearAutosave } from "@/hooks/useAutosave";
 import { capture3DScreenshot, blobToFile } from "@/utils/screenshot";
 import { useRef } from "react";
+import Model3DScreenshotGenerator from "@/components/Model3DScreenshotGenerator";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -80,6 +81,7 @@ export default function Works() {
   const [reportWorkOwnerId, setReportWorkOwnerId] = useState<string | null>(null);
   const [showDownloadable, setShowDownloadable] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [show3DScreenshotGenerator, setShow3DScreenshotGenerator] = useState(false);
 
   // Load autosaved draft
   useEffect(() => {
@@ -256,6 +258,12 @@ export default function Works() {
       setFile(selectedFile);
       setEditedFile(null);
       setThumbnailFile(null);
+      
+      // For 3D models, automatically show screenshot generator
+      const fileType = getFileType(selectedFile);
+      if (fileType === 'model_3d') {
+        setShow3DScreenshotGenerator(true);
+      }
     }
   };
 
@@ -263,6 +271,16 @@ export default function Works() {
     setEditedFile(edited);
     setThumbnailFile(thumbnail || null);
     setShowEditor(false);
+  };
+
+  const handle3DScreenshotSelect = (screenshotBlob: Blob) => {
+    const screenshotFile = new File([screenshotBlob], 'screenshot.jpg', { type: 'image/jpeg' });
+    setThumbnailFile(screenshotFile);
+    setShow3DScreenshotGenerator(false);
+    toast({
+      title: "Screenshot selected",
+      description: "Your 3D model preview has been set.",
+    });
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -421,7 +439,7 @@ export default function Works() {
                   <div>
                     <Label htmlFor="file">File (JPG, PNG, PDF, FBX, Video)</Label>
                     <Input id="file" type="file" accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm" onChange={handleFileChange} required />
-                    {file && (
+                    {file && !show3DScreenshotGenerator && (
                       <div className="mt-4 space-y-3">
                         <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
                           {getFileType(file) === 'image' && (
@@ -431,26 +449,58 @@ export default function Works() {
                             <video src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
                           )}
                           {getFileType(file) === 'model_3d' && (
-                            <Memoized3DViewer file={file} />
+                            <div className="space-y-2">
+                              <Memoized3DViewer file={file} />
+                              {thumbnailFile && (
+                                <div className="p-2 bg-muted rounded">
+                                  <p className="text-xs text-primary mb-2">✓ Preview screenshot selected</p>
+                                  <img 
+                                    src={URL.createObjectURL(thumbnailFile)} 
+                                    alt="Selected preview" 
+                                    className="w-full h-32 object-cover rounded"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full mt-2"
+                                    onClick={() => setShow3DScreenshotGenerator(true)}
+                                  >
+                                    Change Preview
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
                           )}
                         </div>
                         <div className="flex justify-between items-center">
                           <p className="text-sm text-muted-foreground">
                             Selected: {file.name}
                           </p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowEditor(true)}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Modifica
-                          </Button>
+                          {getFileType(file) !== 'model_3d' && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowEditor(true)}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Modifica
+                            </Button>
+                          )}
                         </div>
                         {editedFile && (
                           <p className="text-xs text-primary">✓ File modificato</p>
                         )}
+                      </div>
+                    )}
+                    {file && show3DScreenshotGenerator && getFileType(file) === 'model_3d' && (
+                      <div className="mt-4">
+                        <Model3DScreenshotGenerator
+                          file={file}
+                          onScreenshotSelect={handle3DScreenshotSelect}
+                          onCancel={() => setShow3DScreenshotGenerator(false)}
+                        />
                       </div>
                     )}
                   </div>
