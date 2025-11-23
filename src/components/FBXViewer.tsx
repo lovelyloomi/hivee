@@ -16,20 +16,46 @@ interface FBXViewerProps {
 const ScaledModel = ({ 
   fbx, 
   enableLOD,
-  autoRotate 
+  autoRotate,
+  lightingPreset 
 }: { 
   fbx: any;
   enableLOD?: boolean;
   autoRotate?: boolean;
+  lightingPreset?: 'gallery' | 'detail';
 }) => {
-  const { camera, gl, invalidate } = useThree();
-  const hasScaled = useRef(false);
+  const { camera, scene, invalidate } = useThree();
+  const hasSetup = useRef(false);
   const lodRef = useRef<THREE.LOD | null>(null);
   
   useEffect(() => {
-    if (!fbx || hasScaled.current) return;
+    if (!fbx || hasSetup.current) return;
     
     try {
+      // Ensure all meshes have proper materials that respond to light
+      fbx.traverse((child: any) => {
+        if (child.isMesh) {
+          // Compute vertex normals for proper lighting
+          if (child.geometry) {
+            child.geometry.computeVertexNormals();
+          }
+          
+          // Ensure material responds to lights
+          if (child.material) {
+            child.material.needsUpdate = true;
+            // If it's a basic material, convert to standard for better lighting
+            if (child.material.type === 'MeshBasicMaterial') {
+              const color = child.material.color;
+              child.material = new THREE.MeshStandardMaterial({
+                color: color,
+                metalness: 0.3,
+                roughness: 0.7,
+              });
+            }
+          }
+        }
+      });
+      
       // Calculate bounding box to get model size
       const box = new THREE.Box3().setFromObject(fbx);
       const size = box.getSize(new THREE.Vector3());
@@ -44,6 +70,7 @@ const ScaledModel = ({
       const distance = targetSize * 2.5;
       camera.position.set(distance * 0.5, distance * 0.5, distance);
       camera.lookAt(0, 0, 0);
+      camera.updateProjectionMatrix();
       
       // Setup LOD if enabled
       if (enableLOD) {
@@ -52,20 +79,13 @@ const ScaledModel = ({
         const medDetail = fbx.clone();
         const lowDetail = fbx.clone();
         
-        // Simplify geometries for LOD levels
-        medDetail.traverse((child: any) => {
-          if (child.isMesh && child.geometry) {
-            child.geometry.computeVertexNormals();
-          }
-        });
-        
-        lowDetail.traverse((child: any) => {
-          if (child.isMesh && child.geometry) {
-            child.material = new THREE.MeshBasicMaterial({ 
-              color: child.material?.color || 0xcccccc,
-              wireframe: false
-            });
-          }
+        // Ensure LOD levels also have proper materials
+        [medDetail, lowDetail].forEach(detail => {
+          detail.traverse((child: any) => {
+            if (child.isMesh && child.geometry) {
+              child.geometry.computeVertexNormals();
+            }
+          });
         });
         
         lod.addLevel(highDetail, 0);
@@ -75,14 +95,19 @@ const ScaledModel = ({
         lodRef.current = lod;
       }
       
-      hasScaled.current = true;
+      hasSetup.current = true;
       
-      // Force a render to ensure lights are applied
-      invalidate();
+      // Force multiple renders to ensure everything is properly initialized
+      requestAnimationFrame(() => {
+        invalidate();
+        requestAnimationFrame(() => {
+          invalidate();
+        });
+      });
     } catch (error) {
-      console.error('Error scaling model:', error);
+      console.error('Error setting up model:', error);
     }
-  }, [fbx, camera, enableLOD, invalidate]);
+  }, [fbx, camera, enableLOD, invalidate, scene]);
   
   if (enableLOD && lodRef.current) {
     return <primitive object={lodRef.current} />;
@@ -95,12 +120,14 @@ const Model = ({
   url, 
   onLoadProgress,
   enableLOD,
-  autoRotate 
+  autoRotate,
+  lightingPreset 
 }: { 
   url: string;
   onLoadProgress?: (progress: number) => void;
   enableLOD?: boolean;
   autoRotate?: boolean;
+  lightingPreset?: 'gallery' | 'detail';
 }) => {
   const fbx = useLoader(
     FBXLoader, 
@@ -114,7 +141,7 @@ const Model = ({
     }
   );
   
-  return <ScaledModel fbx={fbx} enableLOD={enableLOD} autoRotate={autoRotate} />;
+  return <ScaledModel fbx={fbx} enableLOD={enableLOD} autoRotate={autoRotate} lightingPreset={lightingPreset} />;
 };
 
 export default function FBXViewer({ 
@@ -140,8 +167,8 @@ export default function FBXViewer({
     }
   }, [autoRotate]);
 
-  const isGalleryPreset = lightingPreset === 'gallery';
-  const bgColor = isGalleryPreset ? '#ffffff' : backgroundColor;
+  // Always use white background for clean presentation
+  const bgColor = '#ffffff';
 
   return (
     <div className="w-full h-full relative" style={{ background: bgColor }}>
@@ -149,48 +176,57 @@ export default function FBXViewer({
         camera={{ position: [3, 3, 5], fov: 50 }}
         gl={{ 
           antialias: true,
-          alpha: true,
-          preserveDrawingBuffer: true
+          alpha: false,
+          preserveDrawingBuffer: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.2,
         }}
         frameloop="always"
+        shadows
       >
-        <color attach="background" args={[bgColor]} />
-        {!isGalleryPreset && <fog attach="fog" args={[bgColor, 10, 50]} />}
+        <color attach="background" args={['#ffffff']} />
         
         <Suspense
           fallback={
             <mesh>
               <boxGeometry args={[0.5, 0.5, 0.5]} />
-              <meshStandardMaterial color="gray" wireframe />
+              <meshStandardMaterial color="#cccccc" />
             </mesh>
           }
         >
-          {/* Lighting setup - Gallery preset is brighter and cleaner like Sketchfab */}
-          {isGalleryPreset ? (
-            <>
-              <ambientLight intensity={0.8} />
-              <directionalLight position={[5, 5, 5]} intensity={1.5} castShadow />
-              <directionalLight position={[-5, 3, -5]} intensity={0.8} />
-              <directionalLight position={[0, 5, -5]} intensity={0.6} />
-              <hemisphereLight color="#ffffff" groundColor="#f0f0f0" intensity={0.5} />
-            </>
-          ) : (
-            <>
-              {/* Detail view - darker, more dramatic */}
-              <ambientLight intensity={0.4} />
-              <directionalLight 
-                position={[5, 5, 5]} 
-                intensity={1.2} 
-                castShadow
-                shadow-mapSize-width={2048}
-                shadow-mapSize-height={2048}
-              />
-              <directionalLight position={[-5, 3, -5]} intensity={0.5} />
-              <directionalLight position={[0, 5, -5]} intensity={0.3} />
-              <pointLight position={[0, 10, 0]} intensity={0.4} />
-              <pointLight position={[10, 0, 10]} intensity={0.2} color="#4a90e2" />
-            </>
-          )}
+          {/* Sketchfab-inspired lighting setup - bright, clean, and professional */}
+          <ambientLight intensity={0.6} />
+          
+          {/* Key light - main illumination from top-right */}
+          <directionalLight 
+            position={[10, 10, 5]} 
+            intensity={1.8}
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+            shadow-camera-far={50}
+            shadow-camera-left={-10}
+            shadow-camera-right={10}
+            shadow-camera-top={10}
+            shadow-camera-bottom={-10}
+          />
+          
+          {/* Fill light - softer light from the left */}
+          <directionalLight position={[-8, 5, -5]} intensity={0.8} />
+          
+          {/* Back light - rim lighting effect */}
+          <directionalLight position={[0, 5, -10]} intensity={0.6} />
+          
+          {/* Hemisphere light for natural ambient */}
+          <hemisphereLight 
+            color="#ffffff" 
+            groundColor="#e8e8e8" 
+            intensity={0.4} 
+          />
+          
+          {/* Accent lights for depth */}
+          <pointLight position={[5, 0, 5]} intensity={0.3} color="#ffffff" />
+          <pointLight position={[-5, 0, -5]} intensity={0.2} color="#f5f5f5" />
           
           <group ref={groupRef}>
             <Center>
@@ -199,6 +235,7 @@ export default function FBXViewer({
                 onLoadProgress={onLoadProgress}
                 enableLOD={enableLOD}
                 autoRotate={false}
+                lightingPreset={lightingPreset}
               />
             </Center>
           </group>
