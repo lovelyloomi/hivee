@@ -77,14 +77,17 @@ const ScaledModel = ({ fbx }: { fbx: any }) => {
 const ModelViewer = ({ 
   modelUrl, 
   currentAngle,
-  onCapture 
+  onCapture,
+  shouldCapture
 }: { 
   modelUrl: string;
   currentAngle: CameraAngle;
   onCapture: (blob: Blob) => void;
+  shouldCapture: boolean;
 }) => {
   const { camera, gl, scene } = useThree();
   const [fbx, setFbx] = useState<any>(null);
+  const capturedRef = useRef(false);
   
   useEffect(() => {
     const loader = new FBXLoader();
@@ -101,27 +104,26 @@ const ModelViewer = ({
     camera.updateProjectionMatrix();
     
     gl.render(scene, camera);
+    capturedRef.current = false;
   }, [currentAngle, fbx, camera, gl, scene]);
   
-  const captureScreenshot = useCallback(() => {
-    gl.render(scene, camera);
-    gl.domElement.toBlob((blob) => {
-      if (blob) {
-        onCapture(blob);
-      }
-    }, 'image/jpeg', 0.95);
-  }, [gl, scene, camera, onCapture]);
+  useEffect(() => {
+    if (!fbx || !shouldCapture || capturedRef.current) return;
+    
+    const timer = setTimeout(() => {
+      gl.render(scene, camera);
+      gl.domElement.toBlob((blob) => {
+        if (blob) {
+          onCapture(blob);
+          capturedRef.current = true;
+        }
+      }, 'image/jpeg', 0.95);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [fbx, shouldCapture, gl, scene, camera, onCapture]);
   
-  return (
-    <>
-      {fbx && <ScaledModel fbx={fbx} />}
-      <button 
-        onClick={captureScreenshot}
-        style={{ display: 'none' }}
-        id="capture-screenshot-btn"
-      />
-    </>
-  );
+  return fbx ? <ScaledModel fbx={fbx} /> : null;
 };
 
 export default function Model3DScreenshotGenerator({
@@ -143,13 +145,7 @@ export default function Model3DScreenshotGenerator({
   }, [file]);
   
   useEffect(() => {
-    if (capturingAll && currentCaptureIndex < cameraAngles.length) {
-      const timer = setTimeout(() => {
-        const btn = document.getElementById('capture-screenshot-btn');
-        if (btn) btn.click();
-      }, 500);
-      return () => clearTimeout(timer);
-    } else if (capturingAll && currentCaptureIndex >= cameraAngles.length) {
+    if (capturingAll && currentCaptureIndex >= cameraAngles.length) {
       setCapturingAll(false);
       toast({
         title: "Screenshots captured",
@@ -221,6 +217,7 @@ export default function Model3DScreenshotGenerator({
                 modelUrl={modelUrl} 
                 currentAngle={selectedAngle}
                 onCapture={handleCapture}
+                shouldCapture={capturingAll && currentCaptureIndex < cameraAngles.length}
               />
             </Center>
           </Canvas>
