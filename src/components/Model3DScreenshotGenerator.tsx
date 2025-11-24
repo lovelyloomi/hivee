@@ -165,6 +165,21 @@ export default function Model3DScreenshotGenerator({
     setScreenshots(prev => new Map(prev).set(angle.id, blob));
     setCurrentCaptureIndex(prev => prev + 1);
   }, [currentCaptureIndex]);
+
+  // Auto-select perspective view when all screenshots are captured
+  useEffect(() => {
+    if (!capturingAll && screenshots.size === cameraAngles.length && screenshots.size > 0) {
+      // Auto-select the perspective view (last angle)
+      const perspectiveScreenshot = screenshots.get('perspective');
+      if (perspectiveScreenshot) {
+        // Wait a bit before auto-selecting to let user see all options
+        const timer = setTimeout(() => {
+          onScreenshotSelect(perspectiveScreenshot);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [capturingAll, screenshots, onScreenshotSelect]);
   
   const handleCaptureAll = () => {
     setScreenshots(new Map());
@@ -195,7 +210,7 @@ export default function Model3DScreenshotGenerator({
         <p className="text-sm text-muted-foreground">
           {capturingAll 
             ? `Capturing screenshots... ${currentCaptureIndex + 1}/${cameraAngles.length}`
-            : "Select the best angle for your 3D model preview"
+            : "Select your preferred angle or wait for auto-selection (Perspective view in 1s)"
           }
         </p>
       </div>
