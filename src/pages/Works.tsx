@@ -440,71 +440,85 @@ export default function Works() {
                   <div>
                     <Label htmlFor="file">File (JPG, PNG, PDF, FBX, Video)</Label>
                     <Input id="file" type="file" accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm" onChange={handleFileChange} required />
-                    {file && !show3DScreenshotGenerator && (
+                    {file && (
                       <div className="mt-4 space-y-3">
-                        <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                          {getFileType(file) === 'image' && (
-                            <img src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-contain" />
-                          )}
-                          {getFileType(file) === 'video' && (
-                            <video src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
-                          )}
-                          {getFileType(file) === 'model_3d' && (
-                            <div className="space-y-2">
-                              <Memoized3DViewer file={file} />
-                              {thumbnailFile && (
-                                <div className="p-2 bg-muted rounded">
-                                  <p className="text-xs text-primary mb-2">✓ Preview screenshot selected</p>
-                                  <img 
-                                    src={URL.createObjectURL(thumbnailFile)} 
-                                    alt="Selected preview" 
-                                    className="w-full h-32 object-cover rounded"
-                                  />
+                        {/* Screenshot Generator for 3D models */}
+                        {show3DScreenshotGenerator && getFileType(file) === 'model_3d' && (
+                          <div className="p-4 border border-border rounded-lg bg-card">
+                            <Model3DScreenshotGenerator
+                              file={file}
+                              onScreenshotSelect={handle3DScreenshotSelect}
+                              onCancel={() => {
+                                // Auto-selection will happen automatically after 1s
+                                setShow3DScreenshotGenerator(false);
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Main Preview - Always show for 3D models */}
+                        {!show3DScreenshotGenerator && (
+                          <div className="space-y-3">
+                            <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+                              {getFileType(file) === 'image' && (
+                                <img src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-contain" />
+                              )}
+                              {getFileType(file) === 'video' && (
+                                <video src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
+                              )}
+                              {getFileType(file) === 'model_3d' && (
+                                <div className="w-full h-full">
+                                  <Memoized3DViewer file={file} />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Gallery Preview Thumbnail for 3D models */}
+                            {getFileType(file) === 'model_3d' && thumbnailFile && (
+                              <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <p className="text-sm font-medium">Gallery Preview</p>
+                                    <p className="text-xs text-muted-foreground">This screenshot will appear in the gallery</p>
+                                  </div>
                                   <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="w-full mt-2"
                                     onClick={() => setShow3DScreenshotGenerator(true)}
                                   >
-                                    Change Preview
+                                    Change
                                   </Button>
                                 </div>
+                                <img 
+                                  src={URL.createObjectURL(thumbnailFile)} 
+                                  alt="Gallery preview" 
+                                  className="w-full h-32 object-cover rounded"
+                                />
+                              </div>
+                            )}
+
+                            <div className="flex justify-between items-center">
+                              <p className="text-sm text-muted-foreground">
+                                Selected: {file.name}
+                              </p>
+                              {getFileType(file) !== 'model_3d' && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowEditor(true)}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifica
+                                </Button>
                               )}
                             </div>
-                          )}
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <p className="text-sm text-muted-foreground">
-                            Selected: {file.name}
-                          </p>
-                          {getFileType(file) !== 'model_3d' && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShowEditor(true)}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Modifica
-                            </Button>
-                          )}
-                        </div>
-                        {editedFile && (
-                          <p className="text-xs text-primary">✓ File modificato</p>
+                            {editedFile && (
+                              <p className="text-xs text-primary">✓ File modificato</p>
+                            )}
+                          </div>
                         )}
-                      </div>
-                    )}
-                    {file && show3DScreenshotGenerator && getFileType(file) === 'model_3d' && (
-                      <div className="mt-4 p-4 border border-border rounded-lg bg-card">
-                        <Model3DScreenshotGenerator
-                          file={file}
-                          onScreenshotSelect={handle3DScreenshotSelect}
-                          onCancel={() => {
-                            // Auto-selection will happen automatically after 1s
-                            setShow3DScreenshotGenerator(false);
-                          }}
-                        />
                       </div>
                     )}
                   </div>
