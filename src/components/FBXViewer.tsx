@@ -171,7 +171,7 @@ export default function FBXViewer({
   const bgColor = '#ffffff';
 
   return (
-    <div className="w-full h-full relative" style={{ background: bgColor }}>
+    <div className="w-full h-full relative bg-white" style={{ minHeight: '400px' }}>
       <Canvas 
         camera={{ position: [3, 3, 5], fov: 50 }}
         gl={{ 
@@ -183,6 +183,7 @@ export default function FBXViewer({
         }}
         frameloop="always"
         shadows
+        dpr={[1, 2]}
       >
         <color attach="background" args={['#ffffff']} />
         

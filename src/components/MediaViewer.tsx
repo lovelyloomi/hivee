@@ -13,13 +13,13 @@ interface MediaViewerProps {
 export default function MediaViewer({ fileUrl, fileType, watermarkUrl, title }: MediaViewerProps) {
   if (fileType === 'model_3d') {
     return (
-      <div className="w-full h-full min-h-[500px]">
+      <div className="w-full h-full min-h-[500px] bg-white">
         <FBXViewer 
           url={fileUrl} 
           enableLOD={true}
           autoRotate={false}
           backgroundColor="#ffffff"
-          lightingPreset="gallery"
+          lightingPreset="detail"
         />
       </div>
     );
