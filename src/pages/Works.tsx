@@ -742,7 +742,7 @@ export default function Works() {
                     <span className="text-4xl">📄</span>
                   </div>
                 ) : work.file_type === 'model_3d' ? (
-                  <div className="w-full h-full">
+                  <div className="w-full h-full bg-background">
                     {work.screenshot_url ? (
                       <img 
                         src={work.screenshot_url} 
@@ -750,8 +750,8 @@ export default function Works() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-muted">
-                        <span className="text-4xl">🎨</span>
+                      <div className="w-full h-full flex items-center justify-center bg-background">
+                        <span className="text-6xl">🎨</span>
                       </div>
                     )}
                   </div>

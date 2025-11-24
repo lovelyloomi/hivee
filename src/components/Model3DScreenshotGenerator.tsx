@@ -145,7 +145,13 @@ export default function Model3DScreenshotGenerator({
   }, [file]);
   
   useEffect(() => {
-    if (capturingAll && currentCaptureIndex >= cameraAngles.length) {
+    if (capturingAll && currentCaptureIndex < cameraAngles.length) {
+      // Trigger next capture by changing angle
+      const nextAngle = cameraAngles[currentCaptureIndex];
+      if (nextAngle) {
+        setSelectedAngle(nextAngle);
+      }
+    } else if (capturingAll && currentCaptureIndex >= cameraAngles.length) {
       setCapturingAll(false);
       toast({
         title: "Screenshots captured",
@@ -164,7 +170,9 @@ export default function Model3DScreenshotGenerator({
     setScreenshots(new Map());
     setCurrentCaptureIndex(0);
     setCapturingAll(true);
-    setSelectedAngle(cameraAngles[0]);
+    if (cameraAngles[0]) {
+      setSelectedAngle(cameraAngles[0]);
+    }
   };
   
   const handleSelectScreenshot = (angleId: string) => {
