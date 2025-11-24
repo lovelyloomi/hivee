@@ -28,6 +28,7 @@ import { useAutosave, loadAutosave, clearAutosave } from "@/hooks/useAutosave";
 import { capture3DScreenshot, blobToFile } from "@/utils/screenshot";
 import { useRef } from "react";
 import Model3DScreenshotGenerator from "@/components/Model3DScreenshotGenerator";
+import { HashtagInput } from "@/components/HashtagInput";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -495,11 +496,14 @@ export default function Works() {
                       </div>
                     )}
                     {file && show3DScreenshotGenerator && getFileType(file) === 'model_3d' && (
-                      <div className="mt-4">
+                      <div className="mt-4 p-4 border border-border rounded-lg bg-card">
                         <Model3DScreenshotGenerator
                           file={file}
                           onScreenshotSelect={handle3DScreenshotSelect}
-                          onCancel={() => setShow3DScreenshotGenerator(false)}
+                          onCancel={() => {
+                            // Auto-selection will happen automatically after 1s
+                            setShow3DScreenshotGenerator(false);
+                          }}
                         />
                       </div>
                     )}
@@ -593,13 +597,11 @@ export default function Works() {
                   </div>
                   <div>
                     <Label htmlFor="hashtags">Hashtags (max 5)</Label>
-                    <Input id="hashtags" placeholder="digitalart, 3d, animation (comma separated)" value={newWork.hashtags} onChange={e => setNewWork({
-                    ...newWork,
-                    hashtags: e.target.value
-                  })} />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Separate with commas, max 5 hashtags
-                    </p>
+                    <HashtagInput
+                      value={newWork.hashtags}
+                      onChange={(value) => setNewWork({ ...newWork, hashtags: value })}
+                      maxTags={5}
+                    />
                   </div>
                   <Button type="submit" className="w-full" disabled={uploading}>
                     {uploading ? <>
