@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Camera, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LoadingProgress } from "@/components/LoadingProgress";
+import { useToast } from "@/hooks/use-toast";
 import * as THREE from "three";
 
 interface Model3DEditorProps {
@@ -173,10 +174,11 @@ const Model3DViewer = ({
 };
 
 const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps) => {
+  const { toast } = useToast();
   const [modelUrl, setModelUrl] = useState<string>('');
   const [lightIntensity, setLightIntensity] = useState(1.5);
   const [ambientIntensity, setAmbientIntensity] = useState(0.5);
-  const [backgroundColor, setBackgroundColor] = useState('#1a1a1a');
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [materialType, setMaterialType] = useState('standard');
   const [renderMode, setRenderMode] = useState('solid');
   const [metalness, setMetalness] = useState(0.5);
@@ -184,6 +186,10 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
   const [envPreset, setEnvPreset] = useState('studio');
   const [loadProgress, setLoadProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedAngle, setSelectedAngle] = useState<string>('');
+  const [screenshots, setScreenshots] = useState<{ [key: string]: Blob }>({});
+  const [capturingAngle, setCapturingAngle] = useState<string>('');
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const url = URL.createObjectURL(file);
@@ -193,23 +199,79 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  const captureScreenshot = () => {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) return null;
-
-    return new Promise<File>((resolve) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const screenshotFile = new File([blob], 'thumbnail.png', { type: 'image/png' });
-          resolve(screenshotFile);
-        }
-      }, 'image/png', 1);
-    });
+  const cameraAngles = {
+    front: { position: [0, 0, 3], target: [0, 0, 0], label: 'Front' },
+    back: { position: [0, 0, -3], target: [0, 0, 0], label: 'Back' },
+    left: { position: [-3, 0, 0], target: [0, 0, 0], label: 'Left' },
+    right: { position: [3, 0, 0], target: [0, 0, 0], label: 'Right' },
+    top: { position: [0, 3, 0], target: [0, 0, 0], label: 'Top' },
+    perspective: { position: [2, 2, 2], target: [0, 0, 0], label: 'Perspective' }
   };
 
-  const handleSave = async () => {
-    const thumbnail = await captureScreenshot();
-    onSave(file, thumbnail || undefined);
+  const captureScreenshotFromAngle = (angleName: string) => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) {
+      toast({
+        title: "Error capturing screenshot",
+        description: "Canvas not found",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setCapturingAngle(angleName);
+    
+    setTimeout(() => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          setScreenshots(prev => ({ ...prev, [angleName]: blob }));
+          toast({
+            title: "Screenshot captured",
+            description: `${cameraAngles[angleName as keyof typeof cameraAngles].label} view saved`,
+          });
+        }
+        setCapturingAngle('');
+      }, 'image/jpeg', 0.95);
+    }, 100);
+  };
+
+  const captureAllAngles = async () => {
+    const angles = Object.keys(cameraAngles);
+    for (const angle of angles) {
+      await new Promise<void>((resolve) => {
+        captureScreenshotFromAngle(angle);
+        setTimeout(resolve, 500);
+      });
+    }
+    
+    // Auto-select perspective after 1 second
+    setTimeout(() => {
+      if (!selectedAngle) {
+        setSelectedAngle('perspective');
+        toast({
+          title: "Default view selected",
+          description: "Perspective view set as gallery preview",
+        });
+      }
+    }, 1000);
+  };
+
+  const handleSave = () => {
+    if (!selectedAngle || !screenshots[selectedAngle]) {
+      toast({
+        title: "No screenshot selected",
+        description: "Please select a screenshot angle for the gallery preview",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const screenshotFile = new File(
+      [screenshots[selectedAngle]], 
+      'thumbnail.jpg', 
+      { type: 'image/jpeg' }
+    );
+    onSave(file, screenshotFile);
   };
 
   return (
@@ -354,14 +416,73 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
         </div>
       </div>
 
-      <div className="flex justify-between items-center pt-4 border-t">
-        <Button variant="outline" onClick={() => captureScreenshot()}>
-          <Camera className="h-4 w-4 mr-2" />
-          Cattura Screenshot
-        </Button>
-        <Button onClick={handleSave} disabled={processing}>
+      <div className="space-y-4 pt-4 border-t">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>Screenshot per Galleria</Label>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={captureAllAngles}
+              disabled={isLoading || Object.keys(screenshots).length > 0}
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Cattura Tutte le Angolazioni
+            </Button>
+          </div>
+          
+          {Object.keys(screenshots).length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              {Object.entries(cameraAngles).map(([key, angle]) => (
+                <div
+                  key={key}
+                  className={`relative border-2 rounded-lg overflow-hidden cursor-pointer transition-all ${
+                    selectedAngle === key
+                      ? 'border-primary ring-2 ring-primary/50'
+                      : 'border-border hover:border-primary/50'
+                  } ${capturingAngle === key ? 'animate-pulse' : ''}`}
+                  onClick={() => setSelectedAngle(key)}
+                >
+                  {screenshots[key] ? (
+                    <>
+                      <img
+                        src={URL.createObjectURL(screenshots[key])}
+                        alt={angle.label}
+                        className="w-full aspect-square object-cover"
+                      />
+                      {selectedAngle === key && (
+                        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                          <Check className="h-4 w-4" />
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs py-1 px-2 text-center">
+                        {angle.label}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full aspect-square flex items-center justify-center bg-muted">
+                      <Camera className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {Object.keys(screenshots).length > 0 && !selectedAngle && (
+            <p className="text-sm text-muted-foreground text-center">
+              Seleziona un'angolazione per l'anteprima della galleria
+            </p>
+          )}
+        </div>
+
+        <Button 
+          onClick={handleSave} 
+          disabled={processing || !selectedAngle || isLoading}
+          className="w-full"
+        >
           <Check className="h-4 w-4 mr-2" />
-          {processing ? 'Salvataggio...' : 'Salva'}
+          {processing ? 'Salvataggio...' : 'Salva con Screenshot Selezionato'}
         </Button>
       </div>
     </div>

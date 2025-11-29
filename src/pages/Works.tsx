@@ -25,9 +25,6 @@ import { WorkEditor } from "@/components/WorkEditor";
 import FBXViewer from "@/components/FBXViewer";
 import { LoadingProgress } from "@/components/LoadingProgress";
 import { useAutosave, loadAutosave, clearAutosave } from "@/hooks/useAutosave";
-import { capture3DScreenshot, blobToFile } from "@/utils/screenshot";
-import { useRef } from "react";
-import Model3DScreenshotGenerator from "@/components/Model3DScreenshotGenerator";
 import { HashtagInput } from "@/components/HashtagInput";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
@@ -81,8 +78,6 @@ export default function Works() {
   const [reportWorkId, setReportWorkId] = useState<string | null>(null);
   const [reportWorkOwnerId, setReportWorkOwnerId] = useState<string | null>(null);
   const [showDownloadable, setShowDownloadable] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [show3DScreenshotGenerator, setShow3DScreenshotGenerator] = useState(false);
 
   // Load autosaved draft
   useEffect(() => {
@@ -259,12 +254,6 @@ export default function Works() {
       setFile(selectedFile);
       setEditedFile(null);
       setThumbnailFile(null);
-      
-      // For 3D models, automatically show screenshot generator
-      const fileType = getFileType(selectedFile);
-      if (fileType === 'model_3d') {
-        setShow3DScreenshotGenerator(true);
-      }
     }
   };
 
@@ -274,21 +263,52 @@ export default function Works() {
     setShowEditor(false);
   };
 
-  const handle3DScreenshotSelect = (screenshotBlob: Blob) => {
-    const screenshotFile = new File([screenshotBlob], 'screenshot.jpg', { type: 'image/jpeg' });
-    setThumbnailFile(screenshotFile);
-    setShow3DScreenshotGenerator(false);
-    toast({
-      title: "Screenshot selected",
-      description: "Your 3D model preview has been set.",
-    });
-  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const fileToProcess = editedFile || file;
-    if (!user || !fileToProcess || !newWork.title || !newWork.work_type || !newWork.work_style) {
+    
+    if (!user || !fileToProcess) {
       toast({
-        title: 'Please fill all required fields (title, type, style)',
+        title: 'Missing file',
+        description: 'Please select a file to upload',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    if (!newWork.title.trim()) {
+      toast({
+        title: 'Missing title',
+        description: 'Please enter a title for your work',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    if (!newWork.work_type) {
+      toast({
+        title: 'Missing type',
+        description: 'Please select a work type',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    if (!newWork.work_style) {
+      toast({
+        title: 'Missing style',
+        description: 'Please select a work style',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    // For 3D models, require a screenshot
+    const fileType = getFileType(fileToProcess);
+    if (fileType === 'model_3d' && !thumbnailFile) {
+      toast({
+        title: 'Missing screenshot',
+        description: 'Please edit the 3D model and capture a screenshot for the gallery preview',
         variant: 'destructive'
       });
       return;
@@ -442,82 +462,56 @@ export default function Works() {
                     <Input id="file" type="file" accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm" onChange={handleFileChange} required />
                     {file && (
                       <div className="mt-4 space-y-3">
-                        {/* Screenshot Generator for 3D models */}
-                        {show3DScreenshotGenerator && getFileType(file) === 'model_3d' && (
-                          <div className="p-4 border border-border rounded-lg bg-card">
-                            <Model3DScreenshotGenerator
-                              file={file}
-                              onScreenshotSelect={handle3DScreenshotSelect}
-                              onCancel={() => {
-                                // Auto-selection will happen automatically after 1s
-                                setShow3DScreenshotGenerator(false);
-                              }}
+                        <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+                          {getFileType(file) === 'image' && (
+                            <img src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-contain" />
+                          )}
+                          {getFileType(file) === 'video' && (
+                            <video src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
+                          )}
+                          {getFileType(file) === 'model_3d' && (
+                            <div className="w-full h-full">
+                              <Memoized3DViewer file={file} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Gallery Preview Thumbnail for 3D models */}
+                        {getFileType(file) === 'model_3d' && thumbnailFile && (
+                          <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <p className="text-sm font-medium">Gallery Preview</p>
+                                <p className="text-xs text-muted-foreground">This screenshot will appear in the gallery</p>
+                              </div>
+                            </div>
+                            <img 
+                              src={URL.createObjectURL(thumbnailFile)} 
+                              alt="Gallery preview" 
+                              className="w-full h-32 object-cover rounded"
                             />
                           </div>
                         )}
 
-                        {/* Main Preview - Always show for 3D models */}
-                        {!show3DScreenshotGenerator && (
-                          <div className="space-y-3">
-                            <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                              {getFileType(file) === 'image' && (
-                                <img src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-contain" />
-                              )}
-                              {getFileType(file) === 'video' && (
-                                <video src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
-                              )}
-                              {getFileType(file) === 'model_3d' && (
-                                <div className="w-full h-full">
-                                  <Memoized3DViewer file={file} />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Gallery Preview Thumbnail for 3D models */}
-                            {getFileType(file) === 'model_3d' && thumbnailFile && (
-                              <div className="p-3 bg-muted/50 rounded-lg border border-border">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div>
-                                    <p className="text-sm font-medium">Gallery Preview</p>
-                                    <p className="text-xs text-muted-foreground">This screenshot will appear in the gallery</p>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setShow3DScreenshotGenerator(true)}
-                                  >
-                                    Change
-                                  </Button>
-                                </div>
-                                <img 
-                                  src={URL.createObjectURL(thumbnailFile)} 
-                                  alt="Gallery preview" 
-                                  className="w-full h-32 object-cover rounded"
-                                />
-                              </div>
-                            )}
-
-                            <div className="flex justify-between items-center">
-                              <p className="text-sm text-muted-foreground">
-                                Selected: {file.name}
-                              </p>
-                              {getFileType(file) !== 'model_3d' && (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setShowEditor(true)}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Modifica
-                                </Button>
-                              )}
-                            </div>
-                            {editedFile && (
-                              <p className="text-xs text-primary">✓ File modificato</p>
-                            )}
-                          </div>
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm text-muted-foreground">
+                            Selected: {file.name}
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowEditor(true)}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Modifica
+                          </Button>
+                        </div>
+                        {editedFile && (
+                          <p className="text-xs text-primary">✓ File modificato</p>
+                        )}
+                        {getFileType(file) === 'model_3d' && thumbnailFile && (
+                          <p className="text-xs text-primary">✓ Screenshot catturato</p>
                         )}
                       </div>
                     )}
@@ -617,7 +611,11 @@ export default function Works() {
                       maxTags={5}
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={uploading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={uploading || !file || !newWork.title.trim() || !newWork.work_type || !newWork.work_style || (getFileType(file) === 'model_3d' && !thumbnailFile)}
+                  >
                     {uploading ? <>
                         <Upload className="w-4 h-4 mr-2 animate-spin" />
                         Uploading...
