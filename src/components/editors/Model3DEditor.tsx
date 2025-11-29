@@ -28,6 +28,7 @@ interface Model3DViewerProps {
   metalness: number;
   roughness: number;
   envPreset: string;
+  cameraAngle?: { position: number[]; target: number[] };
   onLoadProgress?: (progress: number) => void;
   onLoadComplete?: () => void;
 }
@@ -37,15 +38,17 @@ const ScaledModel = ({
   materialType,
   renderMode,
   metalness,
-  roughness
+  roughness,
+  cameraAngle
 }: { 
   fbx: any;
   materialType: string;
   renderMode: string;
   metalness: number;
   roughness: number;
+  cameraAngle?: { position: number[]; target: number[] };
 }) => {
-  const { camera } = useThree();
+  const { camera, invalidate } = useThree();
   const hasScaled = useRef(false);
   
   useEffect(() => {
@@ -64,15 +67,26 @@ const ScaledModel = ({
         const scale = targetSize / maxDim;
         fbx.scale.setScalar(scale);
         
-        // Position camera based on model size
-        const distance = targetSize * 2.5;
-        camera.position.set(distance * 0.5, distance * 0.5, distance);
-        camera.lookAt(0, 0, 0);
-        
         hasScaled.current = true;
       } catch (error) {
         console.error('Error scaling model:', error);
       }
+    }
+    
+    // Apply camera angle if specified
+    if (cameraAngle) {
+      const distance = 2.5;
+      camera.position.set(
+        cameraAngle.position[0] * distance,
+        cameraAngle.position[1] * distance,
+        cameraAngle.position[2] * distance
+      );
+      camera.lookAt(
+        cameraAngle.target[0],
+        cameraAngle.target[1],
+        cameraAngle.target[2]
+      );
+      invalidate();
     }
     
     // Apply materials
@@ -115,7 +129,7 @@ const ScaledModel = ({
         child.material = newMaterial;
       }
     });
-  }, [fbx, materialType, renderMode, metalness, roughness, camera]);
+  }, [fbx, materialType, renderMode, metalness, roughness, camera, cameraAngle]);
   
   return <primitive object={fbx} />;
 };
@@ -130,6 +144,7 @@ const Model3DViewer = ({
   metalness,
   roughness,
   envPreset,
+  cameraAngle,
   onLoadProgress,
   onLoadComplete
 }: Model3DViewerProps) => {
@@ -160,6 +175,7 @@ const Model3DViewer = ({
         renderMode={renderMode}
         metalness={metalness}
         roughness={roughness}
+        cameraAngle={cameraAngle}
       />
       <OrbitControls 
         enablePan={true} 
@@ -189,6 +205,9 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
   const [selectedAngle, setSelectedAngle] = useState<string>('');
   const [screenshots, setScreenshots] = useState<{ [key: string]: Blob }>({});
   const [capturingAngle, setCapturingAngle] = useState<string>('');
+  const [currentCameraAngle, setCurrentCameraAngle] = useState<{ position: number[]; target: number[] } | undefined>();
+  const [shadowIntensity, setShadowIntensity] = useState(0.5);
+  const [exposure, setExposure] = useState(1);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -200,15 +219,15 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
   }, [file]);
 
   const cameraAngles = {
-    front: { position: [0, 0, 3], target: [0, 0, 0], label: 'Front' },
-    back: { position: [0, 0, -3], target: [0, 0, 0], label: 'Back' },
-    left: { position: [-3, 0, 0], target: [0, 0, 0], label: 'Left' },
-    right: { position: [3, 0, 0], target: [0, 0, 0], label: 'Right' },
-    top: { position: [0, 3, 0], target: [0, 0, 0], label: 'Top' },
-    perspective: { position: [2, 2, 2], target: [0, 0, 0], label: 'Perspective' }
+    front: { position: [0, 0, 1], target: [0, 0, 0], label: 'Front' },
+    back: { position: [0, 0, -1], target: [0, 0, 0], label: 'Back' },
+    left: { position: [-1, 0, 0], target: [0, 0, 0], label: 'Left' },
+    right: { position: [1, 0, 0], target: [0, 0, 0], label: 'Right' },
+    top: { position: [0, 1, 0], target: [0, 0, 0], label: 'Top' },
+    perspective: { position: [0.7, 0.7, 0.7], target: [0, 0, 0], label: 'Perspective' }
   };
 
-  const captureScreenshotFromAngle = (angleName: string) => {
+  const captureScreenshotFromAngle = async (angleName: string) => {
     const canvas = document.querySelector('canvas');
     if (!canvas) {
       toast({
@@ -221,39 +240,43 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
 
     setCapturingAngle(angleName);
     
-    setTimeout(() => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          setScreenshots(prev => ({ ...prev, [angleName]: blob }));
-          toast({
-            title: "Screenshot captured",
-            description: `${cameraAngles[angleName as keyof typeof cameraAngles].label} view saved`,
-          });
-        }
-        setCapturingAngle('');
-      }, 'image/jpeg', 0.95);
-    }, 100);
+    // Set camera angle and wait for render
+    const angle = cameraAngles[angleName as keyof typeof cameraAngles];
+    setCurrentCameraAngle(angle);
+    
+    // Wait longer for camera to move and scene to render
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    canvas.toBlob((blob) => {
+      if (blob) {
+        setScreenshots(prev => ({ ...prev, [angleName]: blob }));
+      }
+      setCapturingAngle('');
+    }, 'image/jpeg', 0.95);
   };
 
   const captureAllAngles = async () => {
+    setScreenshots({});
     const angles = Object.keys(cameraAngles);
+    
     for (const angle of angles) {
-      await new Promise<void>((resolve) => {
-        captureScreenshotFromAngle(angle);
-        setTimeout(resolve, 500);
-      });
+      await captureScreenshotFromAngle(angle);
+      await new Promise(resolve => setTimeout(resolve, 400));
     }
     
-    // Auto-select perspective after 1 second
+    // Reset to perspective view
+    setCurrentCameraAngle(cameraAngles.perspective);
+    
+    // Auto-select perspective after capturing
     setTimeout(() => {
       if (!selectedAngle) {
         setSelectedAngle('perspective');
         toast({
-          title: "Default view selected",
-          description: "Perspective view set as gallery preview",
+          title: "Screenshots captured",
+          description: "Perspective view set as default gallery preview",
         });
       }
-    }, 1000);
+    }, 500);
   };
 
   const handleSave = () => {
@@ -281,7 +304,11 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
           <LoadingProgress progress={loadProgress} label="Caricamento Modello 3D..." />
         )}
         {modelUrl && (
-          <Canvas camera={{ position: [3, 3, 5], fov: 50 }}>
+          <Canvas 
+            camera={{ position: [3, 3, 5], fov: 50 }} 
+            gl={{ preserveDrawingBuffer: true }}
+            frameloop="always"
+          >
             <Suspense fallback={null}>
               <Model3DViewer
                 url={modelUrl}
@@ -293,6 +320,7 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
                 metalness={metalness}
                 roughness={roughness}
                 envPreset={envPreset}
+                cameraAngle={currentCameraAngle}
                 onLoadProgress={setLoadProgress}
                 onLoadComplete={() => setIsLoading(false)}
               />
@@ -301,7 +329,7 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="space-y-2">
           <Label>Tipo Materiale</Label>
           <Select value={materialType} onValueChange={setMaterialType}>
@@ -350,9 +378,19 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
             </SelectContent>
           </Select>
         </div>
+
+        <div className="space-y-2">
+          <Label>Colore Sfondo</Label>
+          <Input
+            type="color"
+            value={backgroundColor}
+            onChange={(e) => setBackgroundColor(e.target.value)}
+            className="h-10 cursor-pointer"
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {(materialType === 'standard' || materialType === 'physical') && (
           <>
             <div className="space-y-2">
@@ -405,14 +443,28 @@ const Model3DEditorComponent = ({ file, onSave, processing }: Model3DEditorProps
           <span className="text-xs text-muted-foreground">{ambientIntensity.toFixed(1)}</span>
         </div>
 
-        <div className="space-y-2 col-span-2">
-          <Label>Colore Sfondo</Label>
-          <Input
-            type="color"
-            value={backgroundColor}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-            className="h-12 cursor-pointer"
+        <div className="space-y-2">
+          <Label>Intensità Ombre</Label>
+          <Slider
+            value={[shadowIntensity]}
+            onValueChange={(v) => setShadowIntensity(v[0])}
+            min={0}
+            max={1}
+            step={0.05}
           />
+          <span className="text-xs text-muted-foreground">{shadowIntensity.toFixed(2)}</span>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Esposizione</Label>
+          <Slider
+            value={[exposure]}
+            onValueChange={(v) => setExposure(v[0])}
+            min={0.1}
+            max={3}
+            step={0.1}
+          />
+          <span className="text-xs text-muted-foreground">{exposure.toFixed(1)}</span>
         </div>
       </div>
 

@@ -989,6 +989,60 @@ export type Database = {
           },
         ]
       }
+      work_drafts: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          hashtags: string[] | null
+          id: string
+          is_downloadable: boolean | null
+          made_with_ai: boolean | null
+          nsfw: boolean | null
+          title: string | null
+          updated_at: string
+          user_id: string
+          work_style: string | null
+          work_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_downloadable?: boolean | null
+          made_with_ai?: boolean | null
+          nsfw?: boolean | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          work_style?: string | null
+          work_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_downloadable?: boolean | null
+          made_with_ai?: boolean | null
+          nsfw?: boolean | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          work_style?: string | null
+          work_type?: string | null
+        }
+        Relationships: []
+      }
       work_favorites: {
         Row: {
           created_at: string

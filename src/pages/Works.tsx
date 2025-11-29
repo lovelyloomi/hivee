@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Heart, MessageSquare, Eye, Upload, Filter, Search, X, Globe, MapPin, Plus, Flag, Edit } from "lucide-react";
+import { Heart, MessageSquare, Eye, Upload, Filter, Search, X, Globe, MapPin, Plus, Flag, Edit, Save, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,6 +26,8 @@ import FBXViewer from "@/components/FBXViewer";
 import { LoadingProgress } from "@/components/LoadingProgress";
 import { useAutosave, loadAutosave, clearAutosave } from "@/hooks/useAutosave";
 import { HashtagInput } from "@/components/HashtagInput";
+import { WorkDrafts } from "@/components/WorkDrafts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 type Work = Database['public']['Tables']['works']['Row'] & {
   profiles: {
     full_name: string | null;
@@ -78,6 +80,8 @@ export default function Works() {
   const [reportWorkId, setReportWorkId] = useState<string | null>(null);
   const [reportWorkOwnerId, setReportWorkOwnerId] = useState<string | null>(null);
   const [showDownloadable, setShowDownloadable] = useState(false);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
 
   // Load autosaved draft
   useEffect(() => {
@@ -263,6 +267,91 @@ export default function Works() {
     setShowEditor(false);
   };
 
+  const handleSaveDraft = async () => {
+    if (!user) return;
+
+    try {
+      const draftData = {
+        user_id: user.id,
+        title: newWork.title || null,
+        description: newWork.description || null,
+        hashtags: newWork.hashtags ? newWork.hashtags.split(',').map(t => t.trim()).filter(t => t) : null,
+        work_type: newWork.work_type || null,
+        work_style: newWork.work_style || null,
+        made_with_ai: newWork.made_with_ai,
+        nsfw: newWork.nsfw,
+        is_downloadable: newWork.is_downloadable,
+        file_name: file?.name || null,
+        file_size: file?.size || null,
+        file_type: file ? getFileType(file) : null,
+      };
+
+      if (currentDraftId) {
+        // Update existing draft
+        const { error } = await supabase
+          .from('work_drafts')
+          .update(draftData)
+          .eq('id', currentDraftId);
+
+        if (error) throw error;
+        
+        toast({
+          title: "Draft updated",
+          description: "Your progress has been saved",
+        });
+      } else {
+        // Create new draft
+        const { data, error } = await supabase
+          .from('work_drafts')
+          .insert(draftData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) setCurrentDraftId(data.id);
+        
+        toast({
+          title: "Draft saved",
+          description: "Your progress has been saved",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast({
+        title: "Error saving draft",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLoadDraft = (draft: any) => {
+    setNewWork({
+      title: draft.title || "",
+      description: draft.description || "",
+      hashtags: draft.hashtags ? draft.hashtags.join(', ') : "",
+      work_type: draft.work_type || "",
+      work_style: draft.work_style || "",
+      made_with_ai: draft.made_with_ai || false,
+      nsfw: draft.nsfw || false,
+      is_downloadable: draft.is_downloadable !== false,
+    });
+    setCurrentDraftId(draft.id);
+    setShowDrafts(false);
+  };
+
+  const handleDeleteCurrentDraft = async () => {
+    if (!currentDraftId) return;
+
+    const { error } = await supabase
+      .from('work_drafts')
+      .delete()
+      .eq('id', currentDraftId);
+
+    if (!error) {
+      setCurrentDraftId(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const fileToProcess = editedFile || file;
@@ -401,8 +490,11 @@ export default function Works() {
       });
       if (insertError) throw insertError;
       
-      // Clear autosaved draft
+      // Clear autosaved draft and delete from database
       clearAutosave('works_draft');
+      if (currentDraftId) {
+        await handleDeleteCurrentDraft();
+      }
       
       toast({
         title: 'Work uploaded successfully!'
@@ -451,10 +543,33 @@ export default function Works() {
                   Upload
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-h-[90vh]">
+              <DialogContent className="max-h-[90vh] max-w-4xl">
                 <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
                 <DialogHeader>
-                  <DialogTitle>Upload New Work</DialogTitle>
+                  <DialogTitle className="flex items-center justify-between">
+                    <span>Upload New Work</span>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowDrafts(true)}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Load Draft
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSaveDraft}
+                        disabled={!newWork.title && !newWork.description}
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Draft
+                      </Button>
+                    </div>
+                  </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
@@ -853,6 +968,18 @@ export default function Works() {
         setReportWorkOwnerId(null);
       }
     }} workId={reportWorkId} workOwnerId={reportWorkOwnerId} />}
+
+      <Dialog open={showDrafts} onOpenChange={setShowDrafts}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Your Drafts</DialogTitle>
+          </DialogHeader>
+          <WorkDrafts
+            onLoadDraft={handleLoadDraft}
+            onClose={() => setShowDrafts(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <BottomNav />
     </div>;
