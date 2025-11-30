@@ -637,7 +637,7 @@ export default function Works() {
                           <p className="text-xs text-primary">File modified</p>
                         )}
                         {getFileType(file) === 'model_3d' && thumbnailFile && (
-                          <p className="text-xs text-success">Preview ready for gallery</p>
+                          <p className="text-xs text-primary">Preview ready for gallery</p>
                         )}
                       </div>
                     )}
