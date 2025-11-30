@@ -619,18 +619,6 @@ export default function Works() {
                           )}
                         </div>
 
-                        {/* Gallery Preview Thumbnail for 3D models */}
-                        {getFileType(file) === 'model_3d' && thumbnailFile && (
-                          <div className="p-3 bg-muted/50 rounded-lg border border-border">
-                            <p className="text-sm font-medium mb-2">Gallery Preview</p>
-                            <img 
-                              src={URL.createObjectURL(thumbnailFile)} 
-                              alt="Gallery preview" 
-                              className="w-full h-32 object-cover rounded"
-                            />
-                          </div>
-                        )}
-
                         <div className="flex justify-between items-center">
                           <p className="text-sm text-muted-foreground">
                             Selected: {file.name}
@@ -642,14 +630,14 @@ export default function Works() {
                             onClick={() => setShowEditor(true)}
                           >
                             <Edit className="h-4 w-4 mr-2" />
-                            Modifica
+                            Modify
                           </Button>
                         </div>
                         {editedFile && (
                           <p className="text-xs text-primary">File modified</p>
                         )}
                         {getFileType(file) === 'model_3d' && thumbnailFile && (
-                          <p className="text-xs text-primary">Preview captured</p>
+                          <p className="text-xs text-success">Preview ready for gallery</p>
                         )}
                       </div>
                     )}
