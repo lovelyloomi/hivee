@@ -243,7 +243,7 @@ export default function Works() {
     if (ext === 'fbx') return 'model_3d';
     return 'image';
   };
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       const maxSize = 50 * 1024 * 1024; // 50MB
@@ -258,12 +258,40 @@ export default function Works() {
       setFile(selectedFile);
       setEditedFile(null);
       setThumbnailFile(null);
+      
+      // Auto-generate screenshot for 3D models
+      const fileType = getFileType(selectedFile);
+      if (fileType === 'model_3d') {
+        toast({
+          title: 'Generating preview',
+          description: 'Creating gallery thumbnail...',
+        });
+        
+        const { generateFrontViewScreenshot } = await import('@/utils/screenshot');
+        const screenshot = await generateFrontViewScreenshot(selectedFile);
+        
+        if (screenshot) {
+          setThumbnailFile(screenshot);
+          toast({
+            title: 'Preview ready',
+            description: 'Front-view thumbnail generated',
+          });
+        } else {
+          toast({
+            title: 'Preview generation failed',
+            description: 'Could not create thumbnail',
+            variant: 'destructive'
+          });
+        }
+      }
     }
   };
 
   const handleEditSave = (edited: File, thumbnail?: File) => {
     setEditedFile(edited);
-    setThumbnailFile(thumbnail || null);
+    if (thumbnail) {
+      setThumbnailFile(thumbnail);
+    }
     setShowEditor(false);
   };
 
@@ -396,8 +424,8 @@ export default function Works() {
     const fileType = getFileType(fileToProcess);
     if (fileType === 'model_3d' && !thumbnailFile) {
       toast({
-        title: 'Missing screenshot',
-        description: 'Please edit the 3D model and capture a screenshot for the gallery preview',
+        title: 'Missing preview',
+        description: 'Thumbnail generation failed. Please try uploading again.',
         variant: 'destructive'
       });
       return;
@@ -594,12 +622,7 @@ export default function Works() {
                         {/* Gallery Preview Thumbnail for 3D models */}
                         {getFileType(file) === 'model_3d' && thumbnailFile && (
                           <div className="p-3 bg-muted/50 rounded-lg border border-border">
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <p className="text-sm font-medium">Gallery Preview</p>
-                                <p className="text-xs text-muted-foreground">This screenshot will appear in the gallery</p>
-                              </div>
-                            </div>
+                            <p className="text-sm font-medium mb-2">Gallery Preview</p>
                             <img 
                               src={URL.createObjectURL(thumbnailFile)} 
                               alt="Gallery preview" 
@@ -623,10 +646,10 @@ export default function Works() {
                           </Button>
                         </div>
                         {editedFile && (
-                          <p className="text-xs text-primary">✓ File modificato</p>
+                          <p className="text-xs text-primary">File modified</p>
                         )}
                         {getFileType(file) === 'model_3d' && thumbnailFile && (
-                          <p className="text-xs text-primary">✓ Screenshot catturato</p>
+                          <p className="text-xs text-primary">Preview captured</p>
                         )}
                       </div>
                     )}
