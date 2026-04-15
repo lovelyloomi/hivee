@@ -40,6 +40,7 @@ type FavoriteOpportunity = {
 
 export default function Favorites() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [favorites, setFavorites] = useState<FavoriteWork[]>([]);
   const [opportunityFavorites, setOpportunityFavorites] = useState<FavoriteOpportunity[]>([]);
   const [searchQuery, setSearchQuery] = useState("");

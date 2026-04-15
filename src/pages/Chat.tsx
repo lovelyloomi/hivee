@@ -53,6 +53,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const { createNotification } = useNotifications();
   const { isUserOnline } = usePresence(user?.id);
   

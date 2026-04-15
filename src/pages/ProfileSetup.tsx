@@ -25,6 +25,7 @@ const ProfileSetup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingPortfolio, setUploadingPortfolio] = useState(false);

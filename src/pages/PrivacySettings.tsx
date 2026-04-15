@@ -14,6 +14,7 @@ import { Shield } from 'lucide-react';
 
 export const PrivacySettingsPage = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({
     disable_view_tracking: false,

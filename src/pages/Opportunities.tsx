@@ -37,6 +37,7 @@ const Opportunities = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
   const [showApplications, setShowApplications] = useState(false);
   const [artistType, setArtistType] = useState("");
