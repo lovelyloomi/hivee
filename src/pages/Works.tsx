@@ -1,999 +1,499 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { Heart, MessageSquare, Eye, Upload, Filter, Search, X, Globe, MapPin, Plus, Flag, Edit, Save, FileText } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Search, Upload, SlidersHorizontal, Globe,
+  MapPin, ChevronDown, X, FileText, Save,
+  Plus, Flame, Clock, Heart, Star, Box, Edit, Flag
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuTrigger, DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import WorkDetailDialog from "@/components/WorkDetailDialog";
 import { ReportWorkDialog } from "@/components/ReportWorkDialog";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { applyWatermark, preventImageSave } from "@/utils/watermark";
-import { Database } from "@/integrations/supabase/types";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { calculateDistance, formatDistance } from "@/utils/distance";
-import { HexagonImage } from "@/components/HexagonImage";
-import { useQueryClient } from "@tanstack/react-query";
-import { WorkEditor } from "@/components/WorkEditor";
 import FBXViewer from "@/components/FBXViewer";
-import { LoadingProgress } from "@/components/LoadingProgress";
-import { useAutosave, loadAutosave, clearAutosave } from "@/hooks/useAutosave";
 import { HashtagInput } from "@/components/HashtagInput";
 import { WorkDrafts } from "@/components/WorkDrafts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-type Work = Database['public']['Tables']['works']['Row'] & {
-  profiles: {
-    full_name: string | null;
-    avatar_url: string | null;
-    latitude: number | null;
-    longitude: number | null;
-    location_enabled: boolean | null;
-  } | null;
+import { WorkEditor } from "@/components/WorkEditor";
+import { Model3DScreenshotGenerator } from "@/components/Model3DScreenshotGenerator";
+import { WorkCard, WorkCardData } from "@/components/beemade/WorkCard";
+import { WorkCardSkeleton } from "@/components/beemade/WorkCardSkeleton";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { useAutosave, loadAutosave, clearAutosave } from "@/hooks/useAutosave";
+import { applyWatermark } from "@/utils/watermark";
+import { calculateDistance } from "@/utils/distance";
+import { Database } from "@/integrations/supabase/types";
+
+type WorkRow = Database["public"]["Tables"]["works"]["Row"];
+type Work = WorkRow & {
+  profiles: { full_name: string | null; avatar_url: string | null; latitude: number | null; longitude: number | null; location_enabled: boolean | null; } | null;
+  like_count?: number;
+  comment_count?: number;
   distance?: number | null;
 };
+
+const CATEGORIES = [
+  { id: "all",              label: "All" },
+  { id: "3d",               label: "3D" },
+  { id: "2d",               label: "2D Art" },
+  { id: "photography",      label: "Photography" },
+  { id: "illustration",     label: "Illustration" },
+  { id: "concept_art",      label: "Concept Art" },
+  { id: "animation",        label: "Animation" },
+  { id: "digital_painting", label: "Digital Painting" },
+  { id: "graphic_design",   label: "Graphic Design" },
+];
+
+const SORT_OPTIONS = [
+  { id: "latest",   label: "Latest",     icon: Clock },
+  { id: "trending", label: "Trending",   icon: Flame },
+  { id: "likes",    label: "Most Liked", icon: Heart },
+  { id: "featured", label: "Featured",   icon: Star },
+];
+
+function getFileType(file: File): WorkRow["file_type"] {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (["fbx","obj","glb","gltf"].includes(ext)) return "model_3d";
+  if (["mp4","webm","mov"].includes(ext)) return "video";
+  if (ext === "pdf") return "pdf";
+  return "image";
+}
+
 export default function Works() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useLanguage();
-  const [works, setWorks] = useState<Work[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const [category, setCategory]         = useState("all");
+  const [sort, setSort]                 = useState("latest");
+  const [search, setSearch]             = useState("");
+  const [locationMode, setLocationMode] = useState<"global"|"local">("global");
+  const [showAI, setShowAI]             = useState(true);
+  const [showNSFW, setShowNSFW]         = useState(false);
+  const [showDownloadable, setShowDownloadable] = useState(false);
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
+  const [revealedNSFW, setRevealedNSFW] = useState<Set<string>>(new Set());
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [locationFilter, setLocationFilter] = useState<'global' | 'local'>('global');
-  const [file, setFile] = useState<File | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
-  const [editedFile, setEditedFile] = useState<File | null>(null);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [userLocation, setUserLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterStyle, setFilterStyle] = useState<string>("all");
-  const [showAIWorks, setShowAIWorks] = useState<boolean>(true);
-  const [newWork, setNewWork] = useState({
-    title: "",
-    description: "",
-    hashtags: "",
-    work_type: "",
-    work_style: "",
-    made_with_ai: false,
-    nsfw: false,
-    is_downloadable: true
-  });
-  const [showNSFW, setShowNSFW] = useState(false);
-  const [selectedNSFWWork, setSelectedNSFWWork] = useState<string | null>(null);
-  const [userAge, setUserAge] = useState<number | null>(null);
-  const [trendingHashtags, setTrendingHashtags] = useState<{
-    tag: string;
-    count: number;
-  }[]>([]);
   const [reportWorkId, setReportWorkId] = useState<string | null>(null);
   const [reportWorkOwnerId, setReportWorkOwnerId] = useState<string | null>(null);
-  const [showDownloadable, setShowDownloadable] = useState(false);
-  const [showDrafts, setShowDrafts] = useState(false);
+  const [userAge, setUserAge]           = useState<number | null>(null);
+  const [userLocation, setUserLocation] = useState<{latitude:number;longitude:number}|null>(null);
+
+  const [uploadOpen, setUploadOpen]     = useState(false);
+  const [showDrafts, setShowDrafts]     = useState(false);
+  const [uploading, setUploading]       = useState(false);
+  const [file, setFile]                 = useState<File | null>(null);
+  const [editedFile, setEditedFile]     = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [showEditor, setShowEditor]     = useState(false);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [newWork, setNewWork] = useState({
+    title:"", description:"", hashtags:"", work_type:"", work_style:"",
+    made_with_ai:false, nsfw:false, is_downloadable:true,
+  });
 
-  // Load autosaved draft
+  useAutosave({ key: "works_draft", data: newWork });
   useEffect(() => {
-    const saved = loadAutosave<{
-      title: string;
-      description: string;
-      hashtags: string;
-      work_type: string;
-      work_style: string;
-      made_with_ai: boolean;
-      nsfw: boolean;
-      is_downloadable: boolean;
-    }>('works_draft');
-    if (saved) {
-      setNewWork(saved);
-    }
-  }, []);
-
-  // Autosave draft
-  useAutosave({ key: 'works_draft', data: newWork });
-
-  // Memoized 3D viewer to prevent re-renders when form state changes
-  const Memoized3DViewer = useMemo(() => {
-    return ({ file }: { file: File }) => {
-      const url = useMemo(() => URL.createObjectURL(file), [file]);
-      return <FBXViewer url={url} enableLOD={true} autoRotate={false} />;
-    };
+    const saved = loadAutosave<typeof newWork>("works_draft");
+    if (saved) setNewWork(saved);
   }, []);
 
   useEffect(() => {
-    fetchWorks();
-    fetchTrendingHashtags();
-    setupRealtimeSubscription();
-    if (user) {
-      fetchUserLocation();
-      fetchUserAge();
-    }
+    if (!user) return;
+    supabase.from("profiles").select("birth_date,latitude,longitude").eq("id", user.id).single().then(({ data }) => {
+      if (data?.birth_date) {
+        setUserAge(Math.floor((Date.now() - new Date(data.birth_date).getTime()) / (365.25*24*60*60*1000)));
+      }
+      if (data?.latitude && data?.longitude) setUserLocation({ latitude: data.latitude, longitude: data.longitude });
+    });
   }, [user]);
-  const fetchUserAge = async () => {
-    if (!user) return;
-    const {
-      data: profile
-    } = await supabase.from("profiles").select("birth_date").eq("id", user.id).single();
-    if (profile?.birth_date) {
-      const birthDate = new Date(profile.birth_date);
-      const age = Math.floor((new Date().getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-      setUserAge(age);
-    }
-  };
-  const fetchUserLocation = async () => {
-    if (!user) return;
-    const {
-      data
-    } = await supabase.from('profiles').select('latitude, longitude').eq('id', user.id).single();
-    if (data?.latitude && data?.longitude) {
-      setUserLocation({
-        latitude: data.latitude,
-        longitude: data.longitude
-      });
-    }
-  };
-  const setupRealtimeSubscription = () => {
-    const channel = supabase.channel('works-changes').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'works'
-    }, () => {
-      fetchWorks();
-    }).subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-  const fetchWorks = async () => {
-    const {
-      data
-    } = await supabase.from('works').select(`
-        *,
-        profiles:user_id (
-          full_name,
-          avatar_url,
-          latitude,
-          longitude,
-          location_enabled
-        )
-      `).order('created_at', {
-      ascending: false
-    });
-    if (data) setWorks(data as Work[]);
-  };
-  const fetchTrendingHashtags = async () => {
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-    const {
-      data
-    } = await supabase.from('works').select('hashtags').gte('created_at', twentyFourHoursAgo.toISOString());
-    if (data) {
-      const hashtagCount: {
-        [key: string]: number;
-      } = {};
-      data.forEach(work => {
-        (work.hashtags || []).forEach(tag => {
-          hashtagCount[tag] = (hashtagCount[tag] || 0) + 1;
-        });
-      });
-      const sorted = Object.entries(hashtagCount).map(([tag, count]) => ({
-        tag,
-        count
-      })).sort((a, b) => b.count - a.count).slice(0, 10);
-      setTrendingHashtags(sorted);
-    }
-  };
-  const allHashtags = Array.from(new Set(works.flatMap(work => work.hashtags || [])));
-  
-  // Filter, calculate distances, and sort works
-  const filteredWorks = works
-    .filter(work => {
-      const matchesSearch = work.title?.toLowerCase().includes(searchQuery.toLowerCase()) || work.description?.toLowerCase().includes(searchQuery.toLowerCase()) || (work.hashtags || []).some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesHashtags = selectedHashtags.length === 0 || selectedHashtags.every(selectedTag => (work.hashtags || []).includes(selectedTag));
-      const matchesType = filterType === "all" || work.work_type === filterType;
-      const matchesStyle = filterStyle === "all" || work.work_style === filterStyle;
-      const matchesAI = showAIWorks || !work.made_with_ai;
-      const matchesNSFW = showNSFW || !work.nsfw;
-      return matchesSearch && matchesHashtags && matchesType && matchesStyle && matchesAI && matchesNSFW;
-    })
-    .map(work => {
-      // Calculate distance if in local mode and both locations are available
-      let distance: number | null = null;
-      if (locationFilter === 'local' && userLocation && work.profiles?.latitude && work.profiles?.longitude && work.profiles?.location_enabled) {
-        distance = calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          work.profiles.latitude,
-          work.profiles.longitude
-        );
-      }
-      return { ...work, distance };
-    })
-    .sort((a, b) => {
-      // Sort by distance when in local mode
-      if (locationFilter === 'local') {
-        // Works without location go to the end
-        if (a.distance === null && b.distance === null) return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        if (a.distance === null) return 1;
-        if (b.distance === null) return -1;
-        return a.distance - b.distance;
-      }
-      // Default sort by created_at (newest first)
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
-  const toggleHashtag = (tag: string) => {
-    setSelectedHashtags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
-  };
-  const getFileType = (file: File): Database['public']['Enums']['work_file_type'] => {
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return 'image';
-    if (ext === 'pdf') return 'pdf';
-    if (['mp4', 'webm', 'ogg'].includes(ext || '')) return 'video';
-    if (ext === 'fbx') return 'model_3d';
-    return 'image';
-  };
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      const maxSize = 50 * 1024 * 1024; // 50MB
-      if (selectedFile.size > maxSize) {
-        toast({
-          title: 'File too large',
-          description: 'Maximum file size is 50MB',
-          variant: 'destructive'
-        });
-        return;
-      }
-      setFile(selectedFile);
-      setEditedFile(null);
-      setThumbnailFile(null);
-      
-      // Auto-generate screenshot for 3D models
-      const fileType = getFileType(selectedFile);
-      if (fileType === 'model_3d') {
-        toast({
-          title: 'Generating preview',
-          description: 'Creating gallery thumbnail...',
-        });
-        
-        const { generateFrontViewScreenshot } = await import('@/utils/screenshot');
-        const screenshot = await generateFrontViewScreenshot(selectedFile);
-        
-        if (screenshot) {
-          setThumbnailFile(screenshot);
-          toast({
-            title: 'Preview ready',
-            description: 'Front-view thumbnail generated',
-          });
-        } else {
-          toast({
-            title: 'Preview generation failed',
-            description: 'Could not create thumbnail',
-            variant: 'destructive'
-          });
-        }
-      }
-    }
+
+  const fetchWorks = async (nsfw: boolean) => {
+    let q = supabase.from("works").select(`*, profiles!works_user_id_fkey(full_name,avatar_url,latitude,longitude,location_enabled), like_count:work_likes(count), comment_count:work_comments(count)`).eq("nsfw", nsfw);
+    if (category !== "all") q = q.eq("work_type", category);
+    if (sort === "latest" || sort === "trending") q = q.order("created_at", { ascending: false });
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data || []).map((w: any) => ({ ...w, like_count: w.like_count?.[0]?.count ?? 0, comment_count: w.comment_count?.[0]?.count ?? 0 })) as Work[];
   };
 
-  const handleEditSave = (edited: File, thumbnail?: File) => {
-    setEditedFile(edited);
-    if (thumbnail) {
-      setThumbnailFile(thumbnail);
+  const { data: safeWorks = [], isLoading } = useQuery({ queryKey: ["works-safe", category, sort], queryFn: () => fetchWorks(false), staleTime: 60000 });
+  const { data: nsfwWorks = [] } = useQuery({ queryKey: ["works-nsfw", category, sort], queryFn: () => fetchWorks(true), staleTime: 60000, enabled: showNSFW && !!userAge && userAge >= 18 });
+
+  const { data: trendingHashtags = [] } = useQuery({
+    queryKey: ["trending-hashtags"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 24*60*60*1000).toISOString();
+      const { data } = await supabase.from("works").select("hashtags").gte("created_at", since);
+      const counts: Record<string,number> = {};
+      data?.forEach((w:any) => w.hashtags?.forEach((t:string) => { counts[t] = (counts[t]||0)+1; }));
+      return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([tag,count])=>({tag,count}));
+    },
+    staleTime: 300000,
+  });
+
+  useEffect(() => {
+    const ch = supabase.channel("works-rt").on("postgres_changes",{event:"*",schema:"public",table:"works"},()=>{
+      queryClient.invalidateQueries({queryKey:["works-safe"]});
+      queryClient.invalidateQueries({queryKey:["works-nsfw"]});
+    }).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [queryClient]);
+
+  const filteredWorks = useMemo(() => {
+    const seen = new Set<string>();
+    let list = [...safeWorks, ...(showNSFW ? nsfwWorks : [])].filter(w => { if(seen.has(w.id)) return false; seen.add(w.id); return true; });
+    if (search.trim()) { const q = search.toLowerCase(); list = list.filter(w => w.title.toLowerCase().includes(q) || w.description?.toLowerCase().includes(q) || w.hashtags?.some(h=>h.toLowerCase().includes(q))); }
+    if (!showAI) list = list.filter(w => !w.made_with_ai);
+    if (showDownloadable) list = list.filter(w => w.is_downloadable);
+    if (selectedHashtags.length > 0) list = list.filter(w => selectedHashtags.every(h => w.hashtags?.includes(h)));
+    if (sort === "likes") list = [...list].sort((a,b)=>(b.like_count??0)-(a.like_count??0));
+    if (sort === "featured") list = [...list].sort(()=>Math.random()-0.5);
+    if (userLocation) {
+      list = list.map(w => ({ ...w, distance: w.profiles?.latitude && w.profiles?.longitude && w.profiles?.location_enabled ? calculateDistance(userLocation.latitude,userLocation.longitude,w.profiles.latitude,w.profiles.longitude) : null }));
+      if (locationMode === "local") list = list.filter(w=>w.distance!=null&&w.distance<=100).sort((a,b)=>(a.distance??Infinity)-(b.distance??Infinity));
     }
-    setShowEditor(false);
+    return list;
+  }, [safeWorks, nsfwWorks, search, showAI, showDownloadable, selectedHashtags, sort, locationMode, userLocation, showNSFW]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if(!f) return;
+    setFile(f); setEditedFile(null); setThumbnailFile(null);
   };
 
   const handleSaveDraft = async () => {
-    if (!user) return;
-
-    try {
-      const draftData = {
-        user_id: user.id,
-        title: newWork.title || null,
-        description: newWork.description || null,
-        hashtags: newWork.hashtags ? newWork.hashtags.split(',').map(t => t.trim()).filter(t => t) : null,
-        work_type: newWork.work_type || null,
-        work_style: newWork.work_style || null,
-        made_with_ai: newWork.made_with_ai,
-        nsfw: newWork.nsfw,
-        is_downloadable: newWork.is_downloadable,
-        file_name: file?.name || null,
-        file_size: file?.size || null,
-        file_type: file ? getFileType(file) : null,
-      };
-
-      if (currentDraftId) {
-        // Update existing draft
-        const { error } = await supabase
-          .from('work_drafts')
-          .update(draftData)
-          .eq('id', currentDraftId);
-
-        if (error) throw error;
-        
-        toast({
-          title: "Draft updated",
-          description: "Your progress has been saved",
-        });
-      } else {
-        // Create new draft
-        const { data, error } = await supabase
-          .from('work_drafts')
-          .insert(draftData)
-          .select()
-          .single();
-
-        if (error) throw error;
-        if (data) setCurrentDraftId(data.id);
-        
-        toast({
-          title: "Draft saved",
-          description: "Your progress has been saved",
-        });
-      }
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      toast({
-        title: "Error saving draft",
-        variant: "destructive",
-      });
-    }
+    if (!user || !newWork.title) return;
+    await supabase.from("work_drafts").insert({ user_id:user.id, ...newWork, hashtags:newWork.hashtags });
+    toast({ title:"Draft saved" });
   };
 
   const handleLoadDraft = (draft: any) => {
-    setNewWork({
-      title: draft.title || "",
-      description: draft.description || "",
-      hashtags: draft.hashtags ? draft.hashtags.join(', ') : "",
-      work_type: draft.work_type || "",
-      work_style: draft.work_style || "",
-      made_with_ai: draft.made_with_ai || false,
-      nsfw: draft.nsfw || false,
-      is_downloadable: draft.is_downloadable !== false,
-    });
-    setCurrentDraftId(draft.id);
-    setShowDrafts(false);
+    setNewWork({ title:draft.title||"", description:draft.description||"", hashtags:draft.hashtags||"", work_type:draft.work_type||"", work_style:draft.work_style||"", made_with_ai:draft.made_with_ai||false, nsfw:draft.nsfw||false, is_downloadable:draft.is_downloadable??true });
+    setCurrentDraftId(draft.id); setShowDrafts(false);
   };
 
-  const handleDeleteCurrentDraft = async () => {
-    if (!currentDraftId) return;
-
-    const { error } = await supabase
-      .from('work_drafts')
-      .delete()
-      .eq('id', currentDraftId);
-
-    if (!error) {
-      setCurrentDraftId(null);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user || !file) return;
     const fileToProcess = editedFile || file;
-    
-    if (!user || !fileToProcess) {
-      toast({
-        title: 'Missing file',
-        description: 'Please select a file to upload',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    if (!newWork.title.trim()) {
-      toast({
-        title: 'Missing title',
-        description: 'Please enter a title for your work',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    if (!newWork.work_type) {
-      toast({
-        title: 'Missing type',
-        description: 'Please select a work type',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    if (!newWork.work_style) {
-      toast({
-        title: 'Missing style',
-        description: 'Please select a work style',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    // For 3D models, require a screenshot
+    if (!newWork.title.trim()) return toast({ title:"Missing title", variant:"destructive" });
+    if (!newWork.work_type) return toast({ title:"Missing type", variant:"destructive" });
+    if (!newWork.work_style) return toast({ title:"Missing style", variant:"destructive" });
     const fileType = getFileType(fileToProcess);
-    if (fileType === 'model_3d' && !thumbnailFile) {
-      toast({
-        title: 'Missing preview',
-        description: 'Thumbnail generation failed. Please try uploading again.',
-        variant: 'destructive'
-      });
-      return;
-    }
-    if (newWork.nsfw && (!userAge || userAge < 18)) {
-      toast({
-        title: "Age Restriction",
-        description: "You must be 18+ to upload NSFW content",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (fileType === "model_3d" && !thumbnailFile) return toast({ title:"Preview not ready", description:"Wait for thumbnail generation.", variant:"destructive" });
+    if (newWork.nsfw && (!userAge || userAge < 18)) return toast({ title:"Age restriction", variant:"destructive" });
     setUploading(true);
     try {
-      const fileType = getFileType(fileToProcess);
-      const fileExt = fileToProcess.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const ext = fileToProcess.name.split(".").pop();
+      const fileName = `${user.id}/${Date.now()}.${ext}`;
       let fileToUpload = fileToProcess;
       let screenshotUrl: string | null = null;
-
-      // Capture screenshot for 3D models
-      if (fileType === 'model_3d' && thumbnailFile) {
-        const screenshotExt = 'jpg';
-        const screenshotFileName = `${user.id}/${Date.now()}_screenshot.${screenshotExt}`;
-        
-        const { error: screenshotError } = await supabase.storage
-          .from('works')
-          .upload(screenshotFileName, thumbnailFile);
-
-        if (!screenshotError) {
-          const { data: { publicUrl: screenshotPublicUrl } } = supabase.storage
-            .from('works')
-            .getPublicUrl(screenshotFileName);
-          screenshotUrl = screenshotPublicUrl;
+      if (fileType === "model_3d" && thumbnailFile) {
+        const sName = `${user.id}/${Date.now()}_screenshot.jpg`;
+        const { error: sErr } = await supabase.storage.from("works").upload(sName, thumbnailFile);
+        if (!sErr) screenshotUrl = supabase.storage.from("works").getPublicUrl(sName).data.publicUrl;
+      }
+      if (fileType === "image") {
+        const { data: profile } = await supabase.from("profiles").select("watermark_text,watermark_url,watermark_enabled,watermark_sections,username").eq("id",user.id).single();
+        if (profile?.watermark_enabled && profile?.watermark_sections?.includes("works")) {
+          const blob = await applyWatermark(file, profile.username||profile.watermark_text||"", profile.watermark_url||undefined);
+          fileToUpload = new File([blob], file.name, { type:file.type });
         }
       }
-
-      // Apply watermark to images
-      if (fileType === 'image') {
-        const {
-          data: profile
-        } = await supabase.from('profiles').select('watermark_text, watermark_url, watermark_enabled, watermark_style, watermark_sections, username')
-          .eq('id', user.id)
-          .single();
-        
-        if (profile?.watermark_enabled && profile?.watermark_sections?.includes('works')) {
-          const watermarkText = profile.username || profile.watermark_text || '';
-          const watermarkedBlob = await applyWatermark(file, watermarkText, profile.watermark_url || undefined);
-          fileToUpload = new File([watermarkedBlob], file.name, {
-            type: file.type
-          });
-        } else if (profile?.watermark_text || profile?.watermark_url) {
-          // Legacy watermark support
-          const watermarkedBlob = await applyWatermark(file, profile.watermark_text || '', profile.watermark_url || undefined);
-          fileToUpload = new File([watermarkedBlob], file.name, {
-            type: file.type
-          });
-        }
-      }
-      const {
-        data: uploadData,
-        error: uploadError
-      } = await supabase.storage.from('works').upload(fileName, fileToUpload);
-      if (uploadError) throw uploadError;
-      const {
-        data: {
-          publicUrl
-        }
-      } = supabase.storage.from('works').getPublicUrl(fileName);
-      const hashtags = newWork.hashtags.split(',').map(tag => tag.trim()).filter(tag => tag);
-      const {
-        data: profile
-      } = await supabase.from('profiles').select('watermark_url').eq('id', user.id).single();
-      const {
-        error: insertError
-      } = await supabase.from('works').insert({
-        user_id: user.id,
-        title: newWork.title,
-        description: newWork.description,
-        file_url: publicUrl,
-        file_type: fileType,
-        watermark_url: profile?.watermark_url,
-        hashtags,
-        work_type: newWork.work_type,
-        work_style: newWork.work_style,
-        made_with_ai: newWork.made_with_ai,
-        nsfw: newWork.nsfw,
-        screenshot_url: screenshotUrl,
-        is_downloadable: newWork.is_downloadable
-      });
-      if (insertError) throw insertError;
-      
-      // Clear autosaved draft and delete from database
-      clearAutosave('works_draft');
-      if (currentDraftId) {
-        await handleDeleteCurrentDraft();
-      }
-      
-      toast({
-        title: 'Work uploaded successfully!'
-      });
-      setNewWork({
-        title: "",
-        description: "",
-        hashtags: "",
-        work_type: "",
-        work_style: "",
-        made_with_ai: false,
-        nsfw: false,
-        is_downloadable: true
-      });
-      setFile(null);
-      setEditedFile(null);
-      setThumbnailFile(null);
-      setIsDialogOpen(false);
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: 'Upload failed',
-        variant: 'destructive'
-      });
-    } finally {
-      setUploading(false);
-    }
+      const { error: uploadErr } = await supabase.storage.from("works").upload(fileName, fileToUpload);
+      if (uploadErr) throw uploadErr;
+      const { data: { publicUrl } } = supabase.storage.from("works").getPublicUrl(fileName);
+      const { data: prof } = await supabase.from("profiles").select("watermark_url").eq("id",user.id).single();
+      const hashtags = newWork.hashtags.split(",").map(t=>t.trim()).filter(Boolean);
+      const { error: insertErr } = await supabase.from("works").insert({ user_id:user.id, title:newWork.title, description:newWork.description, file_url:publicUrl, file_type:fileType, watermark_url:prof?.watermark_url, hashtags, work_type:newWork.work_type, work_style:newWork.work_style, made_with_ai:newWork.made_with_ai, nsfw:newWork.nsfw, screenshot_url:screenshotUrl, is_downloadable:newWork.is_downloadable });
+      if (insertErr) throw insertErr;
+      clearAutosave("works_draft");
+      toast({ title:"Work published!" });
+      setNewWork({ title:"", description:"", hashtags:"", work_type:"", work_style:"", made_with_ai:false, nsfw:false, is_downloadable:true });
+      setFile(null); setEditedFile(null); setThumbnailFile(null); setUploadOpen(false);
+      queryClient.invalidateQueries({ queryKey:["works-safe"] });
+    } catch(err) {
+      console.error(err); toast({ title:"Upload failed", variant:"destructive" });
+    } finally { setUploading(false); }
   };
-  return <div className="min-h-screen bg-background pt-24 pb-20">
+
+  const Memoized3DViewer = useMemo(() => ({ file }: { file:File }) => {
+    const url = useMemo(() => URL.createObjectURL(file), [file]);
+    return <FBXViewer url={url} enableLOD autoRotate={false} />;
+  }, []);
+
+  const SortIcon = SORT_OPTIONS.find(s=>s.id===sort)?.icon ?? Clock;
+
+  return (
+    <div className="min-h-screen bg-background pb-20">
       <Header />
+      <main className="pt-16">
 
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-foreground mb-6">Bees Art Gallery</h1>
+        {/* ── Sticky top bar ────────────────────────────────────────────── */}
+        <div className="border-b border-border bg-card/60 backdrop-blur-md sticky top-14 z-30">
+          <div className="container mx-auto px-4">
 
-        <div className="space-y-4 mb-6">
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input placeholder="Search works..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
-            </div>
-          
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="lg" className="shadow-lg shrink-0">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Upload
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-h-[90vh] max-w-4xl">
-                <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center justify-between">
-                    <span>Upload New Work</span>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowDrafts(true)}
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Load Draft
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSaveDraft}
-                        disabled={!newWork.title && !newWork.description}
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Draft
-                      </Button>
-                    </div>
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="file">File (JPG, PNG, PDF, FBX, Video)</Label>
-                    <Input id="file" type="file" accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm" onChange={handleFileChange} required />
-                    {file && (
-                      <div className="mt-4 space-y-3">
-                        <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                          {getFileType(file) === 'image' && (
-                            <img src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-contain" />
-                          )}
-                          {getFileType(file) === 'video' && (
-                            <video src={editedFile ? URL.createObjectURL(editedFile) : URL.createObjectURL(file)} className="w-full h-full object-contain" controls />
-                          )}
-                          {getFileType(file) === 'model_3d' && (
-                            <div className="w-full h-full">
-                              <Memoized3DViewer file={file} />
-                            </div>
-                          )}
-                        </div>
+            {/* Search row */}
+            <div className="flex items-center gap-2 py-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search works, artists, tags…"
+                  value={search}
+                  onChange={e=>setSearch(e.target.value)}
+                  className="pl-9 bg-muted/40 border-transparent focus:border-primary/40 focus:bg-background"
+                />
+                {search && <button onClick={()=>setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>}
+              </div>
 
-                        <div className="flex justify-between items-center">
-                          <p className="text-sm text-muted-foreground">
-                            Selected: {file.name}
-                          </p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowEditor(true)}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Modify
-                          </Button>
-                        </div>
-                        {editedFile && (
-                          <p className="text-xs text-primary">File modified</p>
-                        )}
-                        {getFileType(file) === 'model_3d' && thumbnailFile && (
-                          <p className="text-xs text-primary">Preview ready for gallery</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="title">Title</Label>
-                    <Input id="title" placeholder="Work title" value={newWork.title} onChange={e => setNewWork({
-                    ...newWork,
-                    title: e.target.value
-                  })} required />
-                  </div>
-                  <div>
-                    <Label htmlFor="work_type">Type *</Label>
-                    <Select value={newWork.work_type} onValueChange={value => setNewWork({
-                    ...newWork,
-                    work_type: value
-                  })} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select work type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="3d">3D</SelectItem>
-                        <SelectItem value="2d">2D</SelectItem>
-                        <SelectItem value="photography">Photography</SelectItem>
-                        <SelectItem value="digital_painting">Digital Painting</SelectItem>
-                        <SelectItem value="illustration">Illustration</SelectItem>
-                        <SelectItem value="concept_art">Concept Art</SelectItem>
-                        <SelectItem value="animation">Animation</SelectItem>
-                        <SelectItem value="graphic_design">Graphic Design</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="work_style">Style *</Label>
-                    <Select value={newWork.work_style} onValueChange={value => setNewWork({
-                    ...newWork,
-                    work_style: value
-                  })} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select style" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="stylized">Stylized</SelectItem>
-                        <SelectItem value="realism">Realism</SelectItem>
-                        <SelectItem value="semi_realistic">Semi-Realistic</SelectItem>
-                        <SelectItem value="cartoonish">Cartoonish</SelectItem>
-                        <SelectItem value="vectorial">Vectorial</SelectItem>
-                        <SelectItem value="abstract">Abstract</SelectItem>
-                        <SelectItem value="minimalist">Minimalist</SelectItem>
-                        <SelectItem value="pixel_art">Pixel Art</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
-                      <Checkbox id="made_with_ai" checked={newWork.made_with_ai} onCheckedChange={checked => setNewWork({
-                      ...newWork,
-                      made_with_ai: checked as boolean
-                    })} />
-                      <Label htmlFor="made_with_ai" className="cursor-pointer font-medium">
-                        Made with AI *
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
-                      <Checkbox id="nsfw" checked={newWork.nsfw} onCheckedChange={checked => setNewWork({
-                      ...newWork,
-                      nsfw: checked as boolean
-                    })} />
-                      <Label htmlFor="nsfw" className="cursor-pointer font-medium">
-                        NSFW (18+ content) *
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
-                      <Checkbox id="is_downloadable" checked={newWork.is_downloadable} onCheckedChange={checked => setNewWork({
-                      ...newWork,
-                      is_downloadable: checked as boolean
-                    })} />
-                      <Label htmlFor="is_downloadable" className="cursor-pointer font-medium">
-                        Downloadable
-                      </Label>
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" placeholder="Describe your work..." value={newWork.description} onChange={e => setNewWork({
-                    ...newWork,
-                    description: e.target.value
-                  })} />
-                  </div>
-                  <div>
-                    <Label htmlFor="hashtags">Hashtags (max 5)</Label>
-                    <HashtagInput
-                      value={newWork.hashtags}
-                      onChange={(value) => setNewWork({ ...newWork, hashtags: value })}
-                      maxTags={5}
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={uploading || !file || !newWork.title.trim() || !newWork.work_type || !newWork.work_style || (getFileType(file) === 'model_3d' && !thumbnailFile)}
-                  >
-                    {uploading ? <>
-                        <Upload className="w-4 h-4 mr-2 animate-spin" />
-                        Uploading...
-                      </> : <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload
-                      </>}
+              {/* Filters */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
+                    <SlidersHorizontal className="w-4 h-4" />
+                    <span className="hidden sm:inline">Filters</span>
+                    {(!showAI||showDownloadable||locationMode==="local"||showNSFW) && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                   </Button>
-                </form>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 p-2">
+                  <label className="flex items-center gap-2 py-1 px-1 text-sm cursor-pointer rounded hover:bg-muted/50">
+                    <Checkbox checked={showAI} onCheckedChange={v=>setShowAI(!!v)} /> Show AI works
+                  </label>
+                  <label className="flex items-center gap-2 py-1 px-1 text-sm cursor-pointer rounded hover:bg-muted/50">
+                    <Checkbox checked={showDownloadable} onCheckedChange={v=>setShowDownloadable(!!v)} /> Free downloads only
+                  </label>
+                  {userAge != null && userAge >= 18 && (
+                    <label className="flex items-center gap-2 py-1 px-1 text-sm cursor-pointer rounded hover:bg-muted/50">
+                      <Checkbox checked={showNSFW} onCheckedChange={v=>setShowNSFW(!!v)} /> Show NSFW (18+)
+                    </label>
+                  )}
+                  <DropdownMenuSeparator />
+                  <Button variant={locationMode==="local"?"default":"outline"} size="sm" className="w-full gap-2 mt-1" onClick={()=>setLocationMode(l=>l==="global"?"local":"global")}>
+                    {locationMode==="local"?<MapPin className="w-3.5 h-3.5"/>:<Globe className="w-3.5 h-3.5"/>}
+                    {locationMode==="local"?"Near me":"Global"}
+                  </Button>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-          {/* Trending Hashtags Section */}
-          {trendingHashtags.length > 0 && <div className="bg-card border border-border rounded-lg p-4">
-              <h3 className="text-sm font-semibold mb-3 text-foreground">🔥 Trending in Last 24h</h3>
-              <div className="flex flex-wrap gap-2">
-                {trendingHashtags.map(({
-              tag,
-              count
-            }) => <Badge key={tag} variant={selectedHashtags.includes(tag) ? "default" : "secondary"} className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => toggleHashtag(tag)}>
-                    #{tag} <span className="ml-1 text-xs opacity-70">({count})</span>
-                  </Badge>)}
-              </div>
-            </div>}
+              {/* Sort */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 shrink-0 hidden sm:flex">
+                    <SortIcon className="w-4 h-4" />
+                    {SORT_OPTIONS.find(s=>s.id===sort)?.label}
+                    <ChevronDown className="w-3.5 h-3.5 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {SORT_OPTIONS.map(opt => {
+                    const Icon = opt.icon;
+                    return <DropdownMenuItem key={opt.id} onClick={()=>setSort(opt.id)} className={`gap-2 ${sort===opt.id?"text-primary font-medium":""}`}><Icon className="w-4 h-4"/>{opt.label}</DropdownMenuItem>;
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-          {/* Filter Controls */}
-          <div className="flex flex-wrap gap-3 items-center">
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="3d">3D</SelectItem>
-                <SelectItem value="2d">2D</SelectItem>
-                <SelectItem value="photography">Photography</SelectItem>
-                <SelectItem value="digital_painting">Digital Painting</SelectItem>
-                <SelectItem value="illustration">Illustration</SelectItem>
-                <SelectItem value="concept_art">Concept Art</SelectItem>
-                <SelectItem value="animation">Animation</SelectItem>
-                <SelectItem value="graphic_design">Graphic Design</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filterStyle} onValueChange={setFilterStyle}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Styles" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Styles</SelectItem>
-                <SelectItem value="stylized">Stylized</SelectItem>
-                <SelectItem value="realism">Realism</SelectItem>
-                <SelectItem value="semi_realistic">Semi-Realistic</SelectItem>
-                <SelectItem value="cartoonish">Cartoonish</SelectItem>
-                <SelectItem value="vectorial">Vectorial</SelectItem>
-                <SelectItem value="abstract">Abstract</SelectItem>
-                <SelectItem value="minimalist">Minimalist</SelectItem>
-                <SelectItem value="pixel_art">Pixel Art</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              onClick={() => setLocationFilter(locationFilter === 'global' ? 'local' : 'global')}
-              className="gap-2"
-            >
-              {locationFilter === 'global' ? (
-                <>
-                  <Globe className="h-4 w-4" />
-                  Global
-                </>
-              ) : (
-                <>
-                  <MapPin className="h-4 w-4" />
-                  Local
-                </>
+              {/* Upload CTA */}
+              {user && (
+                <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="gap-2 bg-gradient-primary text-white hover:opacity-90 shrink-0">
+                      <Upload className="w-4 h-4" />
+                      <span className="hidden sm:inline">Upload</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center justify-between">
+                        Upload New Work
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={()=>setShowDrafts(true)}><FileText className="w-4 h-4 mr-1"/>Drafts</Button>
+                          <Button variant="ghost" size="sm" onClick={handleSaveDraft} disabled={!newWork.title}><Save className="w-4 h-4 mr-1"/>Save draft</Button>
+                        </div>
+                      </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleUpload} className="space-y-4 mt-2">
+                      <div>
+                        <Label>File <span className="text-xs text-muted-foreground">(JPG, PNG, PDF, FBX, MP4)</span></Label>
+                        <Input type="file" accept=".jpg,.jpeg,.png,.pdf,.fbx,.mp4,.webm" onChange={handleFileChange} className="mt-1" required />
+                        {file && (
+                          <div className="mt-3 space-y-2">
+                            <div className="rounded-lg overflow-hidden bg-muted aspect-video relative">
+                              {getFileType(file)==="image" && <img src={URL.createObjectURL(editedFile||file)} alt="preview" className="w-full h-full object-contain" />}
+                              {getFileType(file)==="video" && <video src={URL.createObjectURL(editedFile||file)} className="w-full h-full object-contain" controls />}
+                              {getFileType(file)==="model_3d" && <><div className="w-full h-full"><Memoized3DViewer file={file} /></div><Model3DScreenshotGenerator file={file} onScreenshot={setThumbnailFile} /></>}
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground truncate max-w-[200px]">{file.name}</span>
+                              <Button type="button" variant="outline" size="sm" onClick={()=>setShowEditor(true)}><Edit className="w-3.5 h-3.5 mr-1"/>Edit</Button>
+                            </div>
+                            {getFileType(file)==="model_3d" && thumbnailFile && <p className="text-xs text-primary">✓ Preview ready</p>}
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="col-span-2">
+                          <Label>Title *</Label>
+                          <Input placeholder="Give your work a name" value={newWork.title} onChange={e=>setNewWork({...newWork,title:e.target.value})} className="mt-1" required />
+                        </div>
+                        <div>
+                          <Label>Type *</Label>
+                          <Select value={newWork.work_type} onValueChange={v=>setNewWork({...newWork,work_type:v})}>
+                            <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectContent>
+                              {["3d","2d","photography","digital_painting","illustration","concept_art","animation","graphic_design","other"].map(v=><SelectItem key={v} value={v}>{v.replace(/_/g," ")}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Style *</Label>
+                          <Select value={newWork.work_style} onValueChange={v=>setNewWork({...newWork,work_style:v})}>
+                            <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectContent>
+                              {["stylized","realism","semi_realistic","cartoonish","vectorial","abstract","minimalist","pixel_art","other"].map(v=><SelectItem key={v} value={v}>{v.replace(/_/g," ")}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Description</Label>
+                        <Textarea placeholder="Tell the story behind your work…" value={newWork.description} onChange={e=>setNewWork({...newWork,description:e.target.value})} className="mt-1 resize-none" rows={3} />
+                      </div>
+                      <div>
+                        <Label>Hashtags <span className="text-xs text-muted-foreground">(max 5)</span></Label>
+                        <HashtagInput value={newWork.hashtags} onChange={v=>setNewWork({...newWork,hashtags:v})} maxTags={5} />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([["made_with_ai","AI-assisted"],["nsfw","NSFW (18+)"],["is_downloadable","Free download"]] as [keyof typeof newWork, string][]).map(([id,label])=>(
+                          <label key={id} className="flex items-center gap-2 p-2.5 rounded-lg border bg-muted/20 cursor-pointer hover:bg-muted/40 text-sm">
+                            <Checkbox checked={!!newWork[id]} onCheckedChange={v=>setNewWork({...newWork,[id]:!!v})} />{label}
+                          </label>
+                        ))}
+                      </div>
+                      <Button type="submit" className="w-full bg-gradient-primary text-white"
+                        disabled={uploading||!file||!newWork.title.trim()||!newWork.work_type||!newWork.work_style||(file&&getFileType(editedFile||file)==="model_3d"&&!thumbnailFile)}>
+                        {uploading ? <><div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin mr-2"/>Uploading…</> : <><Upload className="w-4 h-4 mr-2"/>Publish Work</>}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               )}
-            </Button>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox id="show_downloadable" checked={showDownloadable} onCheckedChange={checked => setShowDownloadable(checked as boolean)} />
-              <Label htmlFor="show_downloadable" className="cursor-pointer text-sm">
-                Show Downloadable
-              </Label>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox id="show_ai" checked={showAIWorks} onCheckedChange={checked => setShowAIWorks(checked as boolean)} />
-              <Label htmlFor="show_ai" className="cursor-pointer text-sm">
-                Show AI Works
-              </Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox id="show_nsfw" checked={showNSFW} onCheckedChange={checked => setShowNSFW(checked as boolean)} disabled={!userAge || userAge < 18} />
-              <Label htmlFor="show_nsfw" className="cursor-pointer text-sm">
-                Show NSFW {(!userAge || userAge < 18) && "(18+ only)"}
-              </Label>
+            {/* Category tabs */}
+            <div className="flex gap-0 overflow-x-auto scrollbar-hide -mx-px">
+              {CATEGORIES.map(cat=>(
+                <button key={cat.id} onClick={()=>setCategory(cat.id)}
+                  className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${category===cat.id?"border-primary text-primary":"border-transparent text-muted-foreground hover:text-foreground"}`}>
+                  {cat.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
+        <div className="container mx-auto px-4 py-6 space-y-6">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredWorks.map(work => {
-          const isNSFWBlurred = work.nsfw && selectedNSFWWork !== work.id;
-          return <Card key={work.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => {
-            if (work.nsfw && (!userAge || userAge < 18)) {
-              toast({
-                title: "Age Restriction",
-                description: "You must be 18+ to view NSFW content",
-                variant: "destructive"
-              });
-              return;
-            }
-            if (isNSFWBlurred) {
-              setSelectedNSFWWork(work.id);
-              return;
-            }
-            setSelectedWork(work);
-          }}>
-              <div className="relative aspect-square overflow-hidden bg-muted rounded-lg">
-                {work.file_type === 'image' ? (
-                  <img 
-                    src={work.file_url} 
-                    alt={work.title}
-                    className={`w-full h-full object-cover ${isNSFWBlurred ? "blur-2xl" : ""}`}
-                  />
-                ) : work.file_type === 'video' ? (
-                  <div className="relative w-full h-full">
-                    <video src={work.file_url} className="w-full h-full object-cover" muted />
-                  </div>
-                ) : work.file_type === 'pdf' ? (
-                  <div className="w-full h-full flex items-center justify-center bg-muted">
-                    <span className="text-4xl">📄</span>
-                  </div>
-                ) : work.file_type === 'model_3d' ? (
-                  <div className="w-full h-full bg-background">
-                    {work.screenshot_url ? (
-                      <img 
-                        src={work.screenshot_url} 
-                        alt={work.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-background">
-                        <span className="text-6xl">🎨</span>
-                      </div>
+          {/* Trending hashtags */}
+          {trendingHashtags.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <Flame className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-semibold">Trending now</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {trendingHashtags.map(({tag,count})=>(
+                  <button key={tag} onClick={()=>setSelectedHashtags(p=>p.includes(tag)?p.filter(t=>t!==tag):[...p,tag])}
+                    className={`px-3 py-1 rounded-full text-sm transition-all ${selectedHashtags.includes(tag)?"bg-primary text-primary-foreground":"bg-primary/10 text-primary hover:bg-primary/20"}`}>
+                    #{tag}<span className="ml-1 text-xs opacity-60">{count}</span>
+                  </button>
+                ))}
+                {selectedHashtags.length>0&&<button onClick={()=>setSelectedHashtags([])} className="px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground hover:bg-muted/80 flex items-center gap-1"><X className="w-3 h-3"/>Clear</button>}
+              </div>
+            </section>
+          )}
+
+          {/* Works count + mobile sort */}
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {isLoading ? "Loading…" : `${filteredWorks.length} work${filteredWorks.length!==1?"s":""}${selectedHashtags.length>0?` · ${selectedHashtags.map(t=>"#"+t).join(", ")}`:""}${locationMode==="local"?" · Near you":""}`}
+            </p>
+            <Select value={sort} onValueChange={setSort}>
+              <SelectTrigger className="w-36 sm:hidden h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>{SORT_OPTIONS.map(o=><SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+
+          {/* Grid */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({length:12}).map((_,i)=><WorkCardSkeleton key={i}/>)}
+            </div>
+          ) : filteredWorks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                <Search className="w-7 h-7 text-muted-foreground" />
+              </div>
+              <div><p className="font-semibold mb-1">No works found</p><p className="text-sm text-muted-foreground">Try different filters or be the first to post!</p></div>
+              {user && <Button onClick={()=>setUploadOpen(true)} className="gap-2 bg-gradient-primary text-white"><Plus className="w-4 h-4"/>Upload Work</Button>}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredWorks.map(work=>(
+                <ErrorBoundary key={work.id}>
+                  <div className="relative">
+                    <WorkCard
+                      work={work as WorkCardData}
+                      onClick={()=>setSelectedWork(work)}
+                      isNSFWRevealed={revealedNSFW.has(work.id)}
+                      onRevealNSFW={()=>setRevealedNSFW(s=>new Set([...s,work.id]))}
+                      userAge={userAge}
+                    />
+                    {user && work.user_id!==user.id && !work.nsfw && (
+                      <button
+                        className="absolute top-2 right-2 z-20 opacity-0 hover:opacity-100 group-hover:opacity-100 p-1 rounded bg-black/50 text-white transition-opacity"
+                        onClick={e=>{e.stopPropagation();setReportWorkId(work.id);setReportWorkOwnerId(work.user_id);}}
+                        aria-label="Report"
+                      ><Flag className="w-3 h-3"/></button>
                     )}
                   </div>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-muted">
-                    <span className="text-4xl">🎨</span>
-                  </div>
-                )}
-                {isNSFWBlurred && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                    <span className="text-white font-bold text-lg">18+ NSFW</span>
-                  </div>
-                )}
-                {work.watermark_url && !isNSFWBlurred && (
-                  <img src={work.watermark_url} alt="Watermark" className="absolute bottom-2 right-2 w-16 h-auto opacity-50" />
-                )}
-              </div>
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-1">
-                  <h3 className="font-semibold flex-1">{work.title}</h3>
-                  {!work.nsfw && work.user_id !== user?.id && <Button variant="ghost" size="sm" className="h-8 w-8 p-0 ml-2 text-muted-foreground hover:text-destructive" onClick={e => {
-                  e.stopPropagation();
-                  setReportWorkId(work.id);
-                  setReportWorkOwnerId(work.user_id);
-                }}>
-                      <Flag className="h-4 w-4" />
-                    </Button>}
-                </div>
-                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                  {work.description}
-                </p>
-                <p className="text-xs text-muted-foreground mb-3 flex items-center gap-2 flex-wrap">
-                  <span>by {work.profiles?.full_name || 'Unknown Artist'}</span>
-                  {locationFilter === 'local' && work.distance !== null ? (
-                    <>
-                      <span>•</span>
-                      <span className="inline-flex items-center gap-1 text-primary font-medium">
-                        <MapPin className="h-3 w-3" />
-                        {formatDistance(work.distance)} away
-                      </span>
-                    </>
-                  ) : userLocation && work.profiles?.latitude && work.profiles?.longitude && work.profiles?.location_enabled && (
-                    <>
-                      <span>•</span>
-                      <span className="inline-flex items-center gap-1 text-primary font-medium">
-                        <MapPin className="h-3 w-3" />
-                        {formatDistance(calculateDistance(userLocation.latitude, userLocation.longitude, work.profiles.latitude, work.profiles.longitude))} away
-                      </span>
-                    </>
-                  )}
-                </p>
-                {work.hashtags && work.hashtags.length > 0 && <div className="flex flex-wrap gap-1">
-                    {work.hashtags.slice(0, 3).map(tag => <Badge key={tag} variant="secondary" className="text-xs">
-                        #{tag}
-                      </Badge>)}
-                    {work.hashtags.length > 3 && <Badge variant="secondary" className="text-xs">
-                        +{work.hashtags.length - 3}
-                      </Badge>}
-                  </div>}
-              </div>
-            </Card>;
-        })}
+                </ErrorBoundary>
+              ))}
+            </div>
+          )}
         </div>
-
-        {filteredWorks.length === 0 && <div className="text-center py-12 text-muted-foreground">
-            No works found. Try adjusting your search or filters.
-          </div>}
       </main>
 
-      {selectedWork && <WorkDetailDialog work={selectedWork} open={!!selectedWork} onOpenChange={open => !open && setSelectedWork(null)} currentUserId={user?.id} />}
-
-      {file && (
-        <WorkEditor
-          open={showEditor}
-          onOpenChange={setShowEditor}
-          file={file}
-          fileType={getFileType(file) as 'image' | 'video' | 'model_3d'}
-          onSave={handleEditSave}
-        />
+      {selectedWork && (
+        <WorkDetailDialog work={selectedWork} open={!!selectedWork} onOpenChange={o=>!o&&setSelectedWork(null)} currentUserId={user?.id} />
       )}
-
-      {reportWorkId && reportWorkOwnerId && <ReportWorkDialog open={!!reportWorkId} onOpenChange={open => {
-      if (!open) {
-        setReportWorkId(null);
-        setReportWorkOwnerId(null);
-      }
-    }} workId={reportWorkId} workOwnerId={reportWorkOwnerId} />}
-
+      {file && (
+        <WorkEditor open={showEditor} onOpenChange={setShowEditor} file={file} fileType={getFileType(file) as "image"|"video"|"model_3d"} onSave={f=>{setEditedFile(f);setShowEditor(false);}} />
+      )}
+      {reportWorkId && reportWorkOwnerId && (
+        <ReportWorkDialog open={!!reportWorkId} onOpenChange={o=>{if(!o){setReportWorkId(null);setReportWorkOwnerId(null);}}} workId={reportWorkId} workOwnerId={reportWorkOwnerId} />
+      )}
       <Dialog open={showDrafts} onOpenChange={setShowDrafts}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Your Drafts</DialogTitle>
-          </DialogHeader>
-          <WorkDrafts
-            onLoadDraft={handleLoadDraft}
-            onClose={() => setShowDrafts(false)}
-          />
+        <DialogContent><DialogHeader><DialogTitle>Your Drafts</DialogTitle></DialogHeader>
+          <WorkDrafts onLoadDraft={handleLoadDraft} onClose={()=>setShowDrafts(false)} />
         </DialogContent>
       </Dialog>
-
       <BottomNav />
-    </div>;
+    </div>
+  );
 }
