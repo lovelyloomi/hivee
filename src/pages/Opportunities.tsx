@@ -16,6 +16,7 @@ import { OpportunityFilters } from "@/components/OpportunityFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { calculateDistance, formatDistanceRange } from "@/utils/distance";
+import { useLocation as useUserLocation } from "@/hooks/useLocation";
 
 interface Opportunity {
   id: string;
@@ -51,7 +52,12 @@ const Opportunities = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [opportunityFavorites, setOpportunityFavorites] = useState<Set<string>>(new Set());
   const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // ── Location via shared hook (no more duplicate fetchUserLocation) ──
+  const { location: locationData } = useUserLocation(user?.id);
+  const userLocation = locationData.latitude && locationData.longitude
+    ? { latitude: locationData.latitude, longitude: locationData.longitude }
+    : null;
   
   // Filters
   const [filterArtistType, setFilterArtistType] = useState("");
@@ -61,25 +67,10 @@ const Opportunities = () => {
   useEffect(() => {
     fetchOpportunities();
     if (user) {
-      fetchUserLocation();
       fetchFavorites();
       fetchOpportunityFavorites();
     }
   }, [user]);
-
-  const fetchUserLocation = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('profiles')
-      .select('latitude, longitude')
-      .eq('id', user.id)
-      .single();
-
-    if (data?.latitude && data?.longitude) {
-      setUserLocation({ latitude: data.latitude, longitude: data.longitude });
-    }
-  };
 
   const fetchOpportunities = async () => {
     try {
