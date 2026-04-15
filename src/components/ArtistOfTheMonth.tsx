@@ -95,26 +95,35 @@ export const ArtistOfTheMonth = () => {
 
           const workIds = works?.map(w => w.id) || [];
 
-          const { count: likesCount } = await supabase
-            .from('work_likes')
-            .select('*', { count: 'exact', head: true })
-            .in('work_id', workIds)
-            .gte('created_at', thirtyDaysAgo.toISOString());
+          let likesCount = 0;
+          let commentsCount = 0;
+          let viewsCount = 0;
 
-          const { count: commentsCount } = await supabase
-            .from('work_comments')
-            .select('*', { count: 'exact', head: true })
-            .in('work_id', workIds)
-            .gte('created_at', thirtyDaysAgo.toISOString());
+          if (workIds.length > 0) {
+            const { count: lc } = await supabase
+              .from('work_likes')
+              .select('*', { count: 'exact', head: true })
+              .in('work_id', workIds)
+              .gte('created_at', thirtyDaysAgo.toISOString());
+            likesCount = lc || 0;
 
-          const { count: viewsCount } = await supabase
-            .from('work_views')
-            .select('*', { count: 'exact', head: true })
-            .in('work_id', workIds)
-            .gte('viewed_at', thirtyDaysAgo.toISOString());
+            const { count: cc } = await supabase
+              .from('work_comments')
+              .select('*', { count: 'exact', head: true })
+              .in('work_id', workIds)
+              .gte('created_at', thirtyDaysAgo.toISOString());
+            commentsCount = cc || 0;
+
+            const { count: vc } = await supabase
+              .from('work_views')
+              .select('*', { count: 'exact', head: true })
+              .in('work_id', workIds)
+              .gte('viewed_at', thirtyDaysAgo.toISOString());
+            viewsCount = vc || 0;
+          }
 
           // Calculate weighted score
-          const score = (likesCount || 0) * 3 + (commentsCount || 0) * 2 + (viewsCount || 0);
+          const score = likesCount * 3 + commentsCount * 2 + viewsCount;
 
           return {
             id: profile.id,
