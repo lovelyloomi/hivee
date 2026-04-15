@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +24,7 @@ export default function BlockedUsers() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -90,7 +92,7 @@ export default function BlockedUsers() {
       <div className="min-h-screen bg-background pb-20 pt-16">
         <Header />
         <div className="container mx-auto px-4 pt-24">
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
         <BottomNav />
       </div>
@@ -104,15 +106,15 @@ export default function BlockedUsers() {
       <main className="container mx-auto px-4 py-8 pt-24">
         <div className="flex items-center gap-3 mb-6">
           <Shield className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">Blocked Users</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('blocked.title')}</h1>
         </div>
 
         {blockedUsers.length === 0 ? (
           <Card className="p-8 text-center">
             <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No blocked users</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('blocked.noBlocked')}</h3>
             <p className="text-muted-foreground">
-              Users you block will appear here
+              {t('blocked.willAppear')}
             </p>
           </Card>
         ) : (
@@ -141,7 +143,7 @@ export default function BlockedUsers() {
                     variant="outline"
                     onClick={() => handleUnblock(blocked.id)}
                   >
-                    Unblock
+                    {t('common.unblock')}
                   </Button>
                 </div>
               </Card>

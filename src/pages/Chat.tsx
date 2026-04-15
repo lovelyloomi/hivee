@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Send, MoreVertical, Shield, UserX, User, Paperclip, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -52,6 +53,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const { createNotification } = useNotifications();
   const { isUserOnline } = usePresence(user?.id);
   
@@ -388,11 +390,11 @@ const Chat = () => {
         <Header />
         <div className="flex items-center justify-center p-4 min-h-[calc(100vh-80px)] pt-24">
           <div className="text-center space-y-4">
-            <h2 className="text-2xl font-bold">Accedi per Continuare</h2>
-            <p className="text-muted-foreground">Devi effettuare l'accesso per visualizzare le chat</p>
+            <h2 className="text-2xl font-bold">{t('auth.loginToContinue')}</h2>
+            <p className="text-muted-foreground">{t('auth.needLoginChat')}</p>
             <div className="flex gap-3 justify-center">
-              <Button onClick={() => navigate('/auth')} size="lg">Accedi</Button>
-              <Button onClick={() => navigate('/auth')} variant="outline" size="lg">Registrati</Button>
+              <Button onClick={() => navigate('/auth')} size="lg">{t('auth.login')}</Button>
+              <Button onClick={() => navigate('/auth')} variant="outline" size="lg">{t('auth.register')}</Button>
             </div>
           </div>
         </div>
@@ -406,7 +408,7 @@ const Chat = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading conversation...</p>
+          <p className="text-muted-foreground">{t('chat.loadingConversation')}</p>
         </div>
       </div>
     );
@@ -447,7 +449,7 @@ const Chat = () => {
               <div className="flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full ${isUserOnline(otherUser.id) ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                 <span className="text-xs text-muted-foreground">
-                  {isUserOnline(otherUser.id) ? 'Online' : 'Offline'}
+                  {isUserOnline(otherUser.id) ? t('chat.online') : t('chat.offline')}
                 </span>
               </div>
             </div>
@@ -460,19 +462,19 @@ const Chat = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setShowReportDialog(true)}>
                   <Shield className="mr-2 h-4 w-4" />
-                  Report User
+                  {t('chat.reportUser')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(`/profile/${otherUser.id}`)}>
                   <User className="mr-2 h-4 w-4" />
-                  View Profile
+                  {t('chat.viewProfile')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setShowBlockDialog(true)}>
                   <Shield className="mr-2 h-4 w-4" />
-                  Block User
+                  {t('chat.blockUser')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setShowUnmatchDialog(true)} className="text-destructive">
                   <UserX className="mr-2 h-4 w-4" />
-                  Unmatch
+                  {t('chat.unmatch')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -490,15 +492,15 @@ const Chat = () => {
         {isDragging && (
           <div className="fixed inset-0 bg-primary/10 border-2 border-dashed border-primary z-50 flex items-center justify-center pointer-events-none">
             <div className="bg-background p-8 rounded-lg shadow-lg">
-              <p className="text-lg font-semibold">Drop file to upload</p>
+              <p className="text-lg font-semibold">{t('chat.dropToUpload')}</p>
             </div>
           </div>
         )}
 
         {messages.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
-            <p className="text-lg mb-2">No messages yet</p>
-            <p className="text-sm">Send a message to start the conversation!</p>
+            <p className="text-lg mb-2">{t('chat.noMessages')}</p>
+            <p className="text-sm">{t('chat.startConversation')}</p>
           </div>
         ) : (
           messages.map((message) => {
@@ -587,7 +589,7 @@ const Chat = () => {
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
+            placeholder={t('chat.typeMessage')}
             className="flex-1 bg-background border-border text-foreground"
             disabled={sending || uploadingMedia}
           />
@@ -605,15 +607,15 @@ const Chat = () => {
       <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Block User</AlertDialogTitle>
+            <AlertDialogTitle>{t('chat.blockConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to block {otherUser?.full_name}? They won't be able to message you anymore and you won't see their content.
+              {t('chat.blockConfirmDesc', { name: otherUser?.full_name || '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleBlockUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Block
+              {t('common.block')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -623,15 +625,15 @@ const Chat = () => {
       <AlertDialog open={showUnmatchDialog} onOpenChange={setShowUnmatchDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unmatch User</AlertDialogTitle>
+            <AlertDialogTitle>{t('chat.unmatchConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to unmatch with {otherUser?.full_name}? This will remove them from your matches and delete your conversation history.
+              {t('chat.unmatchConfirmDesc', { name: otherUser?.full_name || '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleUnmatch} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Unmatch
+              {t('chat.unmatch')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

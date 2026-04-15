@@ -7,6 +7,7 @@ import { MessageCircle, Heart } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -30,6 +31,7 @@ const Matches = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -189,11 +191,11 @@ const Matches = () => {
         <Header />
         <div className="flex items-center justify-center p-4 min-h-[calc(100vh-80px)] pt-24">
           <div className="text-center space-y-4">
-            <h2 className="text-2xl font-bold">Accedi per Continuare</h2>
-            <p className="text-muted-foreground">Devi effettuare l'accesso per visualizzare i match</p>
+            <h2 className="text-2xl font-bold">{t('auth.loginToContinue')}</h2>
+            <p className="text-muted-foreground">{t('auth.needLoginMatches')}</p>
             <div className="flex gap-3 justify-center">
-              <Button onClick={() => navigate('/auth')} size="lg">Accedi</Button>
-              <Button onClick={() => navigate('/auth')} variant="outline" size="lg">Registrati</Button>
+              <Button onClick={() => navigate('/auth')} size="lg">{t('auth.login')}</Button>
+              <Button onClick={() => navigate('/auth')} variant="outline" size="lg">{t('auth.register')}</Button>
             </div>
           </div>
         </div>
@@ -209,7 +211,7 @@ const Matches = () => {
         <div className="container max-w-2xl mx-auto px-4 py-8 pt-24 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading matches...</p>
+            <p className="text-muted-foreground">{t('matches.loadingMatches')}</p>
           </div>
         </div>
         <BottomNav />
@@ -223,19 +225,19 @@ const Matches = () => {
       <div className="container max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Bees U Matched With
+            {t('matches.title')}
           </h1>
         </div>
 
         {matches.length === 0 ? (
           <Card className="p-12 text-center bg-card border-border">
             <div className="text-6xl mb-4">💫</div>
-            <h2 className="text-2xl font-bold mb-2 text-foreground">No matches yet</h2>
+            <h2 className="text-2xl font-bold mb-2 text-foreground">{t('matches.noMatches')}</h2>
             <p className="text-muted-foreground mb-6">
-              Start swiping to find artists you'd love to work with!
+              {t('matches.startSwiping')}
             </p>
             <Button onClick={() => navigate('/find')} className="bg-gradient-primary text-white hover:opacity-90">
-              Start Swiping
+              {t('landing.cta')}
             </Button>
           </Card>
         ) : (
@@ -316,7 +318,7 @@ const Matches = () => {
                     {!match.lastMessage && (
                       <div className="mt-3 pt-3 border-t border-border">
                         <p className="text-sm text-primary font-medium">
-                          Send a message to start chatting!
+                          {t('matches.sendMessage')}
                         </p>
                       </div>
                     )}
@@ -370,7 +372,7 @@ const Matches = () => {
               </div>
               <div className="flex justify-end">
                 <Button onClick={(e) => previewMatch && handleChatClick(previewMatch, e as any)}>
-                  Message
+                  {t('common.message')}
                 </Button>
               </div>
             </div>
