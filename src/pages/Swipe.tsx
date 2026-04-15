@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { calculateDistance, formatDistanceRange } from "@/utils/distance";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { RecentMatches } from "@/components/RecentMatches";
+import { useLocation as useUserLocation } from "@/hooks/useLocation";
 
 interface Profile {
   id: string;
@@ -58,8 +59,11 @@ const Swipe = () => {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [matchNotification, setMatchNotification] = useState<{ name: string; image?: string } | null>(null);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [distanceFilter, setDistanceFilter] = useState(50);
+  const { location: userLocationData } = useUserLocation(user?.id);
+  const userLocation = userLocationData.latitude && userLocationData.longitude
+    ? { latitude: userLocationData.latitude, longitude: userLocationData.longitude }
+    : null;
   const [showFilters, setShowFilters] = useState(false);
   const [lastSwipe, setLastSwipe] = useState<{ profileId: string; action: 'like' | 'pass'; index: number } | null>(null);
   const [showUndo, setShowUndo] = useState(false);
@@ -77,78 +81,59 @@ const Swipe = () => {
 
   useEffect(() => {
     if (user && !showCategorySelection) {
-      fetchUserLocation();
       fetchProfiles();
     } else if (user) {
       setLoading(false);
     }
   }, [user, selectedCategory, distanceFilter, showCategorySelection]);
 
-  const fetchUserLocation = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('profiles')
-      .select('latitude, longitude')
-      .eq('id', user.id)
-      .single();
-
-    if (data?.latitude && data?.longitude) {
-      setUserLocation({ latitude: data.latitude, longitude: data.longitude });
-    }
-  };
-
   const fetchProfiles = async () => {
     if (!user) return;
     
     try {
+      // 1. Fetch already-swiped IDs first (small set, fast)
+      const { data: swipes } = await supabase
+        .from('swipes')
+        .select('swiped_user_id')
+        .eq('user_id', user.id);
+
+      const swipedUserIds = swipes?.map(s => s.swiped_user_id) || [];
+
+      // 2. Server-side query: exclude self, require completed profile,
+      //    filter by skill category, exclude already-swiped users
       let query = supabase
         .from('profiles')
         .select('*')
         .neq('id', user.id)
         .eq('profile_completed', true);
 
-      const { data, error } = await query;
+      // Server-side skill filter
+      if (selectedCategory && selectedCategory !== 'all') {
+        query = query.contains('skills', [selectedCategory]);
+      }
 
+      // Exclude swiped users server-side (up to PostgREST array limit)
+      if (swipedUserIds.length > 0) {
+        query = query.not('id', 'in', `(${swipedUserIds.join(',')})`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
 
-      const { data: swipes } = await supabase
-        .from('swipes')
-        .select('swiped_user_id')
-        .eq('user_id', user.id);
-
-      const swipedUserIds = new Set(swipes?.map(s => s.swiped_user_id) || []);
-
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('latitude, longitude')
-        .eq('id', user.id)
-        .single();
-
-      const filteredProfiles = data.filter((profile: Profile) => {
-        if (swipedUserIds.has(profile.id)) return false;
-        
-        if (selectedCategory && selectedCategory !== 'all' && (!profile.skills || !profile.skills.includes(selectedCategory))) {
-          return false;
-        }
-        
-        if (userProfile?.latitude && userProfile?.longitude && profile.latitude && profile.longitude) {
-          const distance = calculateDistance(
-            userProfile.latitude,
-            userProfile.longitude,
-            profile.latitude,
-            profile.longitude
+      // 3. Distance filter (still client-side, needs user coords)
+      let result = data || [];
+      if (userLocation) {
+        result = result.filter((profile: Profile) => {
+          if (!profile.latitude || !profile.longitude) return true; // no location = show anyway
+          const dist = calculateDistance(
+            userLocation.latitude, userLocation.longitude,
+            profile.latitude, profile.longitude
           );
-          
-          if (distance > distanceFilter) {
-            return false;
-          }
-        }
-        
-        return true;
-      });
+          return dist <= distanceFilter;
+        });
+      }
 
-      setProfiles(filteredProfiles || []);
+      setProfiles(result);
     } catch (error) {
       console.error('Error fetching profiles:', error);
       toast({
