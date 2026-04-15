@@ -83,10 +83,15 @@ export const ProfileAnalytics = () => {
     }
 
     // Work likes
-    const { count: likes } = await supabase
-      .from('work_likes')
-      .select('*', { count: 'exact', head: true })
-      .in('work_id', works?.map(w => w.id) || []);
+    const workIdsForLikes = works?.map(w => w.id) || [];
+    let likes = 0;
+    if (workIdsForLikes.length > 0) {
+      const { count } = await supabase
+        .from('work_likes')
+        .select('*', { count: 'exact', head: true })
+        .in('work_id', workIdsForLikes);
+      likes = count || 0;
+    }
 
     setAnalytics({
       profileViews7Days: views7d || 0,
