@@ -9,6 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import WorkDetailDialog from "@/components/WorkDetailDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Database } from "@/integrations/supabase/types";
 
 type Work = Database['public']['Tables']['works']['Row'] & {

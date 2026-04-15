@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { ApplicationDialog } from "@/components/ApplicationDialog";
 import { ApplicationsList } from "@/components/ApplicationsList";
 import { OpportunityFilters } from "@/components/OpportunityFilters";
