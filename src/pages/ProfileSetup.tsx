@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import Header from "@/components/Header";
 import { Upload, Link as LinkIcon, X, Loader2, Globe, Instagram, Linkedin, Twitter, Eye } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";

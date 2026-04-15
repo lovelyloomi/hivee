@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { applyWatermark, preventImageSave } from "@/utils/watermark";
 import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { calculateDistance, formatDistance } from "@/utils/distance";
 import { HexagonImage } from "@/components/HexagonImage";
 import { useQueryClient } from "@tanstack/react-query";
