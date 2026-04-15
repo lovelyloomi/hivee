@@ -7,7 +7,7 @@ interface AutosaveOptions {
 }
 
 export const useAutosave = ({ key, data, delay = 2000 }: AutosaveOptions) => {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (timeoutRef.current) {
