@@ -197,13 +197,13 @@ export default function Favorites() {
       <main className="container mx-auto px-4 py-8 pt-24">
         <div className="flex items-center gap-3 mb-6">
           <Bookmark className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">My Favorites</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('fav.title')}</h1>
         </div>
 
         <Tabs defaultValue="works" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="works">Works</TabsTrigger>
-            <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
+            <TabsTrigger value="works">{t('fav.works')}</TabsTrigger>
+            <TabsTrigger value="opportunities">{t('fav.opportunities')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="works">
@@ -212,7 +212,7 @@ export default function Favorites() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   type="text"
-                  placeholder="Search favorites..."
+                  placeholder={t('fav.searchFavorites')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -317,8 +317,8 @@ export default function Favorites() {
                 <Bookmark className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg text-muted-foreground">
                   {searchQuery || selectedHashtags.length > 0 
-                    ? "No favorites match your search"
-                    : "No favorite works yet"
+                    ? t('fav.noMatch')
+                    : t('fav.noFavoriteWorks')
                   }
                 </p>
               </div>
@@ -366,7 +366,7 @@ export default function Favorites() {
                         onClick={() => removeOpportunityFavorite(favorite.id)}
                         className="text-destructive hover:text-destructive/80 text-sm font-medium"
                       >
-                        Remove
+                        {t('common.remove')}
                       </button>
                     </div>
                   </Card>
@@ -375,7 +375,7 @@ export default function Favorites() {
               {opportunityFavorites.length === 0 && (
                 <div className="text-center py-12">
                   <Briefcase className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg text-muted-foreground">No favorite opportunities yet</p>
+                  <p className="text-lg text-muted-foreground">{t('fav.noFavoriteOpp')}</p>
                 </div>
               )}
             </div>

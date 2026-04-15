@@ -110,16 +110,16 @@ export const PrivacySettingsPage = () => {
     <div className="container mx-auto p-6 max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>Privacy Settings</CardTitle>
-          <CardDescription>Control who can see your profile and interact with you</CardDescription>
+          <CardTitle>{t('privacy.title')}</CardTitle>
+          <CardDescription>{t('privacy.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="view-tracking">Disable View Tracking</Label>
+                <Label htmlFor="view-tracking">{t('privacy.disableViewTracking')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Prevent others from seeing that you viewed their profile
+                  {t('privacy.disableViewTrackingDesc')}
                 </p>
               </div>
               <Switch
@@ -133,9 +133,9 @@ export const PrivacySettingsPage = () => {
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="anonymous">Anonymous Browsing</Label>
+                <Label htmlFor="anonymous">{t('privacy.anonymousBrowsing')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Browse profiles without leaving a trace
+                  {t('privacy.anonymousBrowsingDesc')}
                 </p>
               </div>
               <Switch
@@ -148,7 +148,7 @@ export const PrivacySettingsPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Who can see your profile</Label>
+              <Label>{t('privacy.whoCanSeeProfile')}</Label>
               <Select
                 value={settings.who_can_see_profile}
                 onValueChange={(value) => 
@@ -159,9 +159,9 @@ export const PrivacySettingsPage = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="everyone">Everyone</SelectItem>
-                  <SelectItem value="matches_only">Matches Only</SelectItem>
-                  <SelectItem value="nobody">Nobody</SelectItem>
+                  <SelectItem value="everyone">{t('privacy.everyone')}</SelectItem>
+                  <SelectItem value="matches_only">{t('privacy.matchesOnly')}</SelectItem>
+                  <SelectItem value="nobody">{t('privacy.nobody')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -170,7 +170,7 @@ export const PrivacySettingsPage = () => {
               <div>
                 <Label className="flex items-center gap-2 mb-3">
                   <Shield className="w-4 h-4 text-primary" />
-                  Location Privacy Level
+                  {t('privacy.locationPrivacy')}
                 </Label>
                 <RadioGroup value={locationPrecision} onValueChange={(v) => setLocationPrecision(v as LocationPrecision)}>
                   <div className="space-y-3">
@@ -215,7 +215,7 @@ export const PrivacySettingsPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Who can message you</Label>
+              <Label>{t('privacy.whoCanMessage')}</Label>
               <Select
                 value={settings.who_can_message}
                 onValueChange={(value) => 
@@ -226,15 +226,15 @@ export const PrivacySettingsPage = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="everyone">Everyone</SelectItem>
-                  <SelectItem value="matches_only">Matches Only</SelectItem>
+                  <SelectItem value="everyone">{t('privacy.everyone')}</SelectItem>
+                  <SelectItem value="matches_only">{t('privacy.matchesOnly')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <Button onClick={handleSave} disabled={loading} className="w-full">
-            {loading ? 'Saving...' : 'Save Privacy Settings'}
+            {loading ? t('common.saving') : t('privacy.saveSettings')}
           </Button>
         </CardContent>
       </Card>

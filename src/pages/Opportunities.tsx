@@ -356,7 +356,7 @@ const Opportunities = () => {
       <div className="min-h-screen bg-background pb-24 pt-16">
         <Header />
         <div className="container mx-auto px-4 pt-20 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
         <BottomNav />
       </div>
@@ -370,7 +370,7 @@ const Opportunities = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-foreground">Opportunities Around the Hives</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('opp.title')}</h1>
             <div className="flex gap-2">
               {user && (
                 <Button
@@ -379,7 +379,7 @@ const Opportunities = () => {
                   className="gap-2"
                 >
                   <Mail className="h-5 w-5" />
-                  Applications
+                  {t('opp.applications')}
                 </Button>
               )}
               <Button
@@ -393,7 +393,7 @@ const Opportunities = () => {
                 className="gap-2"
               >
                 <Plus className="h-5 w-5" />
-                Post Opportunity
+                {t('opp.postOpportunity')}
               </Button>
             </div>
           </div>
@@ -401,12 +401,12 @@ const Opportunities = () => {
           {showForm && (
             <Card className="p-6 mb-6 bg-card border-border">
               <h2 className="text-xl font-semibold mb-4 text-foreground">
-                {editingOpportunity ? 'Edit Opportunity' : 'Post a New Opportunity'}
+                {editingOpportunity ? t('opp.editOpportunity') : t('opp.postNew')}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
-                    Looking for... *
+                    {t('opp.lookingFor')} *
                   </label>
                   <Select value={artistType} onValueChange={setArtistType} required>
                     <SelectTrigger className="bg-background border-border">
@@ -429,7 +429,7 @@ const Opportunities = () => {
 
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
-                    Work Type *
+                    {t('opp.workType')} *
                   </label>
                   <Select value={workType} onValueChange={setWorkType} required>
                     <SelectTrigger className="bg-background border-border">
@@ -445,7 +445,7 @@ const Opportunities = () => {
 
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
-                    Job Description *
+                    {t('opp.jobDescription')} *
                   </label>
                   <Textarea
                     value={description}
@@ -458,7 +458,7 @@ const Opportunities = () => {
 
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
-                    Payment/Budget *
+                    {t('opp.paymentBudget')} *
                   </label>
                   <Input
                     type="text"
@@ -472,7 +472,7 @@ const Opportunities = () => {
 
                 <div className="flex gap-2 justify-end pt-4">
                   <Button type="submit">
-                    {editingOpportunity ? 'Update' : 'Post'} Opportunity
+                    {editingOpportunity ? t('common.update') : t('common.post')} {t('fav.opportunities')}
                   </Button>
                   <Button
                     type="button"
@@ -486,7 +486,7 @@ const Opportunities = () => {
                       setWorkType("");
                     }}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </form>
@@ -510,7 +510,7 @@ const Opportunities = () => {
               {filteredOpportunities.length === 0 ? (
                 <Card className="p-8 text-center bg-card border-border">
                   <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">No opportunities found</p>
+                  <p className="text-muted-foreground">{t('opp.noOpportunities')}</p>
                 </Card>
               ) : (
                 filteredOpportunities.map((opportunity) => {
@@ -536,7 +536,7 @@ const Opportunities = () => {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground mb-1">Posted by {opportunity.profiles?.full_name}</p>
+                          <p className="text-sm text-muted-foreground mb-1">{t('opp.postedBy')} {opportunity.profiles?.full_name}</p>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{getTimeAgo(opportunity.created_at)}</span>
                             {distance !== null && opportunity.profiles?.location_enabled && (
@@ -583,15 +583,15 @@ const Opportunities = () => {
                         {user?.id === opportunity.creator_id ? (
                           <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={() => handleEdit(opportunity)}>
-                              Edit
+                              {t('common.edit')}
                             </Button>
                             <Button variant="destructive" size="sm" onClick={() => handleDelete(opportunity.id)}>
-                              Delete
+                              {t('common.delete')}
                             </Button>
                           </div>
                         ) : (
                           <Button size="sm" onClick={() => handleApplyClick(opportunity.id, opportunity.creator_id)}>
-                            Apply Now
+                            {t('common.apply')}
                           </Button>
                         )}
                       </div>
